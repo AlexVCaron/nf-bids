@@ -14,4 +14,8 @@ nextflowPlugin {
         'nfneuro.plugin.BidsFactory'
     ]
 
+    dependencies {
+        implementation fileTree('libBIDS.sh') { include '*.sh' }
+    }
+
 }

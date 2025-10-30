@@ -21,6 +21,7 @@ class LibBidsShWrapper {
     private static final String DEFAULT_LIBBIDS_SUBMODULE = "libBIDS.sh/libBIDS.sh"
     private static final String DEFAULT_LIBBIDS_BUNDLED = "assets/libBIDS.sh"
     private static final List<String> SEARCH_PATHS = [
+        "lib/libBIDS.sh",
         "libBIDS.sh/libBIDS.sh",           // Submodule in current dir
         "../libBIDS.sh/libBIDS.sh",        // Submodule one level up
         "../../libBIDS.sh/libBIDS.sh",     // Submodule two levels up

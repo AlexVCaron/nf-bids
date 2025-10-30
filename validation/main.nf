@@ -7,9 +7,8 @@
 
 include { fromBIDS } from "plugin/nf-bids"
 
-params.bids_dir = '/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-dwi'
+params.bids_dir = "${projectDir}/data/custom/ds-dwi"
 params.config = "${projectDir}/configs/config_dwi.yaml"
-params.libbids_sh = null
 
 /**
  * Get set type from data structure
