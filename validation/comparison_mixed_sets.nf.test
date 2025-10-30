@@ -1,0 +1,26 @@
+nextflow_workflow {
+
+    name "Plugin Comparison: Mixed Sets"
+    script "./main.nf"
+    workflow "main_workflow"
+
+    test("qmri_mpm - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_mpm"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mpm.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel.collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+}

@@ -1,0 +1,9 @@
+loop_over: [subject, session, run, task]
+
+MP2RAGE:
+  sequential_set:
+    by_entity: inversion
+    parts: ["mag", "phase"]
+
+UNIT1:
+  plain_set: {}

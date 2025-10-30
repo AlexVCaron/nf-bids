@@ -1,0 +1,132 @@
+nextflow_workflow {
+
+    name "Plugin Comparison: Custom Datasets"
+    script "./main.nf"
+    workflow "main_workflow"
+
+    test("ds-dwi - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-dwi"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("ds-dwi2 - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-dwi2"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("ds-dwi3 - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-dwi3"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("ds-dwi4 - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-dwi4"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("ds-mrs_fmrs - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-mrs_fmrs"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mrs.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("ds-mtsat - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom/ds-mtsat"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mtsat.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+}

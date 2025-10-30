@@ -1,0 +1,13 @@
+loop_over: [subject, session, run, task]
+
+eeg:
+  plain_set:
+    additional_extensions: ["tsv", "edf", "eeg"]
+
+channels:
+  plain_set:
+    additional_extensions: ["tsv"]
+
+events:
+  plain_set:
+    additional_extensions: ["tsv"]

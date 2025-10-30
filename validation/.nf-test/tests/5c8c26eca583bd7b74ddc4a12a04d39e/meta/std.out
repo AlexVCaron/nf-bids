@@ -1,0 +1,6 @@
+Pipeline is starting! 🚀
+🧪 Testing Channel.fromBIDS...
+ITEM_STATS: {"type":"plain","entities":{"subject":"sub-01","session":"NA","run":"NA","task":"task-baseline"},"totalFiles":4,"suffixes":["mrsref","svs","T1w"],"details":[{"suffix":"mrsref","files":2},{"suffix":"svs","files":2},{"suffix":"T1w","files":2}]}
+ITEM_STATS: {"type":"plain","entities":{"subject":"sub-01","session":"NA","run":"NA","task":"task-pain"},"totalFiles":5,"suffixes":["events","mrsref","svs","T1w"],"details":[{"suffix":"events","files":1},{"suffix":"mrsref","files":2},{"suffix":"svs","files":2},{"suffix":"T1w","files":2}]}
+✓ Pipeline completed with 2 items
+Pipeline complete! 👋

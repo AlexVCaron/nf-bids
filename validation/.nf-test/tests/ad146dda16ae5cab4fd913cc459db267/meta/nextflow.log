@@ -1,0 +1,154 @@
+oct.-29 13:12:15.647 [main] DEBUG nextflow.cli.Launcher - $> nextflow -quiet -log /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/ad146dda16ae5cab4fd913cc459db267/meta/nextflow.log run /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test-ad146dda16ae5cab4fd913cc459db267.nf -c /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config -params-file /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/ad146dda16ae5cab4fd913cc459db267/meta/params.json -ansi-log false -with-trace /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/ad146dda16ae5cab4fd913cc459db267/meta/trace.csv -w /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/ad146dda16ae5cab4fd913cc459db267/work
+oct.-29 13:12:15.726 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.0
+oct.-29 13:12:15.774 [main] DEBUG nextflow.config.ConfigBuilder - Found config base: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 13:12:15.778 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 13:12:15.780 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 13:12:15.781 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 13:12:15.809 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+oct.-29 13:12:16.201 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+oct.-29 13:12:16.289 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/local/USHERBROOKE/vala2004/.nextflow/plugins; core-plugins: nf-amazon@3.4.1,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.3,nf-k8s@1.2.2,nf-tower@1.17.1,nf-wave@1.16.1
+oct.-29 13:12:16.305 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+oct.-29 13:12:16.306 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+oct.-29 13:12:16.314 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+oct.-29 13:12:16.333 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+oct.-29 13:12:16.521 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+oct.-29 13:12:16.522 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins declared=[nf-bids@0.1.0]
+oct.-29 13:12:16.524 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+oct.-29 13:12:16.524 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[nf-bids@0.1.0]
+oct.-29 13:12:17.063 [main] DEBUG n.plugin.HttpPluginRepository - Registry request: https://registry.nextflow.io/api/v1/plugins/dependencies?plugins=nf-bids%400.1.0&nextflowVersion=25.10.0
+- code: 200
+- body: {"plugins":[]}
+oct.-29 13:12:17.101 [main] DEBUG nextflow.plugin.PluginUpdater - Installing plugin nf-bids version: 0.1.0
+oct.-29 13:12:17.110 [main] INFO  org.pf4j.AbstractPluginManager - Plugin 'nf-bids@0.1.0' resolved
+oct.-29 13:12:17.110 [main] INFO  org.pf4j.AbstractPluginManager - Start plugin 'nf-bids@0.1.0'
+oct.-29 13:12:17.116 [main] DEBUG nextflow.plugin.BasePlugin - Plugin started nf-bids@0.1.0
+oct.-29 13:12:17.130 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/local/USHERBROOKE/vala2004/.nextflow/secrets/store.json
+oct.-29 13:12:17.134 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@713ec32d] - activable => nextflow.secret.LocalSecretsProvider@713ec32d
+oct.-29 13:12:17.137 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
+oct.-29 13:12:17.155 [main] INFO  nextflow.cli.CmdRun - Launching `/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test-ad146dda16ae5cab4fd913cc459db267.nf` [fervent_minsky] DSL2 - revision: 887c58371d
+oct.-29 13:12:17.241 [main] DEBUG nextflow.Session - Session UUID: 4846b146-bebc-40a9-adbb-0df261b18bca
+oct.-29 13:12:17.242 [main] DEBUG nextflow.Session - Run name: fervent_minsky
+oct.-29 13:12:17.242 [main] DEBUG nextflow.Session - Executor pool size: 8
+oct.-29 13:12:17.258 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+oct.-29 13:12:17.269 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=24; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+oct.-29 13:12:17.297 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.10.0 build 10289
+  Created: 22-10-2025 16:26 UTC (12:26 HAE)
+  System: Linux 6.14.0-33-generic
+  Runtime: Groovy 4.0.28 on OpenJDK 64-Bit Server VM 21.0.8+9-Ubuntu-0ubuntu124.04.1
+  Encoding: UTF-8 (UTF-8)
+  Process: 1639977@dinf-0051-19b [127.0.1.1]
+  CPUs: 8 - Mem: 62.5 GB (12.3 GB) - Swap: 20 GB (11.2 GB)
+oct.-29 13:12:17.335 [main] DEBUG nextflow.Session - Work-dir: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/ad146dda16ae5cab4fd913cc459db267/work [ext2/ext3]
+oct.-29 13:12:17.336 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/bin
+oct.-29 13:12:17.349 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+oct.-29 13:12:17.364 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+oct.-29 13:12:17.370 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+oct.-29 13:12:17.389 [main] DEBUG nextflow.Session - Observer factory: BidsFactory
+oct.-29 13:12:17.445 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+oct.-29 13:12:17.459 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 9; maxThreads: 1000
+oct.-29 13:12:17.582 [main] DEBUG nextflow.Session - Session start
+oct.-29 13:12:17.589 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow started -- trace file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/ad146dda16ae5cab4fd913cc459db267/meta/trace.csv
+oct.-29 13:12:17.986 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+oct.-29 13:12:18.277 [main] DEBUG nextflow.script.IncludeDef - Loading included plugin extensions with names: [fromBIDS:fromBIDS]; plugin Id: nf-bids
+oct.-29 13:12:18.333 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Starting BIDS dataset parsing: /home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_vfa
+oct.-29 13:12:18.334 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ✈︎✈︎✈︎ Pre-flight checks started
+oct.-29 13:12:18.336 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ✓ Pre-flight checks completed
+oct.-29 13:12:18.391 [main] INFO  n.plugin.config.BidsConfigLoader - Loaded BIDS configuration from: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_vfa.yaml
+oct.-29 13:12:18.392 [main] INFO  n.plugin.config.BidsConfigLoader - Configuration keys: [loop_over, VFA, TB1AFI]
+oct.-29 13:12:18.392 [main] INFO  n.plugin.config.BidsConfigLoader -   loop_over: ArrayList = [subject, session, run, task]
+oct.-29 13:12:18.393 [main] INFO  n.plugin.config.BidsConfigLoader -   VFA: LinkedHashMap = [sequential_set:[by_entity:flip]]
+oct.-29 13:12:18.393 [main] INFO  n.plugin.config.BidsConfigLoader -   TB1AFI: LinkedHashMap = [named_set:[tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]], required:[tr1, tr2]]
+oct.-29 13:12:18.396 [main] INFO  n.plugin.config.BidsConfigAnalyzer - Analyzing configuration with keys: [loop_over, VFA, TB1AFI]
+oct.-29 13:12:18.396 [main] INFO  n.plugin.config.BidsConfigAnalyzer -   Checking loop_over: ArrayList
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer -   Checking VFA: LinkedHashMap
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer -     Value is a Map with keys: [sequential_set]
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer -     Found sequential_set!
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer -   Checking TB1AFI: LinkedHashMap
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer -     Value is a Map with keys: [named_set, required]
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer -     Found named_set!
+oct.-29 13:12:18.397 [main] INFO  n.plugin.config.BidsConfigAnalyzer - Analysis results: named=true, sequential=true, mixed=false, plain=false
+oct.-29 13:12:18.398 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ┌─ ✓ Configuration analysis complete:
+oct.-29 13:12:18.398 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ↬ Loop over entities: subject, session, run, task
+oct.-29 13:12:18.398 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑆ Named sets: 1 patterns (TB1AFI)
+oct.-29 13:12:18.398 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑇ Sequential sets: 1 patterns (VFA)
+oct.-29 13:12:18.399 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑈ Mixed sets: 0 patterns ()
+oct.-29 13:12:18.399 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑉ Plain sets: 0 patterns ()
+oct.-29 13:12:18.399 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ = TOTAL patterns: 2
+oct.-29 13:12:18.502 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: 
+oct.-29 13:12:18.505 [main] DEBUG nextflow.Session - Igniting dataflow network (1)
+oct.-29 13:12:18.507 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [BidsParser] Parsing BIDS dataset: /home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_vfa
+oct.-29 13:12:18.508 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_c8c827d3047e33a0: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test-ad146dda16ae5cab4fd913cc459db267.nf
+  Script_178467c7db5c5d9a: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/main.nf
+oct.-29 13:12:18.508 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+oct.-29 13:12:18.508 [main] DEBUG nextflow.Session - Session await
+oct.-29 13:12:18.508 [main] DEBUG nextflow.Session - Session await > all processes finished
+oct.-29 13:12:18.508 [main] DEBUG nextflow.Session - Session await > all barriers passed
+oct.-29 13:12:18.508 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [LibBidsShWrapper] Executing libBIDS.sh parser on: /home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_vfa
+oct.-29 13:12:18.509 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [LibBidsShWrapper] Output CSV: /tmp/bids_parsed_13390653370706392497.csv
+oct.-29 13:12:18.699 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [LibBidsShWrapper] ✅ BIDS parsing completed: 3710 bytes written
+oct.-29 13:12:18.706 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsCsvParser - CSV Header: derivatives,data_type,subject,session,sample,task,tracksys,acquisition,nucleus,volume,ceagent,tracer,stain,reconstruction,direction,run,modality,echo,flip,inversion,mtransfer,part,processing,hemisphere,space,split,recording,chunk,segmentation,resolution,density,label,description,suffix,extension,path
+oct.-29 13:12:18.706 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsCsvParser - First data row: qMRLab,anat,sub-01,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,M0map,json,/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_vfa/derivatives/qMRLab/sub-01/anat/sub-01_M0map.json
+oct.-29 13:12:18.750 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsCsvParser - Parsed 14 BIDS files from CSV with suffixes: [M0map:2, T1map:2, TB1map:2, VFA:4, TB1AFI:4]
+oct.-29 13:12:18.755 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [BidsParser] ✅ Parsed 14 files from dataset 'BEP001 example dataset 0X (Variable Flip Angle)'
+oct.-29 13:12:18.756 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑆ Processing named sets >>>
+oct.-29 13:12:18.766 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Loop-over entities: [subject, session, run, task]
+oct.-29 13:12:18.768 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Loop-over entities (normalized): [sub, ses, run, task]
+oct.-29 13:12:18.779 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Created 1 groups from 14 files with keys: [01|NA|NA|NA]
+oct.-29 13:12:18.783 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_M0map.json with suffix: M0map
+oct.-29 13:12:18.786 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: M0map): null
+oct.-29 13:12:18.786 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_M0map.nii.gz with suffix: M0map
+oct.-29 13:12:18.786 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: M0map): null
+oct.-29 13:12:18.786 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_T1map.json with suffix: T1map
+oct.-29 13:12:18.786 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: T1map): null
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_T1map.nii.gz with suffix: T1map
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: T1map): null
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_TB1map.json with suffix: TB1map
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1map): null
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_TB1map.nii.gz with suffix: TB1map
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1map): null
+oct.-29 13:12:18.787 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_flip-1_VFA.json with suffix: VFA
+oct.-29 13:12:18.788 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: VFA): [sequential_set:[by_entity:flip]]
+oct.-29 13:12:18.788 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: null
+oct.-29 13:12:18.788 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_flip-1_VFA.nii.gz with suffix: VFA
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: VFA): [sequential_set:[by_entity:flip]]
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: null
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_flip-2_VFA.json with suffix: VFA
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: VFA): [sequential_set:[by_entity:flip]]
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: null
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_flip-2_VFA.nii.gz with suffix: VFA
+oct.-29 13:12:18.789 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: VFA): [sequential_set:[by_entity:flip]]
+oct.-29 13:12:18.790 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: null
+oct.-29 13:12:18.790 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-tr1_TB1AFI.json with suffix: TB1AFI
+oct.-29 13:12:18.790 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1AFI): [named_set:[tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]], required:[tr1, tr2]]
+oct.-29 13:12:18.790 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]]
+oct.-29 13:12:18.797 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: tr1
+oct.-29 13:12:18.798 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-tr1_TB1AFI.nii.gz with suffix: TB1AFI
+oct.-29 13:12:18.798 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1AFI): [named_set:[tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]], required:[tr1, tr2]]
+oct.-29 13:12:18.798 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]]
+oct.-29 13:12:18.798 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: tr1
+oct.-29 13:12:18.799 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-tr2_TB1AFI.json with suffix: TB1AFI
+oct.-29 13:12:18.799 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1AFI): [named_set:[tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]], required:[tr1, tr2]]
+oct.-29 13:12:18.799 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]]
+oct.-29 13:12:18.799 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: tr2
+oct.-29 13:12:18.799 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-tr2_TB1AFI.nii.gz with suffix: TB1AFI
+oct.-29 13:12:18.800 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1AFI): [named_set:[tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]], required:[tr1, tr2]]
+oct.-29 13:12:18.800 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [tr1:[description:Image from the first interleaved TR of the AFI sequence, acquisition:acq-tr1], tr2:[description:Image from the second interleaved TR of the AFI sequence, acquisition:acq-tr2]]
+oct.-29 13:12:18.800 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: tr2
+oct.-29 13:12:18.821 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set: 1 emitted, 0 filtered
+oct.-29 13:12:18.822 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑇ Processing sequential sets ...
+oct.-29 13:12:18.847 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Sequential set: 1 emitted, 0 filtered
+oct.-29 13:12:18.847 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⎌ Combining results from all workflow types ...
+oct.-29 13:12:18.849 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Unifying item: [[sub-01, NA, NA, NA], [data:[TB1AFI:[tr1:[json:qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.json, nii:qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.nii.gz], tr2:[json:qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.json, nii:qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.nii.gz]]], filePaths:[qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.json, qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.nii.gz, qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.json, qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.nii.gz], bidsParentDir:null, subject:sub-01, session:NA, run:NA, task:NA]]
+oct.-29 13:12:18.850 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Unifying item: [[sub-01, NA, NA, NA], [data:[VFA:[json:[qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.json, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.json], nii:[qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.nii.gz, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.nii.gz]]], filePaths:[qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.json, qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.nii.gz, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.json, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.nii.gz], bidsParentDir:null, subject:sub-01, session:NA, run:NA, task:NA]]
+oct.-29 13:12:18.853 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing item for cross-modal broadcasting: [[sub-01, NA, NA, NA], [data:[TB1AFI:[tr1:[json:qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.json, nii:qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.nii.gz], tr2:[json:qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.json, nii:qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.nii.gz]], VFA:[json:[qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.json, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.json], nii:[qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.nii.gz, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.nii.gz]]], filePaths:[qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.json, qmri_vfa/sub-01/fmap/sub-01_acq-tr1_TB1AFI.nii.gz, qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.json, qmri_vfa/sub-01/fmap/sub-01_acq-tr2_TB1AFI.nii.gz, qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.json, qmri_vfa/sub-01/anat/sub-01_flip-1_VFA.nii.gz, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.json, qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.nii.gz], bidsParentDir:/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples, subject:sub-01, session:NA, run:NA, task:NA]]
+oct.-29 13:12:18.858 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ✅ SUCCESS
+[bids2nf] └─ Bids2nf workflow complete: 1 data groups processed
+oct.-29 13:12:18.895 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+oct.-29 13:12:18.895 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow completed -- saving trace file
+oct.-29 13:12:18.905 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+oct.-29 13:12:18.927 [main] INFO  org.pf4j.AbstractPluginManager - Stop plugin 'nf-bids@0.1.0'
+oct.-29 13:12:18.927 [main] DEBUG nextflow.plugin.BasePlugin - Plugin stopped nf-bids
+oct.-29 13:12:18.931 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+oct.-29 13:12:18.932 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

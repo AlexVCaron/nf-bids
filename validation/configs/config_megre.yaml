@@ -1,0 +1,5 @@
+loop_over: [subject, session, run, task]
+
+MEGRE:
+  sequential_set:
+    by_entity: echo

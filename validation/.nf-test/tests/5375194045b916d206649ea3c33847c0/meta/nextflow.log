@@ -1,0 +1,123 @@
+oct.-29 00:21:14.061 [main] DEBUG nextflow.cli.Launcher - $> nextflow -quiet -log /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/5375194045b916d206649ea3c33847c0/meta/nextflow.log run /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test-5375194045b916d206649ea3c33847c0.nf -c /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config -params-file /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/5375194045b916d206649ea3c33847c0/meta/params.json -ansi-log false -with-trace /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/5375194045b916d206649ea3c33847c0/meta/trace.csv -w /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/5375194045b916d206649ea3c33847c0/work
+oct.-29 00:21:14.168 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.0
+oct.-29 00:21:14.227 [main] DEBUG nextflow.config.ConfigBuilder - Found config base: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 00:21:14.231 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 00:21:14.233 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 00:21:14.234 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/nextflow.config
+oct.-29 00:21:14.264 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+oct.-29 00:21:14.756 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+oct.-29 00:21:14.840 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/home/local/USHERBROOKE/vala2004/.nextflow/plugins; core-plugins: nf-amazon@3.4.1,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.3,nf-k8s@1.2.2,nf-tower@1.17.1,nf-wave@1.16.1
+oct.-29 00:21:14.854 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+oct.-29 00:21:14.856 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+oct.-29 00:21:14.859 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+oct.-29 00:21:14.878 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+oct.-29 00:21:15.041 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+oct.-29 00:21:15.043 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins declared=[nf-bids@0.1.0]
+oct.-29 00:21:15.044 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+oct.-29 00:21:15.045 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[nf-bids@0.1.0]
+oct.-29 00:21:15.605 [main] DEBUG n.plugin.HttpPluginRepository - Registry request: https://registry.nextflow.io/api/v1/plugins/dependencies?plugins=nf-bids%400.1.0&nextflowVersion=25.10.0
+- code: 200
+- body: {"plugins":[]}
+oct.-29 00:21:15.659 [main] DEBUG nextflow.plugin.PluginUpdater - Installing plugin nf-bids version: 0.1.0
+oct.-29 00:21:15.671 [main] INFO  org.pf4j.AbstractPluginManager - Plugin 'nf-bids@0.1.0' resolved
+oct.-29 00:21:15.671 [main] INFO  org.pf4j.AbstractPluginManager - Start plugin 'nf-bids@0.1.0'
+oct.-29 00:21:15.678 [main] DEBUG nextflow.plugin.BasePlugin - Plugin started nf-bids@0.1.0
+oct.-29 00:21:15.700 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /home/local/USHERBROOKE/vala2004/.nextflow/secrets/store.json
+oct.-29 00:21:15.705 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@713ec32d] - activable => nextflow.secret.LocalSecretsProvider@713ec32d
+oct.-29 00:21:15.708 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
+oct.-29 00:21:15.728 [main] INFO  nextflow.cli.CmdRun - Launching `/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test-5375194045b916d206649ea3c33847c0.nf` [furious_hugle] DSL2 - revision: 887c58371d
+oct.-29 00:21:15.807 [main] DEBUG nextflow.Session - Session UUID: b26b93fb-c49d-47c5-90ce-5943cd621a79
+oct.-29 00:21:15.808 [main] DEBUG nextflow.Session - Run name: furious_hugle
+oct.-29 00:21:15.809 [main] DEBUG nextflow.Session - Executor pool size: 8
+oct.-29 00:21:15.823 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+oct.-29 00:21:15.832 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=24; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+oct.-29 00:21:15.857 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.10.0 build 10289
+  Created: 22-10-2025 16:26 UTC (12:26 HAE)
+  System: Linux 6.14.0-33-generic
+  Runtime: Groovy 4.0.28 on OpenJDK 64-Bit Server VM 21.0.8+9-Ubuntu-0ubuntu124.04.1
+  Encoding: UTF-8 (UTF-8)
+  Process: 881962@dinf-0051-19b [127.0.1.1]
+  CPUs: 8 - Mem: 62.5 GB (1013.1 MB) - Swap: 20 GB (13.1 GB)
+oct.-29 00:21:15.893 [main] DEBUG nextflow.Session - Work-dir: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/5375194045b916d206649ea3c33847c0/work [ext2/ext3]
+oct.-29 00:21:15.894 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/bin
+oct.-29 00:21:15.906 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+oct.-29 00:21:15.920 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+oct.-29 00:21:15.924 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+oct.-29 00:21:15.938 [main] DEBUG nextflow.Session - Observer factory: BidsFactory
+oct.-29 00:21:15.975 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+oct.-29 00:21:15.984 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 9; maxThreads: 1000
+oct.-29 00:21:16.090 [main] DEBUG nextflow.Session - Session start
+oct.-29 00:21:16.098 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow started -- trace file: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test/tests/5375194045b916d206649ea3c33847c0/meta/trace.csv
+oct.-29 00:21:16.471 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+oct.-29 00:21:16.845 [main] DEBUG nextflow.script.IncludeDef - Loading included plugin extensions with names: [fromBIDS:fromBIDS]; plugin Id: nf-bids
+oct.-29 00:21:16.907 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Starting BIDS dataset parsing: /home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_tb1tfl
+oct.-29 00:21:16.909 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ✈︎✈︎✈︎ Pre-flight checks started
+oct.-29 00:21:16.911 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ✓ Pre-flight checks completed
+oct.-29 00:21:16.965 [main] INFO  n.plugin.config.BidsConfigLoader - Loaded BIDS configuration from: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_tb1tfl.yaml
+oct.-29 00:21:16.965 [main] INFO  n.plugin.config.BidsConfigLoader - Configuration keys: [loop_over, TB1TFL]
+oct.-29 00:21:16.966 [main] INFO  n.plugin.config.BidsConfigLoader -   loop_over: ArrayList = [subject, session, run, task]
+oct.-29 00:21:16.966 [main] INFO  n.plugin.config.BidsConfigLoader -   TB1TFL: LinkedHashMap = [named_set:[anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]], required:[anat, famp]]
+oct.-29 00:21:16.969 [main] INFO  n.plugin.config.BidsConfigAnalyzer - Analyzing configuration with keys: [loop_over, TB1TFL]
+oct.-29 00:21:16.970 [main] INFO  n.plugin.config.BidsConfigAnalyzer -   Checking loop_over: ArrayList
+oct.-29 00:21:16.970 [main] INFO  n.plugin.config.BidsConfigAnalyzer -   Checking TB1TFL: LinkedHashMap
+oct.-29 00:21:16.970 [main] INFO  n.plugin.config.BidsConfigAnalyzer -     Value is a Map with keys: [named_set, required]
+oct.-29 00:21:16.970 [main] INFO  n.plugin.config.BidsConfigAnalyzer -     Found named_set!
+oct.-29 00:21:16.970 [main] INFO  n.plugin.config.BidsConfigAnalyzer - Analysis results: named=true, sequential=false, mixed=false, plain=false
+oct.-29 00:21:16.971 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ┌─ ✓ Configuration analysis complete:
+oct.-29 00:21:16.971 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ↬ Loop over entities: subject, session, run, task
+oct.-29 00:21:16.972 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑆ Named sets: 1 patterns (TB1TFL)
+oct.-29 00:21:16.972 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑇ Sequential sets: 0 patterns ()
+oct.-29 00:21:16.972 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑈ Mixed sets: 0 patterns ()
+oct.-29 00:21:16.972 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑉ Plain sets: 0 patterns ()
+oct.-29 00:21:16.972 [main] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ = TOTAL patterns: 1
+oct.-29 00:21:17.062 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: 
+oct.-29 00:21:17.065 [main] DEBUG nextflow.Session - Igniting dataflow network (1)
+oct.-29 00:21:17.068 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [BidsParser] Parsing BIDS dataset: /home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_tb1tfl
+oct.-29 00:21:17.069 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [LibBidsShWrapper] Executing libBIDS.sh parser on: /home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_tb1tfl
+oct.-29 00:21:17.069 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_c8c827d3047e33a0: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/.nf-test-5375194045b916d206649ea3c33847c0.nf
+  Script_178467c7db5c5d9a: /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/main.nf
+oct.-29 00:21:17.069 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+oct.-29 00:21:17.069 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [LibBidsShWrapper] Output CSV: /tmp/bids_parsed_9250381920161603802.csv
+oct.-29 00:21:17.069 [main] DEBUG nextflow.Session - Session await
+oct.-29 00:21:17.069 [main] DEBUG nextflow.Session - Session await > all processes finished
+oct.-29 00:21:17.069 [main] DEBUG nextflow.Session - Session await > all barriers passed
+oct.-29 00:21:17.136 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [LibBidsShWrapper] ✅ BIDS parsing completed: 1290 bytes written
+oct.-29 00:21:17.142 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsCsvParser - CSV Header: derivatives,data_type,subject,session,sample,task,tracksys,acquisition,nucleus,volume,ceagent,tracer,stain,reconstruction,direction,run,modality,echo,flip,inversion,mtransfer,part,processing,hemisphere,space,split,recording,chunk,segmentation,resolution,density,label,description,suffix,extension,path
+oct.-29 00:21:17.142 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsCsvParser - First data row: NA,fmap,sub-01,NA,NA,NA,NA,acq-anat,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,TB1TFL,json,/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json
+oct.-29 00:21:17.181 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsCsvParser - Parsed 4 BIDS files from CSV with suffixes: [TB1TFL:4]
+oct.-29 00:21:17.189 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [BidsParser] ✅ Parsed 4 files from dataset 'Example TB1TFL dataset'
+oct.-29 00:21:17.190 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⑆ Processing named sets >>>
+oct.-29 00:21:17.198 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Loop-over entities: [subject, session, run, task]
+oct.-29 00:21:17.200 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Loop-over entities (normalized): [sub, ses, run, task]
+oct.-29 00:21:17.208 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Created 1 groups from 4 files with keys: [01|NA|NA|NA]
+oct.-29 00:21:17.212 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-anat_TB1TFL.json with suffix: TB1TFL
+oct.-29 00:21:17.214 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1TFL): [named_set:[anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]], required:[anat, famp]]
+oct.-29 00:21:17.215 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]]
+oct.-29 00:21:17.223 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: anat
+oct.-29 00:21:17.224 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-anat_TB1TFL.nii.gz with suffix: TB1TFL
+oct.-29 00:21:17.225 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1TFL): [named_set:[anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]], required:[anat, famp]]
+oct.-29 00:21:17.225 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]]
+oct.-29 00:21:17.225 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: anat
+oct.-29 00:21:17.226 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-famp_TB1TFL.json with suffix: TB1TFL
+oct.-29 00:21:17.226 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1TFL): [named_set:[anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]], required:[anat, famp]]
+oct.-29 00:21:17.226 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]]
+oct.-29 00:21:17.227 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: famp
+oct.-29 00:21:17.227 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing file: sub-01_acq-famp_TB1TFL.nii.gz with suffix: TB1TFL
+oct.-29 00:21:17.227 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Suffix config (key: TB1TFL): [named_set:[anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]], required:[anat, famp]]
+oct.-29 00:21:17.227 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set config: [anat:[description:Anatomical-like image generated by the tfl_b1_map product sequence, acquisition:acq-anat], famp:[description:scaled flip angle map, acquisition:acq-famp]]
+oct.-29 00:21:17.228 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Matched group name: famp
+oct.-29 00:21:17.255 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Named set: 1 emitted, 0 filtered
+oct.-29 00:21:17.256 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ⎌ Combining results from all workflow types ...
+oct.-29 00:21:17.259 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Unifying item: [[sub-01, NA, NA, NA], [data:[TB1TFL:[anat:[json:qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json, nii:qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.nii.gz], famp:[json:qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json, nii:qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz]]], filePaths:[qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json, qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.nii.gz, qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json, qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz], bidsParentDir:null, subject:sub-01, session:NA, run:NA, task:NA]]
+oct.-29 00:21:17.265 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] Processing item for cross-modal broadcasting: [[sub-01, NA, NA, NA], [data:[TB1TFL:[anat:[json:qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json, nii:qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.nii.gz], famp:[json:qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json, nii:qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz]]], filePaths:[qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json, qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.nii.gz, qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json, qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz], bidsParentDir:/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples, subject:sub-01, session:NA, run:NA, task:NA]]
+oct.-29 00:21:17.270 [ForkJoinPool.commonPool-worker-1] INFO  nfneuro.plugin.util.BidsLogger - [bids2nf] ├─ ✅ SUCCESS
+[bids2nf] └─ Bids2nf workflow complete: 1 data groups processed
+oct.-29 00:21:17.307 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+oct.-29 00:21:17.307 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow completed -- saving trace file
+oct.-29 00:21:17.315 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+oct.-29 00:21:17.343 [main] INFO  org.pf4j.AbstractPluginManager - Stop plugin 'nf-bids@0.1.0'
+oct.-29 00:21:17.344 [main] DEBUG nextflow.plugin.BasePlugin - Plugin stopped nf-bids
+oct.-29 00:21:17.348 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+oct.-29 00:21:17.348 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

@@ -1,0 +1,6 @@
+loop_over: [subject, session, run, task]
+
+TB1SRGE:
+  sequential_set:
+    by_entities: [flip, inversion]
+    order: hierarchical

@@ -1,0 +1,5 @@
+loop_over: [subject, session, run, task]
+
+IRT1:
+  sequential_set:
+    by_entity: inversion

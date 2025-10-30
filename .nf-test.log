@@ -1,0 +1,81 @@
+oct.-29 14:38:28.923 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.3
+oct.-29 14:38:28.939 [main] INFO  com.askimed.nf.test.App - Arguments: [test, validation/comparison_custom_datasets.nf.test, validation/comparison_mixed_sets.nf.test, validation/comparison_named_sets.nf.test, validation/comparison_plain_sets.nf.test, validation/comparison_sequential_sets.nf.test, --update-snapshot]
+oct.-29 14:38:29.901 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 25.10.0
+oct.-29 14:38:29.902 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/nf-test.config...
+oct.-29 14:38:30.496 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 30 files from directory /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids in 0.192 sec
+oct.-29 14:38:30.498 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 5 files containing tests.
+oct.-29 14:38:30.499 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_plain_sets.nf.test, /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_sequential_sets.nf.test, /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_named_sets.nf.test, /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_custom_datasets.nf.test, /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_mixed_sets.nf.test]
+oct.-29 14:38:30.955 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 18 tests to execute.
+oct.-29 14:38:30.956 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+oct.-29 14:38:30.956 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Plugin Comparison: Custom Datasets' from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_custom_datasets.nf.test'.
+oct.-29 14:38:30.956 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '390e87bb: ds-dwi - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:38:37.064 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_custom_datasets.nf.test.snap'
+oct.-29 14:38:37.073 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'ds-dwi - Plugin output' match.
+oct.-29 14:38:37.074 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '390e87bb: ds-dwi - Plugin output' finished. status: PASSED
+oct.-29 14:38:37.075 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '9a1a9e14: ds-dwi2 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:38:41.988 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'ds-dwi2 - Plugin output' match.
+oct.-29 14:38:41.988 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '9a1a9e14: ds-dwi2 - Plugin output' finished. status: PASSED
+oct.-29 14:38:41.989 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'a23f057d: ds-dwi3 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:38:46.946 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'ds-dwi3 - Plugin output' match.
+oct.-29 14:38:46.946 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'a23f057d: ds-dwi3 - Plugin output' finished. status: PASSED
+oct.-29 14:38:46.946 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '88862748: ds-dwi4 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:38:53.988 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'ds-dwi4 - Plugin output' do not match. Update snapshots flag set.
+oct.-29 14:38:53.988 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Updated snapshot 'ds-dwi4 - Plugin output'
+oct.-29 14:38:54.026 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Wrote snapshots to file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_custom_datasets.nf.test.snap'
+oct.-29 14:38:54.026 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '88862748: ds-dwi4 - Plugin output' finished. status: PASSED
+oct.-29 14:38:54.026 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '5c8c26ec: ds-mrs_fmrs - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:38:58.778 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'ds-mrs_fmrs - Plugin output' match.
+oct.-29 14:38:58.779 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '5c8c26ec: ds-mrs_fmrs - Plugin output' finished. status: PASSED
+oct.-29 14:38:58.779 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'dde2b470: ds-mtsat - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:04.307 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'ds-mtsat - Plugin output' match.
+oct.-29 14:39:04.307 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'dde2b470: ds-mtsat - Plugin output' finished. status: PASSED
+oct.-29 14:39:04.308 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Plugin Comparison: Custom Datasets' finished. snapshot file: true, skipped tests: false, failed tests: false
+oct.-29 14:39:04.311 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Plugin Comparison: Mixed Sets' from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_mixed_sets.nf.test'.
+oct.-29 14:39:04.311 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '4f604cee: qmri_mpm - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:10.316 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_mixed_sets.nf.test.snap'
+oct.-29 14:39:10.321 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_mpm - Plugin output' match.
+oct.-29 14:39:10.321 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '4f604cee: qmri_mpm - Plugin output' finished. status: PASSED
+oct.-29 14:39:10.321 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Plugin Comparison: Mixed Sets' finished. snapshot file: true, skipped tests: false, failed tests: false
+oct.-29 14:39:10.321 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Plugin Comparison: Named Sets' from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_named_sets.nf.test'.
+oct.-29 14:39:10.321 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'c40d7fec: qmri_mtsat - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:15.239 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_named_sets.nf.test.snap'
+oct.-29 14:39:15.241 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_mtsat - Plugin output' match.
+oct.-29 14:39:15.241 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'c40d7fec: qmri_mtsat - Plugin output' finished. status: PASSED
+oct.-29 14:39:15.242 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '53751940: qmri_tb1tfl - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:19.803 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_tb1tfl - Plugin output' match.
+oct.-29 14:39:19.804 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '53751940: qmri_tb1tfl - Plugin output' finished. status: PASSED
+oct.-29 14:39:19.804 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Plugin Comparison: Named Sets' finished. snapshot file: true, skipped tests: false, failed tests: false
+oct.-29 14:39:19.804 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Plugin Comparison: Plain Sets' from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_plain_sets.nf.test'.
+oct.-29 14:39:19.804 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'd36d3d22: asl001 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:24.587 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_plain_sets.nf.test.snap'
+oct.-29 14:39:24.587 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'asl001 - Plugin output' match.
+oct.-29 14:39:24.588 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'd36d3d22: asl001 - Plugin output' finished. status: PASSED
+oct.-29 14:39:24.588 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '72c050b2: asl002 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:29.219 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'asl002 - Plugin output' match.
+oct.-29 14:39:29.219 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '72c050b2: asl002 - Plugin output' finished. status: PASSED
+oct.-29 14:39:29.220 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'fcc645e3: eeg_cbm - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:35.201 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'eeg_cbm - Plugin output' match.
+oct.-29 14:39:35.201 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'fcc645e3: eeg_cbm - Plugin output' finished. status: PASSED
+oct.-29 14:39:35.201 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Plugin Comparison: Plain Sets' finished. snapshot file: true, skipped tests: false, failed tests: false
+oct.-29 14:39:35.201 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Plugin Comparison: Sequential Sets' from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_sequential_sets.nf.test'.
+oct.-29 14:39:35.201 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'ad146dda: qmri_vfa - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:40.123 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_sequential_sets.nf.test.snap'
+oct.-29 14:39:40.124 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_vfa - Plugin output' match.
+oct.-29 14:39:40.125 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'ad146dda: qmri_vfa - Plugin output' finished. status: PASSED
+oct.-29 14:39:40.125 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '119c31cd: qmri_irt1 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:44.808 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_irt1 - Plugin output' match.
+oct.-29 14:39:44.809 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '119c31cd: qmri_irt1 - Plugin output' finished. status: PASSED
+oct.-29 14:39:44.809 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'f8700414: qmri_megre - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:49.983 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_megre - Plugin output' match.
+oct.-29 14:39:49.983 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'f8700414: qmri_megre - Plugin output' finished. status: PASSED
+oct.-29 14:39:49.984 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '84aa16ea: qmri_mese - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:39:55.899 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_mese - Plugin output' match.
+oct.-29 14:39:55.899 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '84aa16ea: qmri_mese - Plugin output' finished. status: PASSED
+oct.-29 14:39:55.899 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '31e9db23: qmri_mp2rage - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:40:01.120 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_mp2rage - Plugin output' match.
+oct.-29 14:40:01.121 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '31e9db23: qmri_mp2rage - Plugin output' finished. status: PASSED
+oct.-29 14:40:01.121 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '8566db0b: qmri_sa2rage - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 14:40:05.936 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_sa2rage - Plugin output' match.
+oct.-29 14:40:05.937 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '8566db0b: qmri_sa2rage - Plugin output' finished. status: PASSED
+oct.-29 14:40:05.937 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Plugin Comparison: Sequential Sets' finished. snapshot file: true, skipped tests: false, failed tests: false
+oct.-29 14:40:05.937 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 18 tests. 0 tests failed. Done!

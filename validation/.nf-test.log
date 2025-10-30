@@ -1,0 +1,31 @@
+oct.-29 13:12:12.656 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.3
+oct.-29 13:12:12.679 [main] INFO  com.askimed.nf.test.App - Arguments: [test, comparison_sequential_sets.nf.test]
+oct.-29 13:12:13.704 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 25.10.0
+oct.-29 13:12:13.708 [main] WARN  com.askimed.nf.test.commands.RunTestsCommand - No nf-test config file found.
+oct.-29 13:12:13.753 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 12 files from directory /home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation in 0.044 sec
+oct.-29 13:12:13.755 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
+oct.-29 13:12:13.755 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_sequential_sets.nf.test]
+oct.-29 13:12:14.338 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 6 tests to execute.
+oct.-29 13:12:14.339 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+oct.-29 13:12:14.339 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Plugin Comparison: Sequential Sets' from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_sequential_sets.nf.test'.
+oct.-29 13:12:14.339 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'ad146dda: qmri_vfa - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 13:12:19.326 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/comparison_sequential_sets.nf.test.snap'
+oct.-29 13:12:19.335 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_vfa - Plugin output' match.
+oct.-29 13:12:19.336 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'ad146dda: qmri_vfa - Plugin output' finished. status: PASSED
+oct.-29 13:12:19.337 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '119c31cd: qmri_irt1 - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 13:12:24.076 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_irt1 - Plugin output' match.
+oct.-29 13:12:24.076 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '119c31cd: qmri_irt1 - Plugin output' finished. status: PASSED
+oct.-29 13:12:24.076 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test 'f8700414: qmri_megre - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 13:12:29.005 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_megre - Plugin output' match.
+oct.-29 13:12:29.005 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test 'f8700414: qmri_megre - Plugin output' finished. status: PASSED
+oct.-29 13:12:29.005 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '84aa16ea: qmri_mese - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 13:12:34.448 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_mese - Plugin output' match.
+oct.-29 13:12:34.449 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '84aa16ea: qmri_mese - Plugin output' finished. status: PASSED
+oct.-29 13:12:34.449 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '31e9db23: qmri_mp2rage - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 13:12:39.143 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_mp2rage - Plugin output' match.
+oct.-29 13:12:39.143 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '31e9db23: qmri_mp2rage - Plugin output' finished. status: PASSED
+oct.-29 13:12:39.143 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '8566db0b: qmri_sa2rage - Plugin output'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+oct.-29 13:12:43.703 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'qmri_sa2rage - Plugin output' match.
+oct.-29 13:12:43.703 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '8566db0b: qmri_sa2rage - Plugin output' finished. status: PASSED
+oct.-29 13:12:43.704 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Plugin Comparison: Sequential Sets' finished. snapshot file: true, skipped tests: false, failed tests: false
+oct.-29 13:12:43.704 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 6 tests. 0 tests failed. Done!

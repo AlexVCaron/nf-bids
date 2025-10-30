@@ -1,0 +1,69 @@
+nextflow_workflow {
+
+    name "Plugin Comparison: Plain Sets"
+    script "./main.nf"
+    workflow "main_workflow"
+
+    test("asl001 - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/asl001"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_asl.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("asl002 - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/asl002"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_asl.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("eeg_cbm - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/eeg_cbm"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_eeg.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+}

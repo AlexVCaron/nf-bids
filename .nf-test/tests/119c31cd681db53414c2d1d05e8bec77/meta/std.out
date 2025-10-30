@@ -1,0 +1,5 @@
+Pipeline is starting! 🚀
+🧪 Testing Channel.fromBIDS...
+ITEM_STATS: {"type":"plain","entities":{"subject":"sub-01","session":"NA","run":"NA","task":"NA"},"totalFiles":8,"suffixes":["IRT1"],"details":[{"suffix":"IRT1","files":2}]}
+✓ Pipeline completed with 1 items
+Pipeline complete! 👋

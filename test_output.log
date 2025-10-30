@@ -1,0 +1,45 @@
+> Task :compileJava NO-SOURCE
+> Task :compileGroovy
+> Task :processResources NO-SOURCE
+> Task :classes
+> Task :extensionPoints
+> Task :jar
+> Task :packagePlugin
+> Task :assemble
+> Task :compileTestJava NO-SOURCE
+> Task :compileTestGroovy
+> Task :processTestResources NO-SOURCE
+> Task :testClasses
+
+> Task :test
+
+MixedSetHandlerComprehensiveTest > should create mixed sets with named groups and sequential ordering FAILED
+    org.spockframework.runtime.ConditionNotSatisfiedError at MixedSetHandlerComprehensiveTest.groovy:68
+
+MixedSetHandlerComprehensiveTest > should use sequential_dimension for ordering FAILED
+    org.spockframework.runtime.SpockComparisonFailure at MixedSetHandlerComprehensiveTest.groovy:107
+
+MixedSetHandlerComprehensiveTest > should fallback to by_entity when sequential_dimension not specified FAILED
+    org.spockframework.runtime.SpockComparisonFailure at MixedSetHandlerComprehensiveTest.groovy:137
+
+MixedSetHandlerComprehensiveTest > should use suffix_maps_to for configuration lookup FAILED
+    org.spockframework.runtime.SpockComparisonFailure at MixedSetHandlerComprehensiveTest.groovy:274
+
+MixedSetHandlerComprehensiveTest > should sort sequential arrays within named groups FAILED
+    org.spockframework.runtime.ConditionFailedWithExceptionError at MixedSetHandlerComprehensiveTest.groovy:307
+        Caused by: java.lang.NullPointerException at MixedSetHandlerComprehensiveTest.groovy:307
+
+NamedSetHandlerComprehensiveTest > should group files by named patterns with entity normalization FAILED
+    org.spockframework.runtime.SpockComparisonFailure at NamedSetHandlerComprehensiveTest.groovy:48
+
+NamedSetHandlerComprehensiveTest > should emit groups when required validation passes FAILED
+    org.spockframework.runtime.SpockComparisonFailure at NamedSetHandlerComprehensiveTest.groovy:107
+
+NamedSetHandlerComprehensiveTest > should work without required field (optional) FAILED
+    org.spockframework.runtime.SpockComparisonFailure at NamedSetHandlerComprehensiveTest.groovy:134
+
+NamedSetHandlerComprehensiveTest > should use suffix_maps_to for configuration lookup FAILED
+    org.spockframework.runtime.SpockComparisonFailure at NamedSetHandlerComprehensiveTest.groovy:163
+
+NamedSetHandlerComprehensiveTest > should group by multiple loop entities FAILED
+    org.spockframework.runtime.SpockComparisonFailure at NamedSetHandlerComprehensiveTest.groovy:192

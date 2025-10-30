@@ -1,0 +1,132 @@
+nextflow_workflow {
+
+    name "Plugin Comparison: Sequential Sets"
+    script "./main.nf"
+    workflow "main_workflow"
+
+    test("qmri_vfa - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_vfa"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_vfa.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("qmri_irt1 - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_irt1"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_irt1.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("qmri_megre - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_megre"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_megre.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("qmri_mese - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_mese"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mese.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("qmri_mp2rage - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_mp2rage"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mp2rage.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+
+    test("qmri_sa2rage - Plugin output") {
+        when {
+            params {
+                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_sa2rage"
+                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
+                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_sa2rage.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def json = groovy.json.JsonOutput.toJson(results)
+            def serialized = new groovy.json.JsonSlurper().parseText(json)
+            assert snapshot(
+                groovy.json.JsonOutput.toJson(serialized)
+            ).match()
+        }
+    }
+}

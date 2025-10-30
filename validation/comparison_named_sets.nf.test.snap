@@ -1,0 +1,22 @@
+{
+    "qmri_mtsat - Plugin output": {
+        "content": [
+            "[[[\"sub-01\",\"NA\",\"NA\",\"NA\"],{\"data\":{\"MTS\":{\"PDw\":{\"json\":\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-off_MTS.json\",\"nii\":\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-off_MTS.nii.gz\"},\"MTw\":{\"json\":\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-on_MTS.json\",\"nii\":\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-on_MTS.nii.gz\"},\"T1w\":{\"json\":\"qmri_mtsat/sub-01/anat/sub-01_flip-2_mt-off_MTS.json\",\"nii\":\"qmri_mtsat/sub-01/anat/sub-01_flip-2_mt-off_MTS.nii.gz\"}},\"TB1DAM\":{\"json\":[\"qmri_mtsat/sub-01/fmap/sub-01_flip-1_TB1DAM.json\",\"qmri_mtsat/sub-01/fmap/sub-01_flip-2_TB1DAM.json\"],\"nii\":[\"qmri_mtsat/sub-01/fmap/sub-01_flip-1_TB1DAM.nii.gz\",\"qmri_mtsat/sub-01/fmap/sub-01_flip-2_TB1DAM.nii.gz\"]}},\"filePaths\":[\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-off_MTS.json\",\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-off_MTS.nii.gz\",\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-on_MTS.json\",\"qmri_mtsat/sub-01/anat/sub-01_flip-1_mt-on_MTS.nii.gz\",\"qmri_mtsat/sub-01/anat/sub-01_flip-2_mt-off_MTS.json\",\"qmri_mtsat/sub-01/anat/sub-01_flip-2_mt-off_MTS.nii.gz\",\"qmri_mtsat/sub-01/fmap/sub-01_flip-1_TB1DAM.json\",\"qmri_mtsat/sub-01/fmap/sub-01_flip-1_TB1DAM.nii.gz\",\"qmri_mtsat/sub-01/fmap/sub-01_flip-2_TB1DAM.json\",\"qmri_mtsat/sub-01/fmap/sub-01_flip-2_TB1DAM.nii.gz\"],\"bidsParentDir\":\"/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples\",\"subject\":\"sub-01\",\"session\":\"NA\",\"run\":\"NA\",\"task\":\"NA\"}]]"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.0"
+        },
+        "timestamp": "2025-10-28T23:43:03.759498167"
+    },
+    "qmri_tb1tfl - Plugin output": {
+        "content": [
+            "[[[\"sub-01\",\"NA\",\"NA\",\"NA\"],{\"data\":{\"TB1TFL\":{\"anat\":{\"json\":\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json\",\"nii\":\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.nii.gz\"},\"famp\":{\"json\":\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json\",\"nii\":\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz\"}}},\"filePaths\":[\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.json\",\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-anat_TB1TFL.nii.gz\",\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json\",\"qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz\"],\"bidsParentDir\":\"/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples\",\"subject\":\"sub-01\",\"session\":\"NA\",\"run\":\"NA\",\"task\":\"NA\"}]]"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.0"
+        },
+        "timestamp": "2025-10-28T23:43:08.547573951"
+    }
+}

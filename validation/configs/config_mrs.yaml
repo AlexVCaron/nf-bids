@@ -1,0 +1,14 @@
+loop_over: [subject, session, run, task]
+
+T1w:
+  plain_set: {}
+
+mrsref:
+  plain_set:
+    include_cross_modal: ["T1w"]
+
+svs:
+  plain_set: {}
+
+events:
+  plain_set: {}

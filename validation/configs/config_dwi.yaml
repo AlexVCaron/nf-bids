@@ -1,0 +1,79 @@
+loop_over: [subject, session, run, task]
+
+dwi:
+  plain_set:
+    additional_extensions: ["bval", "bvec"]
+    include_cross_modal: ["T1w"]
+
+dwi_fullreverse:
+  suffix_maps_to: "dwi"
+  named_set:
+    ap:
+      direction: "dir-AP"
+    pa:
+      direction: "dir-PA"
+  required: ["ap", "pa"]
+
+sbref:
+  plain_set: {}
+
+sbref_fullreverse:
+  suffix_maps_to: "sbref"
+  named_set:
+    ap:
+      direction: "dir-AP"
+    pa:
+      direction: "dir-PA"
+  required: ["ap", "pa"]
+
+T1w:
+  plain_set: {}
+
+T2w:
+  plain_set: {}
+
+T2starw:
+  plain_set: {}
+
+epi:
+  plain_set: {}
+
+epi_fullreverse:
+  suffix_maps_to: "epi"
+  named_set:
+    ap:
+      direction: "dir-AP"
+    pa:
+      direction: "dir-PA"
+  required: ["ap", "pa"]
+
+MP2RAGE:
+  sequential_set:
+    by_entity: "inversion"
+    exclude_entities: ["reconstruction"]
+
+MTS:
+  named_set:
+    MTw:
+      flip: "flip-1"
+      mt: "mt-on"
+      reconstruction: "rec-dis2d"
+    PDw:
+      flip: "flip-1"
+      mt: "mt-off"
+      reconstruction: "rec-dis2d"
+    T1w:
+      flip: "flip-2"
+      mt: "mt-off"
+      reconstruction: "rec-dis2d"
+
+TB1TFL:
+  named_set:
+    anat:
+      acquisition: "acq-anat"
+    famp:
+      acquisition: "acq-famp"
+
+UNIT1:
+  plain_set:
+    exclude_entities: ["reconstruction"]

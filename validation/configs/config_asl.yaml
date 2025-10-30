@@ -1,0 +1,14 @@
+loop_over: [subject, session, run, task]
+
+asl:
+  plain_set: {}
+
+m0scan:
+  plain_set: {}
+
+aslcontext:
+  plain_set:
+    additional_extensions: ["tsv"]
+
+T1w:
+  plain_set: {}

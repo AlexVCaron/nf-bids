@@ -1,0 +1,50 @@
+loop_over: [subject, session, run, task]
+
+MPM:
+  mixed_set:
+    named_dimension: "acquisition"
+    sequential_dimension: "echo"
+    named_groups:
+      MTw:
+        description: "Magnetization transfer weighted images"
+        acquisition: "acq-MTw"
+        flip: "flip-1"
+        mtransfer: "mt-on"
+      PDw:
+        description: "Proton density weighted images"
+        acquisition: "acq-PDw"
+        flip: "flip-1" 
+        mtransfer: "mt-off"
+      T1w:
+        description: "T1-weighted images"
+        acquisition: "acq-T1w"
+        flip: "flip-2"
+        mtransfer: "mt-off"
+    required: ["MTw", "PDw", "T1w"]
+
+RB1COR:
+  named_set:
+    bodyMTw:
+      description: "MTw B1- field from the body coil"
+      acquisition: "acq-bodyMTw"
+    bodyT1w:
+      description: "T1w B1- field from the body coil"
+      acquisition: "acq-bodyT1w"
+    bodyPDw:
+      description: "PDw B1- field from the body coil"
+      acquisition: "acq-bodyPDw"
+    headMTw:
+      description: "MTw B1- field from the head coil"
+      acquisition: "acq-headMTw"
+    headT1w:
+      description: "T1w B1- field from the head coil"
+      acquisition: "acq-headT1w"
+    headPDw:
+      description: "PDw B1- field from the head coil"
+      acquisition: "acq-headPDw"
+  required: ["bodyMTw", "bodyT1w", "bodyPDw", "headMTw", "headT1w", "headPDw"]
+
+TB1EPI:
+  sequential_set:
+    by_entities: [echo, flip]
+    order: hierarchical

@@ -1,0 +1,15 @@
+loop_over: [subject, session, run, task]
+
+VFA:
+  sequential_set:
+    by_entity: flip
+
+TB1AFI:
+  named_set:
+    tr1:
+      description: "Image from the first interleaved TR of the AFI sequence"
+      acquisition: "acq-tr1"
+    tr2:
+      description: "Image from the second interleaved TR of the AFI sequence"
+      acquisition: "acq-tr2"
+  required: ["tr1", "tr2"]
