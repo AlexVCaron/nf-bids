@@ -1,0 +1,14 @@
+{
+    "Name": "Rhyme judgment",
+    "License": "CC0",
+    "Authors": [
+        "Xue, G.",
+        "Russell A. Poldrack"
+    ],
+    "Acknowledgements": "",
+    "HowToAcknowledge": "",
+    "Funding": [],
+    "ReferencesAndLinks": [],
+    "DatasetDOI": "10.18112/openneuro.ds000003.v1.0.0",
+    "BIDSVersion": "1.0.0"
+}

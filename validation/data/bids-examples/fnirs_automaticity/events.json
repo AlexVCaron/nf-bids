@@ -1,0 +1,56 @@
+{
+  "trial_number": {
+    "Description": "Number of trial within the task condition. Each task was repeated 11 times (= 11 trials) in a row within a condition",
+    "Range": "1 to 11"
+  },
+  "event_type": {
+    "Description": "Primary categorization of the event to identify them as a experimental stimulus or a behavioural response by the participant",
+    "Levels": {
+      "stimulus": "experimental stimulus shown to the participant on the presentation screen",
+      "finger press": "behavioural response by the participant: recorded key press",
+      "foot step": "behavioural response by the participant: foot step as assessed by the experimenter, live/on video (value) and an accelerometer on the right foot (onset)"
+    }
+  },
+  "executed_movement": {
+    "Description": "Value of the finger press (recorded key press) or observed foot step (assessed by the researcher, live/on video)",
+    "Levels": {
+      "1": "index finger (finger)/step to the middle floor pad (foot)",
+      "2": "middle finger (finger)/step to the front floor pad (foot)",
+      "3": "ring finger (finger)/step to the back floor pad (foot)",
+      "4": "little finger (finger)/step to the side floor pad (foot)"
+    }
+  },
+  "correct_movement": {
+    "Description": "Value of the finger press or foot step that the participant should have performed according to the given sequences",
+    "Levels": {
+      "1": "index finger (finger)/step to the middle floor pad (foot)",
+      "2": "middle finger (finger)/step to the front floor pad (foot)",
+      "3": "ring finger (finger)/step to the back floor pad (foot)",
+      "4": "little finger (finger)/step to the side floor pad (foot)"
+    }
+  },
+  "shown_stimulus": {
+    "Description": "visual stimulus shown on the presentation screen",
+    "Format": "string"
+  },
+  "reported_gs": {
+    "Description": "Reported number of G's, as counted by the particpant during the dual-task conditions."
+  },
+  "correct_gs": {
+    "Description": "Correct number of G's, as calculated from the shown 8-letter sequence"
+  },
+  "included_trial": {
+    "Description": "Trial was included in the final analysis",
+    "Levels": {
+      "0": "excluded",
+      "1": "included"
+    }
+  },
+  "reason_for_exclusion": {
+    "Description": "Reason to exclude the trial from the final analysis, if applicable",
+    "Levels": {
+      "test trial": "first trial was always disregarded as a test trial",
+      "erroneous trial": "trial with more than 1 error in the performed sequence"
+    }
+  }
+}
