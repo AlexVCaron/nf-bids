@@ -37,11 +37,18 @@ workflow {
 
 ### After (Plugin)
 
+#### nextflow.config
+
 ```groovy
-// Add plugin to nextflow.config
 plugins {
-    id 'nf-bids@0.2.0'
+    id 'nf-bids@0.1.0-beta.2'
 }
+```
+
+#### main.nf
+
+```groovy
+include { fromBIDS ] from 'plugins/nf-bids'
 
 workflow {
     // Load BIDS data - same configuration file!
@@ -64,7 +71,7 @@ Edit your `nextflow.config`:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.2.0'
+    id 'nf-bids@0.1.0-beta.2'
 }
 ```
 
@@ -72,7 +79,7 @@ Or specify the GitHub repository:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.2.0' from 'https://github.com/AlexVCaron/bids2nf'
+    id 'nf-bids@0.1.0-beta.2' from 'https://github.com/AlexVCaron/nf-bids'
 }
 ```
 
@@ -86,7 +93,11 @@ include { bids2nf } from './modules/bids2nf'
 include { bids2nf } from './subworkflows/bids2nf'
 ```
 
-**No import needed** - `Channel.fromBIDS()` is automatically available!
+**Add** the channel factory:
+
+```groovy
+include { fromBIDS } from 'plugins/nf-bids'
+```
 
 ### 3. Update Channel Creation
 
@@ -200,19 +211,17 @@ The plugin produces **identical output** to the baseline:
 ```groovy
 [
     ["sub-01", "NA", "NA", "NA"],  // [subject, session, run, task]
-    [
-        bidsParentDir: "/path/to/bids",
-        subject: "sub-01",
-        session: "NA",
-        run: "NA",
-        task: "NA",
-        data: [
-            dwi: [
-                nii: "sub-01/dwi/sub-01_dwi.nii.gz",
-                json: "sub-01/dwi/sub-01_dwi.json",
-                bval: "sub-01/dwi/sub-01_dwi.bval",
-                bvec: "sub-01/dwi/sub-01_dwi.bvec"
-            ]
+    bidsParentDir: "/path/to/bids",
+    subject: "sub-01",
+    session: "NA",
+    run: "NA",
+    task: "NA",
+    data: [
+        dwi: [
+            nii: "sub-01/dwi/sub-01_dwi.nii.gz",
+            json: "sub-01/dwi/sub-01_dwi.json",
+            bval: "sub-01/dwi/sub-01_dwi.bval",
+            bvec: "sub-01/dwi/sub-01_dwi.bvec"
         ]
     ]
 ]
@@ -273,7 +282,7 @@ nf-test test --profile test
 
 ```groovy
 plugins {
-    id 'nf-bids@0.2.0'
+    id 'nf-bids@0.1.0-beta.2'
 }
 ```
 
@@ -317,7 +326,7 @@ git stash  # Stash your plugin changes
 ```groovy
 // Temporarily disable
 // plugins {
-//     id 'nf-bids@0.2.0'
+//     id 'nf-bids@0.1.0-beta.2'
 // }
 ```
 
@@ -352,8 +361,8 @@ Once migrated, you'll enjoy:
 
 ## Version History
 
-- **0.2.0** (Oct 2025): 100% baseline alignment achieved
-- **0.1.0** (Dec 2024): Initial plugin release
+- **0.1.0-beta.2** (Oct 2025): 100% baseline alignment achieved
+- **0.1.0** (Oct 2025): Initial plugin release
 
 ---
 
