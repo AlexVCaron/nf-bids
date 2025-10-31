@@ -19,16 +19,13 @@ A Nextflow plugin that provides native BIDS (Brain Imaging Data Structure) datas
 
 ### Prerequisites
 
-- Nextflow 25.10.0 or later
-- Java 11 or later
 - Bash (for libBIDS.sh integration)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/AlexVCaron/bids2nf.git
-cd bids2nf/plugins/nf-bids
+git clone https://github.com/AlexVCaron/nf-bids.git
 
 # Build and install the plugin
 make install
@@ -39,7 +36,7 @@ make install
 ```groovy
 // In your Nextflow pipeline
 plugins {
-    id 'nf-bids@0.1.0'
+    id 'nf-bids@0.1.0-beta.2'
 }
 
 include { fromBIDS } from 'plugin/nf-bids'
@@ -48,11 +45,14 @@ workflow {
     // Load BIDS dataset
     Channel.fromBIDS(
         '/path/to/bids/dataset',
-        'config/bids2nf.yaml'
+        'config.yaml'
     )
     .view()
 }
 ```
+
+Refer to the [bids2nf](https://github.com/agahkarakuzu/bids2nf) repository for configuration examples. Documentation and
+exemples comming here soon !
 
 ---
 
@@ -122,10 +122,10 @@ make clean
 ```bash
 # Test with real BIDS dataset
 cd validation/
-nextflow run main.nf --bids_dir ../tests/data/custom/ds-dwi
+nextflow run main.nf
 
 # Simple channel emission test
-nextflow run test_simple.nf
+nf-test test .
 ```
 
 **Current Status**: ✅ All tests passing (29/29)
@@ -137,19 +137,18 @@ nextflow run test_simple.nf
 ### Project Structure
 
 ```
-plugins/nf-bids/
-├── src/
-│   ├── main/groovy/nfneuro/plugin/
-│   │   ├── channel/          # Channel factory & async handler
-│   │   ├── config/           # YAML config loading & analysis
-│   │   ├── grouping/         # Set handlers (plain, named, etc.)
-│   │   ├── model/            # BIDS data models
-│   │   ├── parser/           # libBIDS.sh integration
-│   │   └── plugin/           # Plugin lifecycle
-│   └── test/groovy/          # Unit tests (30+ tests)
-├── validation/               # Integration tests
-├── docs/                     # Documentation
-└── build.gradle             # Gradle build config
+ src/
+ ├── main/groovy/nfneuro/plugin/
+ │   ├── channel/          # Channel factory & async handler
+ │   ├── config/           # YAML config loading & analysis
+ │   ├── grouping/         # Set handlers (plain, named, etc.)
+ │   ├── model/            # BIDS data models
+ │   ├── parser/           # libBIDS.sh integration
+ │   └── plugin/           # Plugin lifecycle
+ └── test/groovy/          # Unit tests (30+ tests)
+ validation/               # Integration tests
+ docs/                     # Documentation
+ build.gradle             # Gradle build config
 ```
 
 ### Key Technologies
@@ -163,16 +162,13 @@ plugins/nf-bids/
 ### Development Workflow
 
 ```bash
-# 1. Make changes to source code
-vim src/main/groovy/nfneuro/plugin/...
-
-# 2. Run tests
+# 1. Run tests
 ./gradlew test
 
 # 3. Install and test with Nextflow
 make install
 cd validation/
-nextflow run main.nf --bids_dir <path-to-bids>
+nextflow run main.nf
 
 # 4. Check for issues
 ./gradlew check
@@ -182,33 +178,7 @@ nextflow run main.nf --bids_dir <path-to-bids>
 
 ## 📝 Configuration Example
 
-```yaml
-# bids2nf.yaml
-loop_over:
-  - subject
-  - session
-
-plain_sets:
-  - T1w
-  - dwi
-
-named_sets:
-  fieldmaps:
-    entities:
-      datatype: fmap
-      suffix: epi
-    group_by: acq
-
-sequential_sets:
-  echoes:
-    entities:
-      datatype: func
-      suffix: bold
-    sequence_by: echo
-
-include_cross_modal:
-  - anat
-```
+See the [bids2nf](https://github.com/agahkarakuzu/bids2nf) repository. Examples coming soon !
 
 ---
 
@@ -235,7 +205,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 ```bash
 # Ensure plugin is installed
 make install
-ls -la ~/.nextflow/plugins/nf-bids-0.1.0/
+ls -la ~/.nextflow/plugins/nf-bids-0.1.0-beta.2/
 ```
 
 ### Tests failing
@@ -263,7 +233,7 @@ make clean
 
 - **[BIDS Specification](https://bids-specification.readthedocs.io/)** - Official BIDS docs
 - **[Nextflow Plugins](https://www.nextflow.io/docs/latest/plugins.html)** - Plugin development guide
-- **[libBIDS.sh](../../../libBIDS.sh/)** - BIDS parsing library
+- **[libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh)** - BIDS parsing library
 
 ---
 
@@ -277,15 +247,16 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - Nextflow team for the plugin framework
 - BIDS community for the specification
-- Contributors to libBIDS.sh
+- @agahkarakuzu for the initial **bids2nf** implementation
+- @gdevenyi and the @CoBrALab for the **libBIDS** parser
 
 ---
 
 ## 📊 Status
 
-**Current Version**: 0.1.0  
+**Current Version**: 0.1.0-beta.2
 **Status**: ✅ Fully Functional  
-**Last Updated**: December 2024
+**Last Updated**: October 2025
 
 | Component | Status | Coverage |
 |-----------|--------|----------|
