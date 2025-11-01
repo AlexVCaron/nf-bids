@@ -9,10 +9,6 @@ A Nextflow plugin that provides native BIDS (Brain Imaging Data Structure) datas
 [![Validation](https://img.shields.io/badge/baseline-100%25-success)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-> **🎉 100% Baseline Alignment Achieved!**  
-> The plugin produces identical outputs to the original bids2nf implementation across all 18 validation datasets.  
-> See [STATUS.md](STATUS.md) for details.
-
 ---
 
 ## 🚀 Quick Start
@@ -23,36 +19,29 @@ A Nextflow plugin that provides native BIDS (Brain Imaging Data Structure) datas
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/AlexVCaron/nf-bids.git
-
-# Build and install the plugin
-make install
-```
-
-### Basic Usage
+THe plugin is officially published on the [Nextflow Plugins Registry](https://registry.nextflow.io/plugins/nf-bids).
+To install it, add the lines below in your `nextflow.config` file :
 
 ```groovy
-// In your Nextflow pipeline
 plugins {
     id 'nf-bids@0.1.0-beta.2'
 }
+```
 
+Then, include and use the `fromBIDS` channel factory provided by the plugin :
+
+```groovy
 include { fromBIDS } from 'plugin/nf-bids'
 
 workflow {
     // Load BIDS dataset
     Channel.fromBIDS(
         '/path/to/bids/dataset',
-        'config.yaml'
+        '/path/to/config.yaml'
     )
     .view()
 }
 ```
-
-Refer to the [bids2nf](https://github.com/agahkarakuzu/bids2nf) repository for configuration examples. Documentation and
-exemples comming here soon !
 
 ---
 
@@ -60,7 +49,6 @@ exemples comming here soon !
 
 ### For Users
 
-- **[Plugin Status](STATUS.md)** - Current status and validation results ✅
 - **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Migrate from baseline bids2nf
 - **[Configuration Guide](docs/configuration.md)** - Configure BIDS parsing and grouping
 - **[Examples](docs/examples.md)** - Real-world usage examples
@@ -68,6 +56,7 @@ exemples comming here soon !
 
 ### For Contributors
 
+- **[Plugin Status](STATUS.md)** - Current status and validation results ✅
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the plugin
 - **[Development Setup](docs/development.md)** - Set up your development environment
 - **[Architecture Overview](docs/architecture.md)** - Understand the plugin architecture
@@ -88,69 +77,6 @@ exemples comming here soon !
 
 ---
 
-## 🏗️ Building & Testing
-
-### Build the Plugin
-
-```bash
-# Full build (compile + package)
-make assemble
-
-# Install to local Nextflow plugins directory
-make install
-
-# Clean build artifacts
-make clean
-```
-
-### Run Tests
-
-```bash
-# Run all unit tests
-./gradlew test
-
-# Run specific test class
-./gradlew test --tests BidsFileTest
-
-# Run with test report
-./gradlew test
-# Open: build/reports/tests/test/index.html
-```
-
-### Validation Tests
-
-```bash
-# Test with real BIDS dataset
-cd validation/
-nextflow run main.nf
-
-# Simple channel emission test
-nf-test test .
-```
-
-**Current Status**: ✅ All tests passing (29/29)
-
----
-
-## 🔧 Development
-
-### Project Structure
-
-```
- src/
- ├── main/groovy/nfneuro/plugin/
- │   ├── channel/          # Channel factory & async handler
- │   ├── config/           # YAML config loading & analysis
- │   ├── grouping/         # Set handlers (plain, named, etc.)
- │   ├── model/            # BIDS data models
- │   ├── parser/           # libBIDS.sh integration
- │   └── plugin/           # Plugin lifecycle
- └── test/groovy/          # Unit tests (30+ tests)
- validation/               # Integration tests
- docs/                     # Documentation
- build.gradle             # Gradle build config
-```
-
 ### Key Technologies
 
 - **Nextflow**: 25.10.0 (plugin framework)
@@ -158,27 +84,6 @@ nf-test test .
 - **GPars**: DataflowQueue for async channels
 - **Gradle**: 8.14 (build system)
 - **Spock**: Testing framework
-
-### Development Workflow
-
-```bash
-# 1. Run tests
-./gradlew test
-
-# 3. Install and test with Nextflow
-make install
-cd validation/
-nextflow run main.nf
-
-# 4. Check for issues
-./gradlew check
-```
-
----
-
-## 📝 Configuration Example
-
-See the [bids2nf](https://github.com/agahkarakuzu/bids2nf) repository. Examples coming soon !
 
 ---
 
@@ -190,36 +95,15 @@ We welcome contributions! Here's how to get started:
 2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
 3. **Make your changes** and add tests
 4. **Run the test suite**: `./gradlew test`
-5. **Commit your changes**: `git commit -m 'Add amazing feature'`
-6. **Push to your branch**: `git push origin feature/amazing-feature`
-7. **Open a Pull Request**
+5. **Run the nf-test suite**: `nf-test test validation/`
+6. **Update snapshots** (optional) : `nf-test test validation/ --update-snapshot`
+7. **Commit your changes**: `git commit -m 'Add amazing feature'`
+8. **Push to your branch**: `git push origin feature/amazing-feature`
+9. **Open a Pull Request**
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ---
-
-## 🐛 Troubleshooting
-
-### Plugin not found
-
-```bash
-# Ensure plugin is installed
-make install
-ls -la ~/.nextflow/plugins/nf-bids-0.1.0-beta.2/
-```
-
-### Tests failing
-
-```bash
-# Clean and rebuild
-make clean
-./gradlew clean test
-```
-
-### Workflow hangs
-
-- ✅ **Fixed in v0.1.0** - Async execution pattern implemented
-- See [ASYNC_MIGRATION.md](docs/ASYNC_MIGRATION.md) for details
 
 ### Need help?
 
@@ -237,37 +121,12 @@ make clean
 
 ---
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details
-
----
-
 ## 🙏 Acknowledgments
 
 - Nextflow team for the plugin framework
 - BIDS community for the specification
-- @agahkarakuzu for the initial **bids2nf** implementation
-- @gdevenyi and the @CoBrALab for the **libBIDS** parser
-
----
-
-## 📊 Status
-
-**Current Version**: 0.1.0-beta.2
-**Status**: ✅ Fully Functional  
-**Last Updated**: October 2025
-
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| Plugin Infrastructure | ✅ Complete | @Factory pattern, PF4J |
-| Configuration Loader | ✅ Complete | YAML + validation |
-| BIDS Parser | ✅ Complete | libBIDS.sh wrapper |
-| Set Handlers | ✅ Complete | Plain/Named/Sequential/Mixed |
-| Channel Factory | ✅ Complete | Async execution |
-| Cross-Modal Broadcasting | ✅ Complete | Tested with dwi datasets |
-| Test Suite | ✅ Complete | 29 tests, 100% passing |
-| Documentation | ✅ Complete | 10+ doc files |
+- @agahkarakuzu for the initial [bids2nf](https://github.com/agahkarakuzu/bids2nf) implementation
+- @gdevenyi and the @CoBrALab for the [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh) bash parser
 
 ---
 
