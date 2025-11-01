@@ -4,9 +4,11 @@
 
 A Nextflow plugin that provides native BIDS (Brain Imaging Data Structure) dataset support through channel factories, enabling seamless integration of neuroimaging data into Nextflow pipelines.
 
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.2-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.2)
+[![Nextflow](https://img.shields.io/badge/nextflow-&geq;23.x-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
+[![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Nextflow](https://img.shields.io/badge/nextflow-25.x-blue)]()
-[![Validation](https://img.shields.io/badge/baseline-100%25-success)]()
+[![Validation](https://img.shields.io/badge/bids2nf&hyphen;baseline-100%25-success)](https://github.com/agahkarakuzu/bids2nf)
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 ---
@@ -15,11 +17,11 @@ A Nextflow plugin that provides native BIDS (Brain Imaging Data Structure) datas
 
 ### Prerequisites
 
-- Bash (for libBIDS.sh integration)
+- Bash (for [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh) integration)
 
 ### Installation
 
-THe plugin is officially published on the [Nextflow Plugins Registry](https://registry.nextflow.io/plugins/nf-bids).
+The plugin is officially published on the [Nextflow Plugins Registry](https://registry.nextflow.io/plugins/nf-bids).
 To install it, add the lines below in your `nextflow.config` file :
 
 ```groovy
@@ -43,6 +45,17 @@ workflow {
 }
 ```
 
+### `Channel.fromBIDS(bids_dir,config,[options])`
+
+|input|type|description|
+|-|-|-|
+|`bids_dir`|`path-like`|Directory containing a valid [BIDS](https://bids-specification.readthedocs.io/en/stable/) input dataset.|
+|`config`|`path-like`|Path to a `yaml` configuration file for entity parsing. See [configuration](docs/configuration.md).|
+|`options.libbids_sh`|`path-like`|(Optional) Path to an alternative [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh) parsing script.|
+|`options.validate`|`boolean`|(Not implement) Run the [BIDS Validator](https://github.com/bids-standard/bids-validator) on the input dataset before parsing.|
+|`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|
+|`options.ignore_codes`|`path-like`|(Not implemented) [BIDS Validator](https://github.com/bids-standard/bids-validator) error codes to ignore.|
+
 ---
 
 ## 📖 Documentation
@@ -52,7 +65,6 @@ workflow {
 - **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Migrate from baseline bids2nf
 - **[Configuration Guide](docs/configuration.md)** - Configure BIDS parsing and grouping
 - **[Examples](docs/examples.md)** - Real-world usage examples
-- **[API Reference](docs/api.md)** - Complete API documentation
 
 ### For Contributors
 
@@ -60,6 +72,7 @@ workflow {
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the plugin
 - **[Development Setup](docs/development.md)** - Set up your development environment
 - **[Architecture Overview](docs/architecture.md)** - Understand the plugin architecture
+- **[API Reference](docs/api.md)** - Complete API documentation
 - **[Testing Guide](docs/TEST_SUITE.md)** - Run and write tests
 - **[Changelog](CHANGELOG.md)** - Development history and releases
 
