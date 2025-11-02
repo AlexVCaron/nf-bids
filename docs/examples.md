@@ -41,10 +41,13 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    t1w_ch = Channel.fromBIDS(params.bids_dir, 'T1w.yaml')
-        .map { key, data -> [key.findAll{ it != 'NA' }.join('_'), data.data.T1w.nii] }
+    ch_t1w = Channel.fromBIDS(params.bids_dir, 'T1w.yaml')
+        .map { key, data -> [
+          key.findAll{ it != 'NA' }.join('_'),
+          file(data.bidsParentDir) / data.data.T1w.nii
+        ] }
     
-    processT1w(t1w_ch)
+    processT1w(ch_t1w)
 }
 
 process processT1w {
@@ -54,7 +57,7 @@ process processT1w {
     tuple val(subject), path(t1w)
     
     output:
-    path "${subject}_brain.nii.gz"
+    tuple val(subject), path("${subject}_brain.nii.gz"), emit: t1w
     
     script:
     """
@@ -87,307 +90,307 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    bold_ch = Channel.fromBIDS(params.bids_dir, 'mfmri.yaml')
+    ch_bold = Channel.fromBIDS(params.bids_dir, 'mfmri.yaml')
         .filter { key, data -> data.data.task == 'rest' }
-        .map { key, data -> [key.findAll{ it != 'NA' }.join('_'), data.data.bold.nii] }
+        .map { key, data -> [
+          key.findAll{ it != 'NA' }.join('_'),
+          data.subject,
+          data.session,
+          data.data.bold.nii.collect{ file(data.bidsParentDir) / it }
+        ] }
     
-    multiEchoCombine(bold_ch)
+    multiEchoCombine(ch_bold)
 }
 
 process multiEchoCombine {
     publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
     
     input:
-    tuple val(subject), path(echoes)
+    tuple val(id), val(subject), val(session), path(echoes)
     
     output:
-    path "${subject}_combined_bold.nii.gz"
+    tuple val(id), path("${id}_combined_bold.nii.gz"), emit: bold
     
     script:
     def echo_args = echoes.collect { "-e ${it}" }.join(' ')
     """
-    tedana ${echo_args} -o ${subject}_${session}_combined_bold.nii.gz
+    tedana ${echo_args} -o ${id}_combined_bold.nii.gz
     """
 }
 ```
 
 ---
 
-### DWI with Multiple Acquisitions
+## Concatenate DWI from Multiple Runs then run `dtifit`
 
-```groovy
-#!/usr/bin/env nextflow
+**`msdwi.yaml`:**
 
-plugins {
-    id 'nf-bids@0.1.0'
-}
-
-params.bids_dir = '/data/bids'
-params.output_dir = 'results'
-
-workflow {
-    Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data ->
-            def acquisitions = data.data.dwi
-            def bvals = data.data.bval
-            def bvecs = data.data.bvec
-            
-            [data.subject, data.session, acquisitions, bvals, bvecs]
-        }
-        .set { dwi_ch }
-    
-    mergeDWI(dwi_ch)
-    processDWI(mergeDWI.out)
-}
-
-process mergeDWI {
-    input:
-    tuple val(subject), val(session), val(dwi_map), val(bval_map), val(bvec_map)
-    
-    output:
-    tuple val(subject), val(session), path("merged_dwi.nii.gz"), 
-          path("merged.bval"), path("merged.bvec")
-    
-    script:
-    def dwi_files = dwi_map.values().join(' ')
-    def bval_files = bval_map.values().join(' ')
-    def bvec_files = bvec_map.values().join(' ')
-    """
-    # Merge DWI volumes
-    fslmerge -t merged_dwi.nii.gz ${dwi_files}
-    
-    # Concatenate bvals
-    paste -d ' ' ${bval_files} > merged.bval
-    
-    # Concatenate bvecs
-    paste -d ' ' ${bvec_files} > merged.bvec
-    """
-}
-
-process processDWI {
-    publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
-    
-    input:
-    tuple val(subject), val(session), path(dwi), path(bval), path(bvec)
-    
-    output:
-    path "dti_*"
-    
-    script:
-    """
-    dtifit -k ${dwi} -b ${bval} -r ${bvec} -o dti
-    """
-}
-```
-
-**Configuration:**
 ```yaml
 loop_over:
   - subject
   - session
 
 dwi:
-  named_set:
-    entities:
-      suffix: dwi
-    group_by: acquisition
-
-bval:
-  named_set:
-    entities:
-      suffix: bval
-    group_by: acquisition
-
-bvec:
-  named_set:
-    entities:
-      suffix: bvec
-    group_by: acquisition
+  plain_set:
+    additional_extensions:
+    - bval
+    - bvec
 ```
 
----
-
-## Advanced Workflows
-
-### Cross-Modal Analysis with T1w Reference
+**`main.nf`:**
 
 ```groovy
 #!/usr/bin/env nextflow
-
-plugins {
-    id 'nf-bids@0.1.0'
-}
 
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .branch { key, data ->
-            has_both: data.data.T1w && data.data.bold
-                return [data.subject, data.session, data.task, 
-                        data.data.T1w, data.data.bold]
-            missing: true
+    ch_dwi = Channel.fromBIDS(params.bids_dir, 'msdwi.yaml')
+        .map { key, data ->
+            def id = [data.subject, data.session].join('_')
+            def meta = [id: id, subject: data.subject, session: data.session]
+
+            def acquisitions = data.data.dwi.collect{ file(data.bidsParentDir) / it }
+            def bvals = data.data.bval.collect{ file(data.bidsParentDir) / it }
+            def bvecs = data.data.bvec.collect{ file(data.bidsParentDir) / it }
+            
+            return [meta, acquisitions, bvals, bvecs]
         }
-        .set { branched }
     
-    // Process complete datasets
-    registerBoldToT1w(branched.has_both)
-    
-    // Log incomplete datasets
-    branched.missing
-        .subscribe { key, data ->
-            log.warn "Incomplete data for ${data.subject}/${data.session}"
-        }
+    mergeDWI(ch_dwi)
+    ch_merged_dwi = mergeDWI.out.dwi
+      .join(mergeDWI.out.bval)
+      .join(mergeDWI.out.bvec)
+
+    processDWI(ch_merged_dwi)
 }
 
-process registerBoldToT1w {
-    publishDir "${params.output_dir}/${subject}/${session}/${task}", 
-               mode: 'copy'
-    
+process mergeDWI {
     input:
-    tuple val(subject), val(session), val(task), path(t1w), path(bold)
+    tuple val(meta), val(dwis), val(bvals), val(bvecs)
     
     output:
-    path "registered_bold.nii.gz"
-    path "transform.mat"
+    tuple val(meta), path("${prefix}_merged_dwi.nii.gz"), emit: dwi
+    tuple val(meta), path("${prefix}_merged_dwi.bval"), emit: bval
+    tuple val(meta), path("${prefix}_merged_dwi.bvec"), emit: bvec
     
     script:
+    def prefix = meta.id
+    def dwi_files = dwis.join(' ')
+    def bval_files = bvals.join(' ')
+    def bvec_files = bvecs.join(' ')
     """
-    # Extract first volume as reference
-    fslroi ${bold[0]} ref_vol.nii.gz 0 1
+    # Merge DWI volumes
+    fslmerge -t ${prefix}_merged_dwi.nii.gz ${dwi_files}
     
-    # Register BOLD to T1w
-    flirt -in ref_vol.nii.gz -ref ${t1w} \
-          -out registered_bold.nii.gz \
-          -omat transform.mat
+    # Concatenate bvals
+    paste -d ' ' ${bval_files} > ${prefix}_merged_dwi.bval
+    
+    # Concatenate bvecs
+    paste -d ' ' ${bvec_files} > ${prefix}_merged_dwi.bvec
+    """
+}
+
+process processDWI {
+    publishDir "${params.output_dir}/${meta.subject}/${meta.session}", mode: 'copy'
+    
+    input:
+    tuple val(meta), path(dwi), path(bval), path(bvec)
+    
+    output:
+    tuple val(meta), path("${prefix}_dti_*"), emit: dti
+    
+    script:
+    def prefix = meta.id
+    """
+    dtifit -k ${dwi} -b ${bval} -r ${bvec} -o ${prefix}_dti
     """
 }
 ```
 
-**Configuration:**
+---
+
+# Advanced Workflows
+
+## Cross-Modal Analysis with T1w Reference
+
+**`bold+T1w.yaml`:**
+
 ```yaml
 loop_over:
   - subject
   - session
   - task
 
-cross_modal_broadcasting:
-  - T1w
-
-T1w:
-  plain_set:
-    entities:
-      suffix: T1w
-
 bold:
-  sequential_set:
-    entities:
-      suffix: bold
-    sequence_by: echo
+  plain_set:
+    include_cross_modal:
+    - T1w 
 ```
 
----
-
-### Parallel Task Processing
+**`main.nf`:**
 
 ```groovy
 #!/usr/bin/env nextflow
-
-plugins {
-    id 'nf-bids@0.1.0'
-}
 
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .multiMap { key, data ->
-            rest: data.task == 'rest' 
-                ? [data.subject, data.session, data.data.bold] 
-                : null
-            nback: data.task == 'nback' 
-                ? [data.subject, data.session, data.data.bold] 
-                : null
-            memory: data.task == 'memory' 
-                ? [data.subject, data.session, data.data.bold] 
-                : null
+    ch_t1w_bold = Channel.fromBIDS(params.bids_dir, 'bold+T1w.yaml')
+        .map { key, data ->
+          def meta = [
+            id: key.findAll{ it != 'NA' }.join('_'),
+            subject: data.subject,
+            session: data.session,
+            task: data.task
+          ]
+
+          def bold = file(data.bidsParentDir) / data.data.bold
+          def t1w = file(data.bidsParentDir) / data.data.t1w
+
+          return [meta, t1w, bold]
         }
-        .set { tasks }
+    
+    // Process complete datasets
+    registerBoldToT1w(ch_t1w_bold)
+}
+
+process registerBoldToT1w {
+    publishDir "${params.output_dir}/${subject}/${session}/${task}", mode: 'copy'
+    
+    input:
+    tuple val(meta), path(t1w), path(bold)
+    
+    output:
+    tuple val(meta), path("${prefix}_registered_bold.nii.gz", emit: bold
+    tuple val(meta), path "${prefix}_transform.mat", emit: transform
+    
+    script:
+    def prefix = meta.id
+    def subject = meta.subject
+    def session = meta.session
+    def task = meta.task
+    """
+    # Extract first volume as reference
+    fslroi ${bold[0]} ref_vol.nii.gz 0 1
+    
+    # Register BOLD to T1w
+    flirt -in ref_vol.nii.gz \
+      -ref ${t1w} \
+      -out ${prefix}_registered_bold.nii.gz \
+      -omat ${prefix}_transform.mat
+    """
+}
+```
+
+---
+
+### Multiple Tasks Processing
+
+**`mtasks.yaml`:**
+
+```yaml
+loop_over:
+  - subject
+  - session
+  - task
+
+bold:
+  plain_set: {}
+```
+
+**`main.nf`:**
+
+```groovy
+#!/usr/bin/env nextflow
+
+params.bids_dir = '/data/bids'
+params.output_dir = 'results'
+
+workflow {
+    ch_tasks = Channel.fromBIDS(params.bids_dir, 'mtasks.yaml')
+        .map { key, data ->
+          def meta = [
+            id: [data.subject, data.session].join('_'),
+            subject: data.subject,
+            session: data.session
+          ]
+
+          def bold = file(data.bidsParentDir) / data.data.bold
+
+          return [meta, data.task, bold]
+        }
+        .branch { meta, task, bold ->
+            rest: task == 'rest' 
+              return [meta, bold]
+            nback: task == 'nback' 
+              return [meta, bold]
+            memory: task == 'memory' 
+              return [meta, bold]
+        }
     
     // Task-specific processing
-    processRest(tasks.rest)
-    processNBack(tasks.nback)
-    processMemory(tasks.memory)
-    
-    // Combine results
-    combineTaskResults(
-        processRest.out,
-        processNBack.out,
-        processMemory.out
-    )
+    processRest(ch_tasks.rest)
+    processNBack(ch_tasks.nback)
+    processMemory(ch_tasks.memory)
 }
 
 process processRest {
+    publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
+
     input:
-    tuple val(subject), val(session), path(bold)
+    tuple val(meta), path(bold)
     
     output:
-    tuple val(subject), val(session), path("rest_results.nii.gz")
+    tuple val(meta), path("${prefix}_rest_results.nii.gz"), emit: connectivity
     
     script:
+    def prefix = meta.id
+    def subject = meta.subject
+    def session = meta.session
     """
     # Resting-state analysis
-    3dRSFC -prefix rest_results.nii.gz ${bold[0]}
+    3dRSFC -prefix ${prefix}_rest_results.nii.gz $bold
     """
 }
 
 process processNBack {
+    publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
+
     input:
-    tuple val(subject), val(session), path(bold)
+    tuple val(meta), path(bold)
     
     output:
-    tuple val(subject), val(session), path("nback_results.nii.gz")
+    tuple val(meta), path("${prefix}_nback_results.nii.gz"), emit: stimulus
     
     script:
+    def prefix = meta.id
+    def subject = meta.subject
+    def session = meta.session
     """
     # N-back task analysis
-    3dDeconvolve -input ${bold[0]} -prefix nback_results.nii.gz
+    3dDeconvolve -input $bold -prefix ${prefix}_nback_results.nii.gz
     """
 }
 
 process processMemory {
+    publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
+
     input:
-    tuple val(subject), val(session), path(bold)
+    tuple val(meta), path(bold)
     
     output:
-    tuple val(subject), val(session), path("memory_results.nii.gz")
+    tuple val(meta), path("memory_results.nii.gz"), emit: stimulus
     
     script:
+    def prefix = meta.id
+    def subject = meta.subject
+    def session = meta.session
     """
     # Memory task analysis
-    3dDeconvolve -input ${bold[0]} -prefix memory_results.nii.gz
-    """
-}
-
-process combineTaskResults {
-    publishDir "${params.output_dir}", mode: 'copy'
-    
-    input:
-    tuple val(subject), val(session), path(rest)
-    tuple val(subject), val(session), path(nback)
-    tuple val(subject), val(session), path(memory)
-    
-    output:
-    path "combined_results/${subject}/${session}/"
-    
-    script:
-    """
-    mkdir -p combined_results/${subject}/${session}
-    cp ${rest} combined_results/${subject}/${session}/
-    cp ${nback} combined_results/${subject}/${session}/
-    cp ${memory} combined_results/${subject}/${session}/
+    3dDeconvolve -input $bold -prefix ${prefix}_memory_results.nii.gz
     """
 }
 ```
@@ -400,10 +403,6 @@ process combineTaskResults {
 
 ```groovy
 #!/usr/bin/env nextflow
-
-plugins {
-    id 'nf-bids@0.1.0'
-}
 
 workflow {
     Channel.fromBIDS(params.bids_dir, 'config.yaml')
@@ -722,30 +721,6 @@ Channel.fromBIDS(params.bids_dir, params.config)
         func: [data.subject, data.data.bold]
     }
     .set { forked }
-```
-
-### 3. Handle Missing Data
-
-```groovy
-// Check for required data
-Channel.fromBIDS(params.bids_dir, params.config)
-    .filter { key, data ->
-        if (!data.data.T1w) {
-            log.warn "Missing T1w for ${data.subject}"
-            return false
-        }
-        return true
-    }
-```
-
-### 4. Use Demand-Driven Loading
-
-```groovy
-// Default: Fast metadata-only loading
-Channel.fromBIDS(
-    bidsDir: params.bids_dir,
-    demand_driven: true  // Recommended for large datasets
-)
 ```
 
 ## Related Documentation
