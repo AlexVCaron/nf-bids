@@ -41,7 +41,7 @@ workflow {
 
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.2'
+    id 'nf-bids'
 }
 ```
 
@@ -67,7 +67,7 @@ workflow {
 
 ### 1. Add Plugin to Configuration
 
-Edit your `nextflow.config`:
+Edit your `nextflow.config` to add:
 
 ```groovy
 plugins {
@@ -75,22 +75,16 @@ plugins {
 }
 ```
 
-Or specify the GitHub repository:
+You can replace with a [version](https://registry.nextflow.io/plugins/nf-bids) of your choosing,
+or remove `@0.1.0-beta.2` to grab the `latest` available.
 
-```groovy
-plugins {
-    id 'nf-bids@0.1.0-beta.2' from 'https://github.com/AlexVCaron/nf-bids'
-}
-```
-
-### 2. Update Workflow Imports
+### 2. Replace Workflow Imports
 
 **Remove** the old module include:
 
 ```groovy
 // DELETE THIS:
-include { bids2nf } from './modules/bids2nf'
-include { bids2nf } from './subworkflows/bids2nf'
+include { bids2nf } from '/path/to/bids2nf'
 ```
 
 **Add** the channel factory:
@@ -113,7 +107,9 @@ bids_channel = Channel.fromBIDS(params.bids_dir, 'config.yaml')
 
 ### 4. Keep Your Configuration
 
-**No changes needed!** The plugin uses the exact same YAML configuration format:
+**No changes needed!** The plugin uses the exact same YAML configuration format.
+However, a **new filter**, `exclude_entities`, is available to reject files based
+on the presence of entities in **filenames**:
 
 ```yaml
 # bids2nf.yaml - works with both baseline and plugin!
@@ -278,22 +274,15 @@ nf-test test --profile test
 
 **Error**: `Cannot find plugin 'nf-bids'`
 
-**Solution**: Ensure `nextflow.config` has the plugin declaration:
-
-```groovy
-plugins {
-    id 'nf-bids@0.1.0-beta.2'
-}
-```
+**Solution**: Troublehsoot your [Nextflow](https://www.nextflow.io/docs/latest/plugins/using-plugins.html) installation.
 
 ### Channel Method Not Available
 
 **Error**: `No signature of method: Channel.fromBIDS()`
 
 **Solution**: 
-1. Check plugin is properly installed: `nextflow plugin list`
-2. Update Nextflow: `nextflow self-update`
-3. Clear cache: `rm -rf .nextflow/`
+1. Troublehsoot your [Nextflow](https://www.nextflow.io/docs/latest/plugins/using-plugins.html) installation.
+2. Check you include statement : `include { fromBIDS } from 'plugins/nf-bids'`
 
 ### Different Output Structure
 
@@ -305,6 +294,7 @@ plugins {
 3. Check for typos in entity names
 
 **Note**: The plugin produces **identical** outputs - if you see differences, it's likely a configuration issue.
+Feel free to open an issue if you need help.
 
 ---
 
@@ -333,7 +323,7 @@ git stash  # Stash your plugin changes
 ### 3. Restore Old Import
 
 ```groovy
-include { bids2nf } from './modules/bids2nf'
+include { bids2nf } from '/path/to/bids2nf'
 ```
 
 ---
@@ -345,24 +335,6 @@ Once migrated, you'll enjoy:
 - 🚀 **Faster startup**: Plugin loads once, not on every run
 - 🧹 **Cleaner codebase**: No module files to maintain
 - 🔄 **Easy updates**: Just bump version number
-- ✅ **Better tested**: 100% validation coverage
-- 📚 **Better documented**: Comprehensive docs and examples
-
----
-
-## Need Help?
-
-- **Documentation**: See [docs/](../docs/) directory
-- **Examples**: Check [docs/examples.md](examples.md)
-- **Issues**: Report problems via GitHub issues
-- **Questions**: Open a discussion on GitHub
-
----
-
-## Version History
-
-- **0.1.0-beta.2** (Oct 2025): 100% baseline alignment achieved
-- **0.1.0** (Oct 2025): Initial plugin release
 
 ---
 
