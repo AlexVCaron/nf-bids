@@ -10,24 +10,39 @@ Practical examples for using the nf-bids plugin in various scenarios.
 - [Multi-Modal Studies](#multi-modal-studies)
 - [Quality Control](#quality-control)
 
-## Basic Examples
+>[!NOTE]
+>All examples need the following lines in the `nextflow.config` file to load the plugin :
+>
+>```groovy
+>plugins {
+>    id 'nf-bids'
+>}
+>```
 
-### Simple T1w Processing
+# Basic Examples
+
+## T1w brain extraction with FSL `bet`
+
+**`T1w.yaml`:**
+```yaml
+loop_over:
+  - subject
+
+T1w:
+  plain_set: {}
+```
+
+**`main.nf`:**
 
 ```groovy
 #!/usr/bin/env nextflow
-
-plugins {
-    id 'nf-bids@0.1.0'
-}
 
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data -> [data.subject, data.data.T1w] }
-        .set { t1w_ch }
+    t1w_ch = Channel.fromBIDS(params.bids_dir, 'T1w.yaml')
+        .map { key, data -> [key.findAll{ it != 'NA' }.join('_'), data.data.T1w.nii] }
     
     processT1w(t1w_ch)
 }
@@ -48,60 +63,10 @@ process processT1w {
 }
 ```
 
-**Configuration (config.yaml):**
-```yaml
-loop_over:
-  - subject
+## Multi-Echo fMRI combination with `tedana`
 
-T1w:
-  plain_set:
-    entities:
-      suffix: T1w
-```
+**`mfmri.yaml`:**
 
----
-
-### Multi-Echo fMRI
-
-```groovy
-#!/usr/bin/env nextflow
-
-plugins {
-    id 'nf-bids@0.1.0'
-}
-
-params.bids_dir = '/data/bids'
-params.output_dir = 'results'
-
-workflow {
-    Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .filter { key, data -> data.task == 'rest' }
-        .map { key, data -> 
-            [data.subject, data.session, data.data.bold]
-        }
-        .set { bold_ch }
-    
-    multiEchoCombine(bold_ch)
-}
-
-process multiEchoCombine {
-    publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
-    
-    input:
-    tuple val(subject), val(session), path(echoes)
-    
-    output:
-    path "${subject}_${session}_combined_bold.nii.gz"
-    
-    script:
-    def echo_args = echoes.collect { "-e ${it}" }.join(' ')
-    """
-    tedana ${echo_args} -o ${subject}_${session}_combined_bold.nii.gz
-    """
-}
-```
-
-**Configuration:**
 ```yaml
 loop_over:
   - subject
@@ -110,9 +75,40 @@ loop_over:
 
 bold:
   sequential_set:
-    entities:
-      suffix: bold
-    sequence_by: echo
+    by_entity: echo
+```
+
+**`main.nf`:**
+
+```groovy
+#!/usr/bin/env nextflow
+
+params.bids_dir = '/data/bids'
+params.output_dir = 'results'
+
+workflow {
+    bold_ch = Channel.fromBIDS(params.bids_dir, 'mfmri.yaml')
+        .filter { key, data -> data.data.task == 'rest' }
+        .map { key, data -> [key.findAll{ it != 'NA' }.join('_'), data.data.bold.nii] }
+    
+    multiEchoCombine(bold_ch)
+}
+
+process multiEchoCombine {
+    publishDir "${params.output_dir}/${subject}/${session}", mode: 'copy'
+    
+    input:
+    tuple val(subject), path(echoes)
+    
+    output:
+    path "${subject}_combined_bold.nii.gz"
+    
+    script:
+    def echo_args = echoes.collect { "-e ${it}" }.join(' ')
+    """
+    tedana ${echo_args} -o ${subject}_${session}_combined_bold.nii.gz
+    """
+}
 ```
 
 ---
