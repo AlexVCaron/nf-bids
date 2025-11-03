@@ -72,8 +72,6 @@ workflow {
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the plugin
 - **[Development Setup](docs/development.md)** - Set up your development environment
 - **[Architecture Overview](docs/architecture.md)** - Understand the plugin architecture
-- **[API Reference](docs/api.md)** - Complete API documentation
-- **[Testing Guide](docs/TEST_SUITE.md)** - Run and write tests
 - **[Changelog](CHANGELOG.md)** - Development history and releases
 
 ---

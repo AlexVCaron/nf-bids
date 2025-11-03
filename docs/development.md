@@ -8,99 +8,85 @@ Guide for developers working on the nf-bids plugin implementation.
 - [Development Setup](#development-setup)
 - [Building the Plugin](#building-the-plugin)
 - [Testing](#testing)
-- [Implementation Roadmap](#implementation-roadmap)
-- [Contributing](#contributing)
+- [Implementation Guidelines](#implementation-guidelines)
+- [Debugging](#debugging)
+- [Resources](#resources)
 
 ## Getting Started
 
-### Prerequisites
-
-- **Java JDK**: 11 or higher
-- **Gradle**: 8.4+ (or use included wrapper)
-- **Git**: For cloning libBIDS.sh submodule
-- **Nextflow**: 23.10.0+ (for testing)
-- **Docker**: Optional, for BIDS validator
+**Prerequisites**:
+- Java 11 or later
+- Gradle 8.14 (included via wrapper)
+- [Nextflow 23+](https://nextflow.io) or later
+- Bash (for [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh))
 
 ### Project Structure
 
 ```
 nf-bids/
 ├── src/
-│   ├── main/
-│   │   ├── groovy/nextflow/bids/
-│   │   │   ├── BidsPlugin.groovy          # Plugin entry point
-│   │   │   ├── BidsExtension.groovy       # DSL extension
-│   │   │   ├── channel/                   # Channel factory
-│   │   │   │   └── BidsChannelFactory.groovy
-│   │   │   ├── config/                    # Configuration
-│   │   │   │   ├── BidsConfigLoader.groovy
-│   │   │   │   └── BidsConfigAnalyzer.groovy
-│   │   │   ├── parser/                    # BIDS parsing
-│   │   │   │   ├── BidsParser.groovy
-│   │   │   │   ├── LibBidsShWrapper.groovy
-│   │   │   │   └── BidsValidator.groovy
-│   │   │   ├── grouping/                  # Set handlers
-│   │   │   │   ├── BaseSetHandler.groovy
-│   │   │   │   ├── PlainSetHandler.groovy
-│   │   │   │   ├── NamedSetHandler.groovy
-│   │   │   │   ├── SequentialSetHandler.groovy
-│   │   │   │   └── MixedSetHandler.groovy
-│   │   │   ├── model/                     # Domain models
-│   │   │   │   ├── BidsEntity.groovy
-│   │   │   │   ├── BidsFile.groovy
-│   │   │   │   ├── BidsDataset.groovy
-│   │   │   │   └── BidsChannelData.groovy
-│   │   │   └── util/                      # Utilities
-│   │   │       ├── BidsLogger.groovy
-│   │   │       └── BidsErrorHandler.groovy
-│   │   └── resources/
-│   │       └── META-INF/
-│   │           ├── MANIFEST.MF            # Plugin metadata
-│   │           └── extensions.idx         # Extension registry
-│   └── test/
-│       └── groovy/nextflow/bids/
-│           ├── BidsPluginTest.groovy
-│           ├── BidsExtensionTest.groovy
-│           ├── channel/
-│           ├── config/
-│           ├── parser/
-│           ├── grouping/
-│           └── model/
-├── validation/                             # Integration tests
-│   └── test.nf
+│   └── main/
+│       └── groovy/nfneuro/
+│           ├── plugin/                         # Plugin registration
+│           │   ├── BidsPlugin.groovy               # Plugin entry point
+│           │   ├── BidsExtension.groovy            # DSL extension
+│           │   ├── BidsObserver.groovy             # Nextflow events tracing
+│           │   └── BidsFactory.groovy              # Trace observer registration
+│           ├── channel/                        # BIDS channel packaging
+│           │   ├── BidsChannelFactory.groovy       # Factory Channel.fromBIDS
+│           │   └── BIDSHandler.groovy              # Channel packaging and management
+│           ├── config/                         # Configuration management
+│           │   ├── BidsConfigLoader.groovy         # Load configudation to code
+│           │   ├── BidsConfigValidator.groovy      # Validate confguration fields
+│           │   └── BidsConfigAnalyzer.groovy       # Configuration summarizing
+│           ├── parser/                         # BIDS parsing and validation
+│           │   ├── BidsParser.groovy               # BIDS directory parsing handler
+│           │   ├── LibBidsShWrapper.groovy         # libBIDS.sh bash script wrapper
+│           │   └── BidsValidator.groovy            # BIDS Validator wrapper
+│           ├── grouping/                       # Set handlers
+│           │   ├── BaseSetHandler.groovy           # Common set properties and methods
+│           │   ├── PlainSetHandler.groovy          # Specific Plain Set behaviors
+│           │   ├── NamedSetHandler.groovy          # Specific Named Set behaviors
+│           │   ├── SequentialSetHandler.groovy     # Specific Sequential Set behaviors
+│           │   └── MixedSetHandler.groovy          # Specific Mixed Set behaviors
+│           ├── model/                          # Domain models
+│           │   ├── BidsEntity.groovy               # BIDS entity representation
+│           │   ├── BidsFile.groovy                 # BIDS file representation
+│           │   ├── BidsDataset.groovy              # BIDS dataset representation
+│           │   └── BidsChannelData.groovy          # BIDS channel item representation
+│           └── util/                           # Utilities
+│               ├── BidsLogger.groovy               # Nextflow logging utilities
+│               ├── BidsErrorHandler.groovy         # Error handling utilities
+│               ├── BidsCsvParser.groovy            # libBIDS.sh CSV output conversion
+│               ├── BidsEntityUtils.groovy          # BIDS entity management utility
+│               └── SuffixMapper.groovy             # BIDS suffix management utility 
+├── validation/                                 # Integration tests
+│   ├── main.nf                                     # Base integration test with Nextflow
+│   ├── nextflow.config                             # Plugin integration configuration
+│   ├── test_datasets.sh                            # Utility script to run integration suite
+│   ├── comparison_*.nf.test                        # Integration testing suite with nf-test
+│   ├── comparison_*.nf.test.snap                   # nf-test snapshot of the integration suite
+│   ├── data/                                       # BIDS example and custom datasets
+│   └── config/                                     # Plugin configurations to test
 ├── .dev-notes/                            # Development notes
-├── docs/                                  # Documentation
+├── docs/                                  # Official documentation
 ├── build.gradle                           # Build configuration
 ├── settings.gradle                        # Project settings
+├── Makefile                               # Plugin makefile
 └── README.md
 ```
 
 ## Development Setup
 
-> **Note**: The plugin is fully functional. All core components are implemented and tested. See [TODO.md](TODO.md) for current priorities.
-
 ### Initial Setup
 
-1. **Navigate to plugin directory**:
-   ```bash
-   cd /path/to/bids2nf/plugins/nf-bids
-   ```
-
-2. **Initialize libBIDS.sh submodule** (from repository root):
-   ```bash
-   cd ../..  # Go to repository root
-   git submodule update --init --recursive
-   cd plugins/nf-bids  # Return to plugin directory
-   ```
-
-3. **Run setup script**:
+1. **Run setup script**:
    ```bash
    ./setup.sh
    ```
 
    This script will:
    - Check for Java 11+
-   - Download and install Gradle wrapper
    - Download dependencies
    - Verify build configuration
 
@@ -108,17 +94,12 @@ nf-bids/
 
 If the setup script fails:
 
-1. **Install Gradle wrapper manually**:
-   ```bash
-   ./setup-gradle.sh
-   ```
-
-2. **Download dependencies**:
+1. **Download dependencies**:
    ```bash
    ./gradlew dependencies
    ```
 
-3. **Verify setup**:
+2. **Verify setup**:
    ```bash
    ./gradlew tasks
    ```
@@ -133,16 +114,13 @@ If the setup script fails:
 
 # Install to Nextflow
 make install
-
-# Or quick test script
-./quick-test.sh
 ```
 
 This will run:
 1. Clean build
 2. Run tests
 3. Build JAR
-4. Install to Maven local
+4. Install into Nextflow
 
 ### Individual Build Steps
 
@@ -156,12 +134,12 @@ This will run:
 ./gradlew compileGroovy
 ```
 
-**Build without tests** (current requirement):
+**Build without tests:**
 ```bash
 ./gradlew build -x test
 ```
 
-**Run tests** (will fail until implementation complete):
+**Run tests:**
 ```bash
 ./gradlew test
 ```
@@ -171,9 +149,9 @@ This will run:
 ./gradlew jar
 ```
 
-**Install to Maven local:**
+**Install to Nextflow:**
 ```bash
-./gradlew publishToMavenLocal -x test
+./gradlew install
 ```
 
 ### Build Output
@@ -185,159 +163,18 @@ Built artifacts are located in:
 
 ## Testing
 
-### Unit Tests
-
-Located in `src/test/groovy/nextflow/bids/`
-
-**Run all tests:**
-```bash
-./gradlew test
-```
-
-**Run specific test:**
-```bash
-./gradlew test --tests BidsPluginTest
-```
-
-**View test report:**
-```bash
-open build/reports/tests/test/index.html
-```
-
 ### Integration Tests
 
-Located in `validation/test.nf`
+Located in `validation/`
 
 **Run integration test:**
 ```bash
-cd validation
-nextflow run test.nf -plugins nf-bids@0.1.0
+nextflow run validation/
 ```
 
 ### Test Data
 
-Use test datasets from the main bids2nf project:
-```bash
-# Link test data
-ln -s ../../tests/data/bids-examples validation/test-data
-```
-
-### Writing Tests
-
-Use Spock framework:
-
-```groovy
-package nextflow.bids.channel
-
-import spock.lang.Specification
-import nextflow.Session
-
-class BidsChannelFactoryTest extends Specification {
-    
-    def "should create channel from BIDS directory"() {
-        given:
-        def bidsDir = '/path/to/test/bids'
-        def factory = new BidsChannelFactory()
-        
-        when:
-        def channel = factory.fromBIDS(bidsDir)
-        
-        then:
-        channel != null
-        // Add assertions
-    }
-    
-    def "should handle missing BIDS directory"() {
-        given:
-        def bidsDir = '/nonexistent/path'
-        def factory = new BidsChannelFactory()
-        
-        when:
-        factory.fromBIDS(bidsDir)
-        
-        then:
-        thrown(IllegalArgumentException)
-    }
-}
-```
-
-## Implementation Roadmap
-
-### Phase 1: Core Infrastructure ✅
-
-- [x] Plugin scaffolding
-- [x] Build configuration
-- [x] Test framework
-- [x] Documentation structure
-
-### Phase 2: Configuration Layer
-
-See `docs/implementation.md` for detailed steps.
-
-**Priority:**
-1. **BidsConfigLoader** - Load and validate YAML
-2. **BidsConfigAnalyzer** - Parse configuration structure
-3. **Unit tests** - Verify configuration handling
-
-**Reference:**
-- Original: `modules/utils/config_analyzer.nf`
-- Schema: `config/schemas/bids2nf.schema.yaml`
-
-### Phase 3: BIDS Parsing
-
-**Priority:**
-1. **LibBidsShWrapper** - Interface with libBIDS.sh
-2. **BidsParser** - Parse BIDS files
-3. **BidsValidator** - Optional validation
-4. **Unit tests** - Verify parsing
-
-**Reference:**
-- Original: `modules/parsers/lib_bids_sh_parser.nf`
-- Library: `libBIDS.sh/`
-
-### Phase 4: Grouping Logic
-
-**Priority:**
-1. **BaseSetHandler** - Base class
-2. **PlainSetHandler** - Simple 1:1 mapping
-3. **NamedSetHandler** - Entity grouping
-4. **SequentialSetHandler** - Ordered arrays
-5. **MixedSetHandler** - Nested structures
-6. **Unit tests** - Verify each handler
-
-**Reference:**
-- Original: `modules/grouping/`
-- Templates: `modules/templates/`
-
-### Phase 5: Channel Factory
-
-**Priority:**
-1. **BidsChannelFactory.fromBIDS()** - Main entry point
-2. **Preflight checks** - Validation
-3. **Dataset processing** - Core logic
-4. **Cross-modal broadcasting** - Entity sharing
-5. **Integration tests** - End-to-end
-
-**Reference:**
-- Original: `main.nf` workflow logic
-- Subworkflows: `subworkflows/`
-
-### Phase 6: Extension and Plugin
-
-**Priority:**
-1. **BidsExtension** - Register factory
-2. **BidsPlugin** - Lifecycle management
-3. **Integration tests** - Full workflow
-4. **Documentation** - Usage examples
-
-### Phase 7: Polish and Release
-
-**Priority:**
-1. Error handling improvements
-2. Logging and diagnostics
-3. Performance optimization
-4. Documentation completion
-5. Example workflows
+All test datasets are located under `validation/data`.
 
 ## Implementation Guidelines
 
@@ -393,23 +230,35 @@ try {
 
 ### Logging
 
-Use SLF4J logging:
+Use `BidsLogger` for consistent logging:
 
 ```groovy
-@Slf4j
+import nfneuro.plugin.util.BidsLogger
+
 class MyClass {
     def myMethod() {
-        log.debug "Debug message"
-        log.info "Info message"
-        log.warn "Warning message"
-        log.error "Error message", exception
+        BidsLogger.logDebug("Debug message")
+        BidsLogger.logProgress("Info message")
+        BidsLogger.logWarning("Warning message")
+        BidsLogger.logError("Error message")
+        BidsLogger.logSuccess("Success message")
     }
+}
+```
+
+For context-specific logging:
+
+```groovy
+BidsLogger.logProgress("my-context", "Processing started")
+BidsLogger.logStats("my-context", ["files": 42, "datasets": 3])
+BidsLogger.withTiming("my-context", "parsing operation") {
+    // Code to time
 }
 ```
 
 ### Reference Original Code
 
-Each method includes `@reference` tags pointing to the original implementation:
+When available, a method should includes `@reference` tags pointing to the original implementation:
 
 ```groovy
 /**
@@ -421,62 +270,6 @@ def processDatasets(Map params) {
     // Implementation based on original code
 }
 ```
-
-## Contributing
-
-### Workflow
-
-1. **Create branch** for your feature:
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-
-2. **Implement feature** following guidelines above
-
-3. **Add tests** for new functionality
-
-4. **Run tests**:
-   ```bash
-   ./gradlew test
-   ```
-
-5. **Build and verify**:
-   ```bash
-   ./quick-test.sh
-   ```
-
-6. **Commit changes**:
-   ```bash
-   git add .
-   git commit -m "feat: add my feature"
-   ```
-
-7. **Push and create PR**:
-   ```bash
-   git push origin feature/my-feature
-   ```
-
-### Commit Message Format
-
-Follow conventional commits:
-
-```
-feat: add new feature
-fix: fix bug
-docs: update documentation
-test: add tests
-refactor: refactor code
-chore: update build configuration
-```
-
-### Code Review Checklist
-
-- [ ] Tests pass (`./gradlew test`)
-- [ ] Code follows style guidelines
-- [ ] Documentation updated
-- [ ] `@reference` tags present
-- [ ] Error handling implemented
-- [ ] Logging added where appropriate
 
 ## Debugging
 
@@ -507,26 +300,11 @@ def factory = new BidsChannelFactory()
 def channel = factory.fromBIDS('/path/to/bids')
 ```
 
-### IntelliJ IDEA Setup
-
-1. Open project in IntelliJ IDEA
-2. Import as Gradle project
-3. Set JDK to 11+
-4. Enable Groovy support
-5. Run tests from IDE
-
 ## Resources
 
-- **Nextflow Plugin Development**: https://www.nextflow.io/docs/latest/plugins.html
-- **PF4J Documentation**: https://pf4j.org/
-- **Groovy Documentation**: https://groovy-lang.org/documentation.html
-- **Spock Testing**: https://spockframework.org/
-- **BIDS Specification**: https://bids-specification.readthedocs.io/
-- **Original bids2nf**: https://github.com/AlexVCaron/bids2nf
-
-## Related Documentation
-
-- [Architecture Guide](architecture.md) - Plugin architecture
-- [Implementation Guide](implementation.md) - Step-by-step implementation
-- [Testing Guide](testing.md) - Testing strategies
-- [API Reference](api.md) - API documentation
+- [Nextflow Plugin Development](https://www.nextflow.io/docs/latest/plugins.html)
+- [Groovy Documentation](https://groovy-lang.org/documentation.html)
+- [Spock Testing](https://spockframework.org/)
+- [BIDS Specification](https://bids-specification.readthedocs.io/)
+- [libBIDS.sh parser](https://github.com/CoBrALab/libBIDS.sh)
+- [Original bids2nf](https://github.com/agahkarakuzu/bids2nf)

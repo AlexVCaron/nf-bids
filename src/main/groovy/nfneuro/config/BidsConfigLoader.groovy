@@ -4,33 +4,32 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.yaml.snakeyaml.Yaml
 import nfneuro.plugin.util.BidsLogger
-import nfneuro.plugin.config.ConfigValidator
 
 /**
  * Configuration loader for BIDS workflows
- * 
+ *
  * Loads and validates YAML configuration files
- * 
- * @reference Configuration loading: 
+ *
+ * @reference Configuration loading:
  *            https://github.com/AlexVCaron/bids2nf/blob/main/bids2nf.yaml
  */
 @Slf4j
 @CompileStatic
 class BidsConfigLoader {
-    
+
     private final Yaml yaml
-    
+
     BidsConfigLoader() {
         this.yaml = new Yaml()
     }
-    
+
     /**
      * Load configuration from YAML file
-     * 
+     *
      * @param configPath Path to bids2nf.yaml configuration file
      * @return Parsed configuration map
-     * 
-     * @reference Config loading with error handling: 
+     *
+     * @reference Config loading with error handling:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L46-L48
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L35-L48
      */
@@ -40,26 +39,26 @@ class BidsConfigLoader {
             if (!configFile.exists()) {
                 throw new FileNotFoundException("Configuration file not found: ${configPath}")
             }
-            
+
             def config = yaml.load(new FileReader(configFile)) as Map
-            
+
             // Validate configuration structure and values
-            def validationResult = ConfigValidator.validate(config)
+            def validationResult = BidsConfigValidator.validate(config)
             if (!validationResult.isValid()) {
                 def errorMsg = "Configuration validation failed for ${configPath}:\n${validationResult}"
-                log.error(errorMsg)
+                BidsLogger.logError(errorMsg)
                 throw new IllegalArgumentException(errorMsg)
             }
-            
+
             // Log warnings if any
             if (validationResult.warnings && !validationResult.warnings.isEmpty()) {
-                log.warn("Configuration warnings for ${configPath}:\n${validationResult.warnings.join('\n  ')}")
+                BidsLogger.logWarn("Configuration warnings for ${configPath}:\n${validationResult.warnings.join('\n  ')}")
             }
-            
-            log.info("Loaded BIDS configuration from: ${configPath}")
-            log.info("Configuration keys: ${config.keySet()}")
+
+            BidsLogger.logInfo("Loaded BIDS configuration from: ${configPath}")
+            BidsLogger.logInfo("Configuration keys: ${config.keySet()}")
             config.each { k, v ->
-                log.info("  ${k}: ${v?.getClass()?.simpleName} = ${v}")
+                BidsLogger.logInfo("  ${k}: ${v?.getClass()?.simpleName} = ${v}")
             }
             return config
             
