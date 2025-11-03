@@ -706,7 +706,6 @@ Channel.fromBIDS(params.bids_dir, params.config)
         anat: [data.subject, data.data.T1w]
         func: [data.subject, data.data.bold]
     }
-    .set { forked }
 ```
 
 # Related Documentation
