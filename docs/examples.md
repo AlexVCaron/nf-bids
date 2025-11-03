@@ -6,9 +6,8 @@ Practical examples for using the nf-bids plugin in various scenarios.
 
 - [Basic Examples](#basic-examples)
 - [Advanced Workflows](#advanced-workflows)
-- [Common Use Cases](#common-use-cases)
-- [Multi-Modal Studies](#multi-modal-studies)
 - [Quality Control](#quality-control)
+- [Tips and Best Practices](#tips-and-best-practices)
 
 >[!NOTE]
 >All examples need the following lines in the `nextflow.config` file to load the plugin :
@@ -23,7 +22,7 @@ Practical examples for using the nf-bids plugin in various scenarios.
 
 ## T1w brain extraction with FSL `bet`
 
-**`T1w.yaml`:**
+**`config.yaml`:**
 ```yaml
 loop_over:
 - subject
@@ -41,7 +40,7 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    ch_t1w = Channel.fromBIDS(params.bids_dir, 'T1w.yaml')
+    ch_t1w = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .map { key, data -> [
             key.findAll{ it != 'NA' }.join('_'),
             file(data.bidsParentDir) / data.data.T1w.nii
@@ -68,7 +67,7 @@ process processT1w {
 
 ## Multi-Echo Resting-State fMRI combination with `tedana`
 
-**`mersfmri.yaml`:**
+**`config.yaml`:**
 
 ```yaml
 loop_over:
@@ -90,7 +89,7 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    ch_bold = Channel.fromBIDS(params.bids_dir, 'mfmri.yaml')
+    ch_bold = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .filter { key, data -> data.data.task == 'rest' }
         .map { key, data -> [
             key.findAll{ it != 'NA' }.join('_'),
@@ -123,7 +122,7 @@ process multiEchoCombine {
 
 ## Concatenate DWI from Multiple Runs then run `dtifit`
 
-**`msdwi.yaml`:**
+**`config.yaml`:**
 
 ```yaml
 loop_over:
@@ -146,7 +145,7 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    ch_dwi = Channel.fromBIDS(params.bids_dir, 'msdwi.yaml')
+    ch_dwi = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .map { key, data ->
             def id = [data.subject, data.session].join('_')
             def meta = [id: id, subject: data.subject, session: data.session]
@@ -215,7 +214,7 @@ process processDWI {
 
 ## Cross-Modal Analysis with T1w Reference
 
-**`bold+T1w.yaml`:**
+**`config.yaml`:**
 
 ```yaml
 loop_over:
@@ -238,7 +237,7 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    ch_t1w_bold = Channel.fromBIDS(params.bids_dir, 'bold+T1w.yaml')
+    ch_t1w_bold = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .map { key, data ->
             def meta = [
                 id: key.findAll{ it != 'NA' }.join('_'),
@@ -287,9 +286,9 @@ process registerBoldToT1w {
 
 ---
 
-### Multiple Tasks Processing
+## Multiple Tasks Processing
 
-**`mtasks.yaml`:**
+**`config.yaml`:**
 
 ```yaml
 loop_over:
@@ -310,7 +309,7 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
 workflow {
-    ch_tasks = Channel.fromBIDS(params.bids_dir, 'mtasks.yaml')
+    ch_tasks = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .map { key, data ->
             def meta = [
                 id: [data.subject, data.session].join('_'),
@@ -397,16 +396,14 @@ process processMemory {
 
 ---
 
-## Common Use Cases
-
-### DWI EPI Correction
+## DWI EPI Correction
 
 >[!NOTE]
 >Using version `0.1.0-beta.2` and prior, it is not possible to perform the correct
 >**entity mapping** to split DWI, EPI and SBREF files based on, for example, the
 >`acquisition` entity (`AP` vs `PA` and such). Implementation to come very soon !
 
-**`dwi+epi.yaml`:**
+**`config.yaml`:**
 
 ```yaml
 loop_over:
@@ -433,7 +430,7 @@ params.output_dir = 'results'
 params.phase_direction = "AP" //AP,PA,RL,LR,IS,SI
 
 workflow {
-    ch_dwi_epi = Channel.fromBIDS(params.bids_dir, 'dwi+epi.yaml')
+    ch_dwi_epi = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .map { key, data ->
             def id = key.findAll{ it != 'NA' }.join('_')
             def subpath = key.findAll{ it != 'NA' }.join('/')
@@ -547,9 +544,11 @@ process applyFieldMapCorrection {
 
 ---
 
-### Quality Control with `MultiQC`, `Scilpy` and `ImageMagick`
+# Quality Control
 
-**`dwi+t1w.yaml`:**
+## Quality Control with `MultiQC`, `Scilpy` and `ImageMagick`
+
+**`config.yaml`:**
 
 ```yaml
 loop_over:
@@ -573,7 +572,7 @@ t1w:
 #!/usr/bin/env nextflow
 
 workflow {
-    ch_bids_data = Channel.fromBIDS(params.bids_dir, 'dwi+t1w.yaml')
+    ch_bids_data = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .branch { key, data ->
             dwi: data.data.dwi
             t1w: data.data.t1w
@@ -682,9 +681,9 @@ process generateMultiQC {
 }
 ```
 
-## Tips and Best Practices
+# Tips and Best Practices
 
-### 1. Filter Early
+## 1. Filter Early
 
 ```groovy
 // Good: Filter before mapping
@@ -698,7 +697,7 @@ Channel.fromBIDS(params.bids_dir, params.config)
     .filter { subject, t1w -> subject.startsWith('sub-control') }
 ```
 
-### 2. Use multiMap for Forking
+## 2. Use multiMap for Forking
 
 ```groovy
 // Efficient parallel branching
@@ -710,7 +709,7 @@ Channel.fromBIDS(params.bids_dir, params.config)
     .set { forked }
 ```
 
-## Related Documentation
+# Related Documentation
 
 - [API Reference](api.md) - Complete API documentation
 - [Configuration Guide](configuration.md) - YAML configuration
