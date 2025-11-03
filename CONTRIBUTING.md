@@ -21,17 +21,17 @@ Thank you for your interest in contributing to the nf-bids plugin! This guide wi
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/bids2nf.git
-cd bids2nf/plugins/nf-bids
+git clone https://github.com/YOUR_USERNAME/nf-bids.git
+cd nf-bids/
 ```
 
 ### 2. Set Up Development Environment
 
 **Prerequisites**:
 - Java 11 or later
-- Nextflow 25.10.0 or later
+- [Nextflow 23.10.0](https://nextflow.io) or later
 - Gradle 8.14 (included via wrapper)
-- Bash (for libBIDS.sh)
+- Bash (for [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh))
 
 **Verify setup**:
 ```bash
@@ -54,7 +54,7 @@ make install
 
 # Test with a real workflow
 cd validation/
-nextflow run main.nf --bids_dir ../tests/data/custom/ds-dwi
+nextflow run main.nf
 ```
 
 ---
@@ -71,14 +71,14 @@ git checkout -b fix/your-bug-fix
 
 ### Make Your Changes
 
-1. **Write code** following our style guidelines
-2. **Add tests** for new functionality
-3. **Update documentation** as needed
-4. **Run tests** to ensure everything works
+1. **Write code** following [guidelines](#groovy-style-guidelines)
+2. **[Add tests](#unit-tests)** for new functionality
+4. **Update documentation** as needed
+5. **Run tests** to ensure everything works
 
 ### Commit Your Changes
 
-Use clear, descriptive commit messages:
+Use clear, descriptive commit messages, e.g. support for a derivative :
 
 ```bash
 git add .
@@ -88,6 +88,11 @@ git commit -m "Add support for BIDS derivatives
 - Add tests for derivatives handling
 - Update documentation with examples"
 ```
+
+>[!NOTE]
+>In a `bash` terminal, if a string `"` is not quoted by its sibling on the same row,
+>next lines (pressing `enter`) will be considered as part of it, until a line with a
+>_non-escaped_ `"` is met.
 
 **Commit Message Format**:
 - First line: Brief summary (50 chars or less)
@@ -112,24 +117,7 @@ Then open a Pull Request on GitHub with:
 
 ### Unit Tests
 
-All new functionality must have unit tests:
-
-```groovy
-// Example test in src/test/groovy/nfneuro/plugin/model/
-class MyNewFeatureTest extends Specification {
-    
-    def "should do something useful"() {
-        given:
-        def instance = new MyNewFeature()
-        
-        when:
-        def result = instance.doSomething()
-        
-        then:
-        result != null
-    }
-}
-```
+All new functionality must have unit tests in `src/test/groovy/nfneuro`.
 
 **Test Philosophy**:
 - Keep tests minimal (< 10 per class)
@@ -145,10 +133,6 @@ class MyNewFeatureTest extends Specification {
 
 # Specific test class
 ./gradlew test --tests MyNewFeatureTest
-
-# With coverage report
-./gradlew test jacocoTestReport
-# Open: build/reports/jacoco/test/html/index.html
 ```
 
 ### Integration Tests
@@ -157,8 +141,26 @@ Test with real BIDS datasets:
 
 ```bash
 cd validation/
-nextflow run main.nf --bids_dir /path/to/test/dataset
+nextflow run main.nf
 ```
+
+>[!NOTE]
+>The base validation test might not catch outputs produced by your changes, but it's
+>a good sanity test that other stuff still works. It is by no means an insurance of
+>their validity.
+
+Then, look in the **nf-test** test cases, if one could be improved to cover your changes. Those
+tests cover the full length of [bids-datasets](https://bids.neuroimaging.io/datasets/examples.html),
+using one of the many [test configurations](validation/configs), plus a few more complex
+[use-cases](validation/data/custom). Run the full suite :
+
+```bash
+nf-test test validation/
+```
+
+>[!IMPORTANT]
+>If you changed **nf-test** test cases, then you need to run those specific suites with `--update-snapshot`,
+>then re-run the full suite, to see if you affected any other cases.
 
 ---
 
@@ -205,19 +207,6 @@ class MyClass {
 - **Imports**: Organized, no wildcards
 - **Comments**: Clear JavaDoc for public APIs
 
-### Channel Operations
-
-Always use `.bind()` for channel operations:
-
-```groovy
-// ✅ Correct
-queue.bind(item)
-queue.bind(Channel.STOP)
-
-// ❌ Wrong
-queue << item
-```
-
 ### Type Safety
 
 Use explicit types with @CompileStatic:
@@ -239,32 +228,11 @@ def x = item[1]
 
 When adding features, update relevant docs:
 
-- **README.md** - For user-facing changes
-- **API docs** - For new public methods
-- **Examples** - For new use cases
-- **Architecture docs** - For structural changes
-
-### Documentation Style
-
-```markdown
-# Clear Headers
-
-Brief introduction explaining the concept.
-
-## Subsections
-
-Detailed information with examples.
-
-### Code Examples
-
-```groovy
-// Well-commented example
-def result = myMethod()
-```
-
-**Tips**: Bullet points for lists
-**Note**: Important information
-```
+- [README.md](README.md) - For user-facing changes
+- [API docs](docs/api.md) - For new public methods
+- [Examples](docs/examples.md) - For new use cases
+- [Configuration](docs/configuration.md) - For configuration changes
+- [Architecture docs](docs/architecture.md) - For structural changes
 
 ---
 
@@ -274,6 +242,7 @@ Before submitting your PR, ensure:
 
 - [ ] Code follows style guidelines
 - [ ] All tests pass (`./gradlew test`)
+- [ ] Validation tests pass
 - [ ] New functionality has tests
 - [ ] Documentation is updated
 - [ ] Commit messages are clear
@@ -392,9 +361,8 @@ If adding a new set handler:
 
 ## 📞 Getting Help
 
-- **Questions**: Open a [discussion](https://github.com/AlexVCaron/bids2nf/discussions)
-- **Bugs**: Create an [issue](https://github.com/AlexVCaron/bids2nf/issues)
-- **Chat**: Join our Slack/Discord (if available)
+- **Questions**: Open a [discussion](https://github.com/AlexVCaron/nf-bids/discussions)
+- **Bugs**: Create an [issue](https://github.com/AlexVCaron/nf-bids/issues)
 
 ---
 
@@ -440,12 +408,7 @@ If adding a new set handler:
 
 ## 🙏 Recognition
 
-Contributors will be:
-- Listed in the CONTRIBUTORS file
-- Mentioned in release notes
-- Credited in the documentation
-
-Thank you for contributing to nf-bids! 🎉
+Thank you for contributing to nf-bids! We'll try to acknowlegde you every time we can 🎉
 
 ---
 
