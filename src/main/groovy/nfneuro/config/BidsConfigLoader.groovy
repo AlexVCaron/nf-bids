@@ -52,13 +52,13 @@ class BidsConfigLoader {
 
             // Log warnings if any
             if (validationResult.warnings && !validationResult.warnings.isEmpty()) {
-                BidsLogger.logWarn("Configuration warnings for ${configPath}:\n${validationResult.warnings.join('\n  ')}")
+                BidsLogger.logWarning("Configuration warnings for ${configPath}:\n${validationResult.warnings.join('\n  ')}")
             }
 
-            BidsLogger.logInfo("Loaded BIDS configuration from: ${configPath}")
-            BidsLogger.logInfo("Configuration keys: ${config.keySet()}")
+            BidsLogger.logProgress("Loaded BIDS configuration from: ${configPath}")
+            BidsLogger.logProgress("Configuration keys: ${config.keySet()}")
             config.each { k, v ->
-                BidsLogger.logInfo("  ${k}: ${v?.getClass()?.simpleName} = ${v}")
+                BidsLogger.logProgress("  ${k}: ${v?.getClass()?.simpleName} = ${v}")
             }
             return config
             

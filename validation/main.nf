@@ -279,6 +279,9 @@ workflow main_workflow {
         def stats = generateItemStats(item)
         def statsJson = groovy.json.JsonOutput.toJson(stats)
         println "ITEM_STATS: ${statsJson}"
+        if (params.debug) {
+            println "ITEM_DEBUG: ${item}"
+        }
         return item  // Pass through for counting and emit
     }
     

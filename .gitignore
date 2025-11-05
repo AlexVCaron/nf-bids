@@ -6,3 +6,8 @@
 # Ignore Gradle build output directory
 build
 work
+
+# Validation runs
+*.nf-test/
+*.nf-test*
+*.nf-test.log

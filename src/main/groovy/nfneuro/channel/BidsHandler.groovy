@@ -90,7 +90,7 @@ class BidsHandler {
         List<BidsFile> bidsFiles = dataset.getFiles()
 
         // Route to appropriate handlers based on configuration
-        DataflowQueue results = processDatasets(bidsFiles, config, configAnalysis, loopOverEntities)
+        DataflowQueue results = processDatasets(bidsDir, bidsFiles, config, configAnalysis, loopOverEntities)
 
         // Apply cross-modal broadcasting
         DataflowQueue finalResults = applyCrossModalBroadcasting(results, config, loopOverEntities)
@@ -146,6 +146,7 @@ class BidsHandler {
      * Routes parsed data to named, sequential, mixed, or plain set handlers
      * based on configuration analysis
      *
+     * @param datasetRoot Root path of BIDS dataset
      * @param bidsFiles List of BidsFile objects from parser
      * @param config Configuration map
      * @param analysis Configuration analysis
@@ -156,6 +157,7 @@ class BidsHandler {
      *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L69-L92
      */
     private DataflowQueue processDatasets(
+            String datasetRoot,
             List<BidsFile> bidsFiles,
             Map config,
             Map analysis,
@@ -167,28 +169,28 @@ class BidsHandler {
         if (analysis.hasNamedSets) {
             bidsLogger.logProgress("bids2nf", "├─ ⑆ Processing named sets >>>")
             NamedSetHandler handler = new NamedSetHandler()
-            DataflowQueue namedResults = handler.process(bidsFiles, config, loopOverEntities, suffixMapping)
+            DataflowQueue namedResults = handler.process(datasetRoot, bidsFiles, config, loopOverEntities, suffixMapping)
             transferQueueItems(namedResults, combinedResults)
         }
 
         if (analysis.hasSequentialSets) {
             bidsLogger.logProgress("bids2nf", "├─ ⑇ Processing sequential sets ...")
             SequentialSetHandler handler = new SequentialSetHandler()
-            DataflowQueue sequentialResults = handler.process(bidsFiles, config, loopOverEntities, suffixMapping)
+            DataflowQueue sequentialResults = handler.process(datasetRoot, bidsFiles, config, loopOverEntities, suffixMapping)
             transferQueueItems(sequentialResults, combinedResults)
         }
 
         if (analysis.hasMixedSets) {
             bidsLogger.logProgress("bids2nf", "├─ ⑈ Processing mixed sets ...")
             MixedSetHandler handler = new MixedSetHandler()
-            DataflowQueue mixedResults = handler.process(bidsFiles, config, loopOverEntities, suffixMapping)
+            DataflowQueue mixedResults = handler.process(datasetRoot, bidsFiles, config, loopOverEntities, suffixMapping)
             transferQueueItems(mixedResults, combinedResults)
         }
 
         if (analysis.hasPlainSets) {
             bidsLogger.logProgress("bids2nf", "├─ ⑉ Processing plain sets ...")
             PlainSetHandler handler = new PlainSetHandler()
-            DataflowQueue plainResults = handler.process(bidsFiles, config, loopOverEntities, suffixMapping)
+            DataflowQueue plainResults = handler.process(datasetRoot, bidsFiles, config, loopOverEntities, suffixMapping)
             transferQueueItems(plainResults, combinedResults)
         }
 
