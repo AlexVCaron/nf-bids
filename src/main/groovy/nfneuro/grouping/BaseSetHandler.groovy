@@ -30,13 +30,40 @@ abstract class BaseSetHandler {
      * @param suffixMapping Suffix to config key mapping (for suffix_maps_to)
      * @return Processed channel data
      */
-    abstract DataflowQueue process(
+    DataflowQueue process(
         String datasetRoot,
         List<BidsFile> bidsFiles,
         Map config,
         List<String> loopOverEntities,
         Map<String, String> suffixMapping
-    )
+    ) {
+        BidsLogger.logProgress(getLogGroup(), "Processing mixed sets with ${bidsFiles.size()} files")
+        BidsLogger.logProgress(getLogGroup(), "Loop-over entities: ${loopOverEntities}")
+
+        def results = new DataflowQueue()
+        def processedCount = 0
+        def filteredCount = 0
+
+        // Group files by loop-over entities first
+        def filesByGroup = BidsEntityUtils.groupByEntities(bidsFiles, loopOverEntities)
+
+        // Process each group
+        filesByGroup.each { groupKey, filesInGroup ->
+            def channelData = processGroup(datasetRoot, filesInGroup, config, loopOverEntities, suffixMapping)
+
+            if (channelData) {
+                results << channelData
+                processedCount++
+            } else {
+                filteredCount++
+            }
+        }
+
+        // Return unbound queue - will be consumed by transferQueueItems
+        logProcessingStats(processedCount, filteredCount)
+
+        return results
+    }
 
     /**
      * Get set configuration from suffix config
@@ -45,6 +72,35 @@ abstract class BaseSetHandler {
      * @return Set configuration (plain_set, named_set, etc.)
      */
     protected abstract Map getSetConfig(Map suffixConfig)
+
+    /**
+     * Get set name
+     *
+     * @return Name of the set type (e.g., "plain_set", "named_set")
+     */
+    protected abstract String getSetName()
+
+    /**
+     * Process a group of files
+     *
+     * @param datasetRoot Root path of BIDS dataset
+     * @param filesInGroup Files in the current group
+     * @param config Configuration map
+     * @param loopOverEntities Entities to group by
+     * @param suffixMapping Suffix to config key mapping
+     * @return BidsChannelData for the group or null if filtered out
+     */
+    protected abstract BidsChannelData processGroup(
+        String datasetRoot,
+        List<BidsFile> filesInGroup,
+        Map config,
+        List<String> loopOverEntities,
+        Map<String, String> suffixMapping
+    )
+
+    protected String getLogGroup() {
+        return "nf-bids-${getSetName()}"
+    }
 
     /**
      * Find matching grouping pattern for given file
@@ -125,15 +181,14 @@ abstract class BaseSetHandler {
      * @param filteredCount Files filtered
      */
     protected void logProcessingStats(
-            String handlerName,
             int processedCount,
             int filteredCount) {
 
-        BidsLogger.logProgress("nf-bids-handler", "${handlerName}: ${processedCount} emitted, ${filteredCount} filtered")
+        BidsLogger.logProgress(getLogGroup(), "${processedCount} emitted, ${filteredCount} filtered")
 
         if (filteredCount > 0) {
             def filterRatio = (filteredCount * 100) / (processedCount + filteredCount)
-            BidsLogger.logProgress("nf-bids-handler", "Filter ratio: ${filterRatio.round(1)}%")
+            BidsLogger.logProgress(getLogGroup(), "Filter ratio: ${filterRatio.round(1)}%")
         }
     }
 

@@ -17,10 +17,7 @@ nextflow_workflow {
             assert workflow.out.bids_channel
             def results = workflow.out.bids_channel.collect()
             def json = groovy.json.JsonOutput.toJson(results)
-            def serialized = new groovy.json.JsonSlurper().parseText(json)
-            assert snapshot(
-                groovy.json.JsonOutput.toJson(serialized)
-            ).match()
+            assert snapshot(new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(json))).match()
         }
     }
 }

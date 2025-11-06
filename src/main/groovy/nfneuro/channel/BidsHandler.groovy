@@ -103,7 +103,7 @@ class BidsHandler {
         List<BidsFile> bidsFiles = dataset.getFiles()
 
         // Route to appropriate handlers based on configuration
-        DataflowQueue results = processDatasets(new File(bidsDir).parent, bidsFiles, config, configAnalysis, loopOverEntities)
+        DataflowQueue results = processDatasets(getBidsParentDir(), bidsFiles, config, configAnalysis, loopOverEntities)
 
         // Apply cross-modal broadcasting
         DataflowQueue finalResults = applyCrossModalBroadcasting(results, config, loopOverEntities)
@@ -136,17 +136,17 @@ class BidsHandler {
 
         if (count == 0) {
             throw new IllegalStateException(
-                "├─ ⛔️ ERROR\n" +
-                "[nf-bids-handler] └─ No data groups were processed! This could indicate:\n" +
-                "  - No files match the configured patterns in bids2nf.yaml\n" +
-                "  - Incorrect BIDS directory structure\n" +
-                "  - Configuration issues with entity matching\n" +
-                "  - Missing required files for complete groupings"
+                '├─ ⛔️ ERROR\n' +
+                '[nf-bids-handler] └─ No data groups were processed! This could indicate:\n' +
+                '  - No files match the configured patterns in bids2nf.yaml\n' +
+                '  - Incorrect BIDS directory structure\n' +
+                '  - Configuration issues with entity matching\n' +
+                '  - Missing required files for complete groupings'
             )
         }
 
-        BidsLogger.logProgress("nf-bids-handler", "├─ ✅ SUCCESS")
-        BidsLogger.logProgress("nf-bids-handler", "└─ nf-bids job complete: ${count} data groups processed")
+        BidsLogger.logProgress('nf-bids-handler', '├─ ✅ SUCCESS')
+        BidsLogger.logProgress('nf-bids-handler', "└─ nf-bids job complete: ${count} data groups processed")
 
         // Signal completion with poison pill - this is the ONLY way to close the channel
         target << Channel.STOP
@@ -255,9 +255,9 @@ class BidsHandler {
                 return
             }
 
-            List tupleList = (List)tuple
-            def groupingKey = tupleList[0]
-            def enrichedData = tupleList[1] as Map
+            List tupleList = tuple as List
+            List groupingKey = tupleList[0]
+            Map enrichedData = tupleList[1] as Map
             Map<String, String> entityValues = extractEntityValues(groupingKey, loopOverEntities)
 
             String loopingKey = constructLoopingKey(entityValues, loopOverEntities)
@@ -283,22 +283,17 @@ class BidsHandler {
         DataflowQueue broadcastedResults = new DataflowQueue()
 
         groupedData.each { loopingKey, groupEntries ->
-            def hasBroadcasted = false
+            boolean hasBroadcasted = false
             BidsLogger.logProgress("nf-bids-handler", "├─ Applying broadcasting for looping key: ${loopingKey} with ${groupEntries.size()} entries")
             crossModalData.findAll { key, value -> loopingKey.contains(key) }
                 .each { availableKey, available ->
                     if (!hasBroadcasted) {
                         BidsLogger.logProgress("nf-bids-handler", "├─ Applying cross-modal broadcasting for key: ${loopingKey} with available data: ${availableKey} | ${available.keySet().join(', ')}")
-                        groupEntries //.findAll { entry ->
-                        //     def enrichedData = (entry as List)[1] as Map
-
-                        //     return loopingKey != availableKey || (enrichedData.data as Map<String, Object>).keySet() != available.keySet()
-                        // }
-                        .each { entry ->
-                            def groupingKey = (entry as List)[0]
-                            def enrichedData = (entry as List)[1] as Map
+                        groupEntries.each { entry ->
+                            List groupingKey = (entry as List)[0]
+                            Map enrichedData = (entry as List)[1] as Map
                             BidsLogger.logProgress("nf-bids-handler", "├─ Enhancing entry for grouping key: ${groupingKey}")
-                            def enhanced = applyIncludeCrossModal(
+                            Map enhanced = applyIncludeCrossModal(
                                 enrichedData,
                                 available,
                                 config
@@ -520,7 +515,7 @@ class BidsHandler {
      * @return Parent directory path
      */
     private String getBidsParentDir() {
-        return bidsDir ? new File(bidsDir).parent : ""
+        return bidsDir ? new File(bidsDir).parent : ''
     }
 
     /**
@@ -553,7 +548,7 @@ class BidsHandler {
         }
 
         // Build suffix mapping from configuration
-        this.suffixMapping = SuffixMapper.buildSuffixMapping(config)
+        this.suffixMapping = SuffixMapper.suffixMapping(config)
         if (suffixMapping && !suffixMapping.isEmpty()) {
             BidsLogger.logProgress("nf-bids-handler", "├─ Built suffix mappings: ${suffixMapping}")
         }
@@ -563,7 +558,7 @@ class BidsHandler {
         this.loopOverEntities = configAnalyzer.getLoopOverEntities(config)
 
         Map summary = configAnalyzer.getConfigurationSummary(config)
-        logConfigurationSummary(config, summary, loopOverEntities)
+        logConfigurationSummary(summary, loopOverEntities)
     }
 
     /**
@@ -575,20 +570,35 @@ class BidsHandler {
      * @reference Logging format:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L61-L67
      */
-    private void logConfigurationSummary(Map config, Map summary, List<String> loopOverEntities) {
-        BidsLogger.logProgress("nf-bids-handler", "┌─ ✓ Configuration analysis complete:")
-        BidsLogger.logProgress("nf-bids-handler", "├─ ↬ Loop over entities: ${loopOverEntities.join(', ')}")
+    private void logConfigurationSummary(Map summary, List<String> loopOverEntities) {
+        final String handler = 'nf-bids-handler'
+        final String separator = ', '
+
+        BidsLogger.logProgress(handler, '┌─ ✓ Configuration analysis complete:')
+        BidsLogger.logProgress(handler, "├─ ↬ Loop over entities: ${loopOverEntities.join(separator)}")
 
         Map namedSets = summary.namedSets as Map
         Map sequentialSets = summary.sequentialSets as Map
         Map mixedSets = summary.mixedSets as Map
         Map plainSets = summary.plainSets as Map
 
-        BidsLogger.logProgress("nf-bids-handler", "├─ ⑆ Named sets: ${namedSets.count} patterns (${(namedSets.suffixes as List).join(', ')})")
-        BidsLogger.logProgress("nf-bids-handler", "├─ ⑇ Sequential sets: ${sequentialSets.count} patterns (${(sequentialSets.suffixes as List).join(', ')})")
-        BidsLogger.logProgress("nf-bids-handler", "├─ ⑈ Mixed sets: ${mixedSets.count} patterns (${(mixedSets.suffixes as List).join(', ')})")
-        BidsLogger.logProgress("nf-bids-handler", "├─ ⑉ Plain sets: ${plainSets.count} patterns (${(plainSets.suffixes as List).join(', ')})")
-        BidsLogger.logProgress("nf-bids-handler", "├─ = TOTAL patterns: ${summary.totalPatterns}")
+        String namedSetMsg = "├─ ⑆ Named sets: ${namedSets.count} patterns " +
+            "(${(namedSets.suffixes as List).join(separator)})"
+        BidsLogger.logProgress(handler, namedSetMsg)
+
+        String seqSetMsg = "├─ ⑇ Sequential sets: ${sequentialSets.count} patterns " +
+            "(${(sequentialSets.suffixes as List).join(separator)})"
+        BidsLogger.logProgress(handler, seqSetMsg)
+
+        String mixedSetMsg = "├─ ⑈ Mixed sets: ${mixedSets.count} patterns " +
+            "(${(mixedSets.suffixes as List).join(separator)})"
+        BidsLogger.logProgress(handler, mixedSetMsg)
+
+        String plainSetMsg = "├─ ⑉ Plain sets: ${plainSets.count} patterns " +
+            "(${(plainSets.suffixes as List).join(separator)})"
+        BidsLogger.logProgress(handler, plainSetMsg)
+
+        BidsLogger.logProgress(handler, "├─ = TOTAL patterns: ${summary.totalPatterns}")
     }
 
 }

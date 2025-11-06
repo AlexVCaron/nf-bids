@@ -72,28 +72,28 @@ class BidsValidator {
         }
         */ // End v1.1 implementation
     }
-    
+
     /**
      * Build validation command with ignore codes
-     * 
+     *
      * ⚠️ v1.1 Feature - Not yet implemented
-     * 
+     *
      * @param bidsDir BIDS directory
      * @param ignoreCodes Codes to ignore
      * @return Command string
-     * 
-     * @reference Validation command: 
+     *
+     * @reference Validation command:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf#L17-L26
      */
-    private String buildValidationCommand(String bidsDir, List<Integer> ignoreCodes) {
-        def ignoreFlags = ignoreCodes.collect { "--ignoreWarnings ${it}" }.join(' ')
-        
-        // Try Docker command first, fall back to local bids-validator if available
-        return """
-            docker run --rm -v ${bidsDir}:/data:ro ${VALIDATOR_IMAGE} /data ${ignoreFlags}
-        """.stripIndent().trim()
-    }
-    
+    // private String buildValidationCommand(String bidsDir, List<Integer> ignoreCodes) {
+    //     def ignoreFlags = ignoreCodes.collect { "--ignoreWarnings ${it}" }.join(' ')
+
+    //     // Try Docker command first, fall back to local bids-validator if available
+    //     return """
+    //         docker run --rm -v ${bidsDir}:/data:ro ${VALIDATOR_IMAGE} /data ${ignoreFlags}
+    //     """.stripIndent().trim()
+    // }
+
     /**
      * Perform pre-flight checks before main workflow
      * 

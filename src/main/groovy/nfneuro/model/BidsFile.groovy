@@ -28,8 +28,9 @@ class BidsFile {
     public static final List<String> PRIMARY_EXTENSIONS = [
         'nii.gz',
         'nii',
-        'json',
-        'tsv'
+        'tsv',
+        'edf',
+        'eeg'
     ]
 
     String path

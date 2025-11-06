@@ -31,39 +31,8 @@ import groovyx.gpars.dataflow.DataflowQueue
 class SequentialSetHandler extends BaseSetHandler {
 
     @Override
-    DataflowQueue process(
-            String datasetRoot,
-            List<BidsFile> bidsFiles,
-            Map config,
-            List<String> loopOverEntities,
-            Map<String, String> suffixMapping) {
-
-        BidsLogger.logProgress("nf-bids-sequential-set", "Processing sequential sets with ${bidsFiles.size()} files")
-        BidsLogger.logProgress("nf-bids-sequential-set", "Loop-over entities: ${loopOverEntities}")
-
-        def results = new DataflowQueue()
-        def processedCount = 0
-        def filteredCount = 0
-
-        // Group files by loop-over entities first
-        def filesByGroup = BidsEntityUtils.groupByEntities(bidsFiles, loopOverEntities)
-        BidsLogger.logProgress("nf-bids-sequential-set", "Created ${filesByGroup.size()} groups from ${bidsFiles.size()} files with keys: ${filesByGroup.keySet()}")
-
-        // Process each group
-        filesByGroup.each { groupKey, filesInGroup ->
-            def channelData = processSequentialSetGroup(datasetRoot, filesInGroup, config, loopOverEntities, suffixMapping)
-
-            if (channelData) {
-                results << channelData
-                processedCount++
-            } else {
-                filteredCount++
-            }
-        }
-
-        logProcessingStats("Sequential set", processedCount, filteredCount)
-
-        return results
+    protected String getSetName() {
+        return "sequential_set"
     }
 
     /**
@@ -81,7 +50,8 @@ class SequentialSetHandler extends BaseSetHandler {
      * @reference Sequential set processing:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L95-L230
      */
-    private BidsChannelData processSequentialSetGroup(
+    @Override
+    protected BidsChannelData processGroup(
             String datasetRoot,
             List<BidsFile> filesInGroup,
             Map config,
@@ -108,7 +78,7 @@ class SequentialSetHandler extends BaseSetHandler {
             // Get the entities to sequence by (single or multiple)
             def sequenceByEntities = getSequenceByEntities(sequentialSetConfig)
             if (!sequenceByEntities || sequenceByEntities.isEmpty()) {
-                BidsLogger.logProgress("nf-bids-sequential-set", "Sequential set config missing sequence entities for suffix: ${suffix}")
+                BidsLogger.logProgress(getLogGroup(), "Sequential set config missing sequence entities for suffix: ${suffix}")
                 return
             }
 
@@ -121,14 +91,14 @@ class SequentialSetHandler extends BaseSetHandler {
 
             // Skip if any required sequence entity is missing
             if (sequenceValues.any { it == null }) {
-                BidsLogger.logProgress("nf-bids-sequential-set", "File missing required sequence entities: ${file.filename}")
+                BidsLogger.logProgress(getLogGroup(), "File missing required sequence entities: ${file.filename}")
                 return
             }
 
             // Apply entity filters if specified
             if (sequentialSetConfig.filter) {
                 if (!BidsEntityUtils.entitiesMatch(file.entities, sequentialSetConfig.filter as List)) {
-                    BidsLogger.logProgress("nf-bids-sequential-set", "File filtered by pattern: ${file.filename}")
+                    BidsLogger.logProgress(getLogGroup(), "File filtered by pattern: ${file.filename}")
                     return
                 }
             }
@@ -139,7 +109,7 @@ class SequentialSetHandler extends BaseSetHandler {
                     String normalizedEntity = BidsEntity.normalizeName(entityName)
                     String entityValue = file.getEntityValue(normalizedEntity)
                     if (entityValue && entityValue != "NA") {
-                        BidsLogger.logProgress("nf-bids-sequential-set", "File excluded by entity ${entityName}: ${file.filename}")
+                        BidsLogger.logProgress(getLogGroup(), "File excluded by entity ${entityName}: ${file.filename}")
                         return
                     }
                 }
@@ -222,7 +192,7 @@ class SequentialSetHandler extends BaseSetHandler {
             }
         }
 
-        BidsLogger.logProgress("nf-bids-sequential-set", "Sequential set emitted with ${sequentialSets.size()} suffixes, key: ${groupingKey}")
+        BidsLogger.logProgress(getLogGroup(), "Sequential set emitted with ${sequentialSets.size()} suffixes, key: ${groupingKey}")
 
         return channelData
     }

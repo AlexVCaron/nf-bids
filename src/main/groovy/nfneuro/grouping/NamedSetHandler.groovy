@@ -35,7 +35,7 @@ class NamedSetHandler extends BaseSetHandler {
     /**
      * Build nested map for a file grouping by extension type
      */
-    private Map<String, String> buildNestedMapForFile(String datasetRoot, BidsFile file, List<BidsFile> allFiles) {
+    private Map<String, String> nestedMapForFile(String datasetRoot, BidsFile file, List<BidsFile> allFiles) {
         def baseName = file.getBasename()
         def nestedMap = [:]
 
@@ -49,39 +49,8 @@ class NamedSetHandler extends BaseSetHandler {
     }
 
     @Override
-    DataflowQueue process(
-            String datasetRoot,
-            List<BidsFile> bidsFiles,
-            Map config,
-            List<String> loopOverEntities,
-            Map<String, String> suffixMapping) {
-
-        BidsLogger.logProgress("nf-bids-named-set", "Processing named sets with ${bidsFiles.size()} files")
-        BidsLogger.logProgress("nf-bids-named-set", "Loop-over entities: ${loopOverEntities}")
-
-        def results = new DataflowQueue()
-        def processedCount = 0
-        def filteredCount = 0
-
-        // Group files by loop-over entities first
-        def filesByGroup = BidsEntityUtils.groupByEntities(bidsFiles, loopOverEntities)
-        BidsLogger.logProgress("nf-bids-named-set", "Created ${filesByGroup.size()} groups from ${bidsFiles.size()} files with keys: ${filesByGroup.keySet()}")
-
-        // Process each group
-        filesByGroup.each { groupKey, filesInGroup ->
-            def channelData = processNamedSetGroup(datasetRoot, filesInGroup, config, loopOverEntities, suffixMapping)
-
-            if (channelData) {
-                results << channelData
-                processedCount++
-            } else {
-                filteredCount++
-            }
-        }
-
-        logProcessingStats("Named set", processedCount, filteredCount)
-
-        return results
+    protected String getSetName() {
+        return "named_set"
     }
 
     /**
@@ -99,7 +68,8 @@ class NamedSetHandler extends BaseSetHandler {
      *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_named_sets.nf#L1-L70
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L20-L60
      */
-    private BidsChannelData processNamedSetGroup(
+    @Override
+    protected BidsChannelData processGroup(
             String datasetRoot,
             List<BidsFile> filesInGroup,
             Map config,
@@ -112,26 +82,26 @@ class NamedSetHandler extends BaseSetHandler {
 
         filesInGroup.each { file ->
             def suffix = file.suffix
-            BidsLogger.logProgress("nf-bids-named-set", "Processing file: ${file.filename} with suffix: ${suffix}")
+            BidsLogger.logProgress(getLogGroup(), "Processing file: ${file.filename} with suffix: ${suffix}")
             if (!suffix) return
 
             // Resolve config key using suffix mapping
             def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(suffix, suffixMapping ?: [:])
 
             def suffixConfig = config.get(configKey) as Map
-            BidsLogger.logProgress("nf-bids-named-set", "Suffix config (key: ${configKey}): ${suffixConfig}")
+            BidsLogger.logProgress(getLogGroup(), "Suffix config (key: ${configKey}): ${suffixConfig}")
             if (!suffixConfig) return
 
             def namedSetConfig = getSetConfig(suffixConfig)
-            BidsLogger.logProgress("nf-bids-named-set", "Named set config: ${namedSetConfig}")
+            BidsLogger.logProgress(getLogGroup(), "Named set config: ${namedSetConfig}")
             if (!namedSetConfig) return
 
             // Use pattern matching to find matching group name
             // Find which named group this file belongs to
             def groupName = findMatchingGroupName(file, namedSetConfig)
-            BidsLogger.logProgress("nf-bids-named-set", "Matched group name: ${groupName}")
+            BidsLogger.logProgress(getLogGroup(), "Matched group name: ${groupName}")
             if (!groupName) {
-                BidsLogger.logProgress("nf-bids-named-set", "No matching group pattern for file: ${file.filename}")
+                BidsLogger.logProgress(getLogGroup(), "No matching group pattern for file: ${file.filename}")
                 return
             }
 
@@ -172,7 +142,7 @@ class NamedSetHandler extends BaseSetHandler {
                         entityMap[entity] = filesInGroup[0]?.getEntityValue(entity) ?: "NA"
                     }
                     def entityDesc = loopOverEntities.collect { entity -> "${entity}: ${entityMap[entity]}" }.join(", ")
-                    BidsLogger.logProgress("nf-bids-named-set", "Entities ${entityDesc}, Suffix ${suffix}: Missing required groups: ${missing}. Found: ${foundGroups}")
+                    BidsLogger.logProgress(getLogGroup(), "Entities ${entityDesc}, Suffix ${suffix}: Missing required groups: ${missing}. Found: ${foundGroups}")
                 }
             } else {
                 // No required groups specified, accept all groups
@@ -198,7 +168,7 @@ class NamedSetHandler extends BaseSetHandler {
 
             def groupMap = groups.collectEntries { groupName, file ->
                 // Build nested file data map by extension type
-                [groupName, buildNestedMapForFile(datasetRoot, file, allFiles)]
+                [groupName, nestedMapForFile(datasetRoot, file, allFiles)]
             }
             channelData.addSuffixData(configKey, groupMap)  // Use config key, not file suffix
         }
@@ -218,7 +188,7 @@ class NamedSetHandler extends BaseSetHandler {
             }
         }
 
-        BidsLogger.logProgress("nf-bids-named-set", "Named set emitted with ${validSuffixes.size()} suffixes, key: ${groupingKey}")
+        BidsLogger.logProgress(getLogGroup(), "Named set emitted with ${validSuffixes.size()} suffixes, key: ${groupingKey}")
 
         return channelData
     }

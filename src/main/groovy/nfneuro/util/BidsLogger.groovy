@@ -151,7 +151,11 @@ class BidsLogger {
      * @param duration Duration in milliseconds
      */
     static void logTiming(String context, String operation, long duration) {
-        def seconds = duration / 1000.0
+        logTiming(context, operation, duration as BigDecimal)
+    }
+
+    static void logTiming(String context, String operation, BigDecimal duration) {
+        BigDecimal seconds = duration / 1000.0
         logDebug(context, "⏱ ${operation} took ${seconds}s")
     }
 
@@ -164,12 +168,12 @@ class BidsLogger {
      * @return Result of closure
      */
     static <T> T withTiming(String context, String operation, Closure<T> closure) {
-        def start = System.currentTimeMillis()
+        BigDecimal start = System.currentTimeMillis()
         try {
             return closure.call()
         } finally {
-            def duration = System.currentTimeMillis() - start
-            logTiming(context, operation, duration)
+            BigDecimal duration = System.currentTimeMillis() - start
+            logTiming(context, operation, duration.longValue())
         }
     }
 

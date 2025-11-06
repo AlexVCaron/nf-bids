@@ -8,6 +8,9 @@ import nextflow.plugin.extension.Factory
 import nfneuro.plugin.parser.BidsParser
 import nfneuro.plugin.util.BidsLogger
 import groovyx.gpars.dataflow.DataflowWriteChannel
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.Files
 
 /**
  * Channel factory for creating BIDS-structured Nextflow channels
@@ -19,12 +22,7 @@ import groovyx.gpars.dataflow.DataflowWriteChannel
  *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf
  */
 @Slf4j
-// @CompileStatic - TODO: Complex dynamic features require significant refactoring:
-//   - Multiple assignment destructuring (def (a,b) = list)
-//   - Dynamic Map property access (map.property vs map['property'])
-//   - Dynamic list operations (groupingKey[index])
-//   - Collection type inference challenges
-//   Recommend refactoring to use explicit data classes instead of dynamic Maps
+@CompileStatic
 class BidsChannelFactory {
 
     private final Session session
@@ -78,36 +76,33 @@ class BidsChannelFactory {
      * @param bidsDir Path to BIDS dataset
      * @param configPath Path to configuration file
      * @param options Options map
-     *
-     * @reference Validation logic:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf#L55-L85
      */
     private void preFlightChecks(String bidsDir, String configPath, Map options) {
-        BidsLogger.logProgress("✈︎✈︎✈︎ Pre-flight checks started")
+        BidsLogger.logProgress('✈︎✈︎✈︎ Pre-flight checks started')
 
         // Validate BIDS directory exists
-        File bidsPath = new File(bidsDir)
-        if (!bidsPath.exists() || !bidsPath.isDirectory()) {
+        Path bidsPath = Paths.get(bidsDir)
+        if (!Files.exists(bidsPath) || !Files.isDirectory(bidsPath)) {
             throw new IllegalArgumentException("BIDS directory does not exist: ${bidsDir}")
         }
 
         // Validate configuration file if provided
         if (configPath) {
-            def configFile = new File(configPath)
-            if (!configFile.exists()) {
+            Path configFile = Paths.get(configPath)
+            if (!Files.exists(configFile)) {
                 throw new IllegalArgumentException("Configuration file not found: ${configPath}")
             }
         }
 
         // Validate libBIDS.sh if required
         if (options.libbids_sh) {
-            def libBidsPath = new File(options.libbids_sh as String)
-            if (!libBidsPath.exists()) {
+            Path libBidsPath = Paths.get(options.libbids_sh as String)
+            if (!Files.exists(libBidsPath)) {
                 throw new IllegalArgumentException("libBIDS.sh not found: ${options.libbids_sh}")
             }
         }
 
-        BidsLogger.logProgress("✓ Pre-flight checks completed")
+        BidsLogger.logProgress('✓ Pre-flight checks completed')
     }
 
 }

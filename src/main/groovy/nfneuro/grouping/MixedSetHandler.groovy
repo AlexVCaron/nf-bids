@@ -36,17 +36,21 @@ class MixedSetHandler extends BaseSetHandler {
     /**
      * Build nested map for files grouping by extension type
      */
-    private static Map<String, List<String>> buildNestedMapForFiles(String datasetRoot, List<BidsFile> files, List<BidsFile> allFiles) {
-        def nestedMap = [:]
+    private static Map<String, List<String>> nestedMapForFiles(
+        String datasetRoot,
+        List<BidsFile> files,
+        List<BidsFile> allFiles
+    ) {
+        Map nestedMap = [:]
 
         files.each { file ->
-            def baseName = file.getBasename()
+            String baseName = file.getBasename()
 
             // Find all related files with same base name
             allFiles.each { relatedFile ->
                 if (relatedFile.getBasename() == baseName) {
-                    def type = relatedFile.getType()
-                    def relativePath = relatedFile.relativeTo(datasetRoot)
+                    String type = relatedFile.getType()
+                    String relativePath = relatedFile.relativeTo(datasetRoot)
 
                     if (!nestedMap[type]) {
                         nestedMap[type] = []
@@ -62,39 +66,8 @@ class MixedSetHandler extends BaseSetHandler {
     }
 
     @Override
-    DataflowQueue process(
-            String datasetRoot,
-            List<BidsFile> bidsFiles,
-            Map config,
-            List<String> loopOverEntities,
-            Map<String, String> suffixMapping) {
-
-        BidsLogger.logProgress("nf-bids-mixed-set", "Processing mixed sets with ${bidsFiles.size()} files")
-        BidsLogger.logProgress("nf-bids-mixed-set", "Loop-over entities: ${loopOverEntities}")
-
-        def results = new DataflowQueue()
-        def processedCount = 0
-        def filteredCount = 0
-
-        // Group files by loop-over entities first
-        def filesByGroup = BidsEntityUtils.groupByEntities(bidsFiles, loopOverEntities)
-
-        // Process each group
-        filesByGroup.each { groupKey, filesInGroup ->
-            def channelData = processMixedSetGroup(datasetRoot, filesInGroup, config, loopOverEntities, suffixMapping)
-
-            if (channelData) {
-                results << channelData
-                processedCount++
-            } else {
-                filteredCount++
-            }
-        }
-
-        // Return unbound queue - will be consumed by transferQueueItems
-        logProcessingStats("Mixed set", processedCount, filteredCount)
-
-        return results
+    protected String getSetName() {
+        return "mixed-set"
     }
 
     /**
@@ -111,7 +84,8 @@ class MixedSetHandler extends BaseSetHandler {
      * @reference Mixed set processing:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L56-L70
      */
-    private BidsChannelData processMixedSetGroup(
+    @Override
+    protected BidsChannelData processGroup(
             String datasetRoot,
             List<BidsFile> filesInGroup,
             Map config,
@@ -138,27 +112,27 @@ class MixedSetHandler extends BaseSetHandler {
             // Use pattern matching to find which named group this file belongs to
             def groupName = findMatchingMixedGroupName(file, mixedSetConfig)
             if (!groupName) {
-                BidsLogger.logProgress("nf-bids-mixed-set", "File does not match any named group patterns: ${file.filename}")
+                BidsLogger.logProgress(getLogGroup(), "File does not match any named group patterns: ${file.filename}")
                 return
             }
 
             // Get sequential dimension entity for ordering
-            def sequenceByEntity = getSequenceByEntity(mixedSetConfig)
+            String sequenceByEntity = getSequenceByEntity(mixedSetConfig)
             if (!sequenceByEntity) {
-                BidsLogger.logProgress("nf-bids-mixed-set", "Mixed set config missing sequential dimension for suffix: ${suffix}")
+                BidsLogger.logProgress(getLogGroup(), "Mixed set config missing sequential dimension for suffix: ${suffix}")
                 return
             }
 
-            def sequenceValue = file.getEntityValue(sequenceByEntity)
+            String sequenceValue = file.getEntityValue(sequenceByEntity)
             if (!sequenceValue) {
-                BidsLogger.logProgress("nf-bids-mixed-set", "File missing sequential entity '${sequenceByEntity}': ${file.filename}")
+                BidsLogger.logProgress(getLogGroup(), "File missing sequential entity '${sequenceByEntity}': ${file.filename}")
                 return
             }
 
             // Apply entity filters if specified
             if (mixedSetConfig.filter) {
                 if (!BidsEntityUtils.entitiesMatch(file.entities, mixedSetConfig.filter as List)) {
-                    BidsLogger.logProgress("nf-bids-mixed-set", "File filtered by pattern: ${file.filename}")
+                    BidsLogger.logProgress(getLogGroup(), "File filtered by pattern: ${file.filename}")
                     return
                 }
             }
@@ -189,7 +163,7 @@ class MixedSetHandler extends BaseSetHandler {
                 def missingGroups = requiredGroups.findAll { !groups.containsKey(it) }
 
                 if (missingGroups) {
-                    BidsLogger.logProgress("nf-bids-mixed-set", "Suffix ${suffix} missing required groups: ${missingGroups}")
+                    BidsLogger.logProgress(getLogGroup(), "Suffix ${suffix} missing required groups: ${missingGroups}")
                     mixedSets.remove(suffix)
                     return
                 }
@@ -197,7 +171,7 @@ class MixedSetHandler extends BaseSetHandler {
         }
 
         if (mixedSets.isEmpty()) {
-            BidsLogger.logProgress("nf-bids-mixed-set", "No complete mixed sets after required group validation")
+            BidsLogger.logProgress(getLogGroup(), "No complete mixed sets after required group validation")
             return null
         }
 
@@ -219,7 +193,7 @@ class MixedSetHandler extends BaseSetHandler {
         // Add suffix data as maps of {groupName -> {extension: [paths]}}
         mixedSets.each { suffix, groups ->
             def groupMap = groups.collectEntries { groupName, files ->
-                [groupName, buildNestedMapForFiles(datasetRoot, files, allFiles)]
+                [groupName, nestedMapForFiles(datasetRoot, files, allFiles)]
             }
             channelData.addSuffixData(suffix, groupMap)
         }
@@ -236,7 +210,7 @@ class MixedSetHandler extends BaseSetHandler {
             }
         }
 
-        BidsLogger.logProgress("nf-bids-mixed-set", "Mixed set emitted with ${mixedSets.size()} suffixes, key: ${groupingKey}")
+        BidsLogger.logProgress(getLogGroup(), "Mixed set emitted with ${mixedSets.size()} suffixes, key: ${groupingKey}")
 
         return channelData
     }
@@ -257,7 +231,7 @@ class MixedSetHandler extends BaseSetHandler {
     private String findMatchingMixedGroupName(BidsFile file, Map mixedSetConfig) {
         def namedGroups = mixedSetConfig.named_groups as Map
         if (!namedGroups) {
-            BidsLogger.logProgress("nf-bids-mixed-set", "Mixed set config missing 'named_groups'")
+            BidsLogger.logProgress(getLogGroup(), "Mixed set config missing 'named_groups'")
             return null
         }
 
@@ -327,7 +301,7 @@ class MixedSetHandler extends BaseSetHandler {
             if (BidsEntity.longEntityExists(config.sequential_dimension as String)) {
                 return config.sequential_dimension as String
             }
-            BidsLogger.logProgress("nf-bids-mixed-set", "Sequential dimension entity '${config.sequential_dimension}' is not a valid BIDS entity.")
+            BidsLogger.logProgress(getLogGroup(), "Sequential dimension entity '${config.sequential_dimension}' is not a valid BIDS entity.")
         }
         return null
     }
@@ -346,7 +320,7 @@ class MixedSetHandler extends BaseSetHandler {
             if (BidsEntity.longEntityExists(config.named_dimension as String)) {
                 return config.named_dimension as String
             }
-            BidsLogger.logProgress("nf-bids-mixed-set", "Named dimension entity '${config.named_dimension}' is not a valid BIDS entity.")
+            BidsLogger.logProgress(getLogGroup(), "Named dimension entity '${config.named_dimension}' is not a valid BIDS entity.")
         }
         return null  // Pattern match on all entities
     }
