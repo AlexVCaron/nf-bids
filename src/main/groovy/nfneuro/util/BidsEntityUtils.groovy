@@ -6,137 +6,38 @@ import nfneuro.plugin.model.BidsFile
 
 /**
  * Utility methods for working with BIDS entities
- * 
+ *
  * Provides common entity operations like filtering, matching, and extraction
- * 
+ *
  * @reference Entity utilities from:
  *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
  */
 @CompileStatic
 class BidsEntityUtils {
 
-    public static final Map<String, String> SHORT_ENTITY_MAPPING = [
-        'subject': 'sub',
-        'session': 'ses',
-        'acquisition': 'acq',
-        'ceagent': 'ce',
-        'tracer': 'trc',
-        'reconstruction': 'rec',
-        'direction': 'dir',
-        'modality': 'mod',
-        'mtransfer': 'mt',
-        'inversion': 'inv',
-        'processing': 'proc',
-        'hemisphere': 'hemi',
-        'segmentation': 'seg',
-        'resolution': 'res',
-        'density': 'den',
-        'nucleus': 'nuc',
-        'volume': 'voi'
-    ]
-
-    public static final List<String> LONG_ENTITIES = SHORT_ENTITY_MAPPING.keySet().toList()
-    public static final List<String> SHORT_ENTITIES = SHORT_ENTITY_MAPPING.values().toList()
-
-    static final boolean shortEntityExists(String entityName) {
-        return SHORT_ENTITIES.contains(entityName)
-    }
-
-    static final boolean longEntityExists(String entityName) {
-        return LONG_ENTITIES.contains(entityName)
-    }
-
-    static final String normalizeEntityName(String entityName) {
-        try {
-            return SHORT_ENTITY_MAPPING[entityName]
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Unknown long entity name: ${entityName}")
-        }
-    }
-
     /**
      * Check if entities match the required pattern
      *
-     * @param entities Actual entity values
-     * @param requiredEntities Required entity pattern
+     * @param entities Actual entities
+     * @param requiredEntities Required entities
      * @return true if match
      *
      * @reference Entity matching logic from:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L15-L30
      */
-    static final boolean entitiesMatch(Map entities, Map requiredEntities, Comparator comparator = Comparator.naturalOrder()) {
-        return requiredEntities.every { key, value ->
-            if (value == null || value == 'NA') {
-                return true  // Wildcard match
+    static final boolean entitiesMatch(
+        List<BidsEntity> entities,
+        List<BidsEntity> requiredEntities,
+        Comparator comparator = Comparator.naturalOrder()
+    ) {
+        return requiredEntities.every { entity ->
+            BidsEntity comparable = entities.find{ other -> other == entity }
+            if (!comparable) {
+                return false
             }
-            return comparator.compare(entities[key], value)
+
+            return comparator.compare(comparable, entity)
         }
-    }
-
-    /**
-     * Compare entity value with normalization
-     *
-     * Handles different zero-padding formats: "flip-02" matches "flip-2"
-     * Also handles prefix differences: config has "mt-on" while file stores "on"
-     *
-     * @param actualValue Value from file entity (without prefix, e.g., "on")
-     * @param expectedValue Value from configuration pattern (with prefix, e.g., "mt-on")
-     * @return true if value match after normalization
-     *
-     * @reference entityValuesMatch function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L47-L53
-     */
-    static final boolean entityValueMatch(String actualValue, String expectedValue) {
-        if (!actualValue || !expectedValue) {
-            return actualValue == expectedValue
-        }
-
-        // Strip prefixes from expected value if present (e.g., "mt-on" -> "on")
-        def cleanExpected = expectedValue
-        if (expectedValue.contains('-')) {
-            def parts = expectedValue.split('-', 2)
-            if (parts.length == 2) {
-                cleanExpected = parts[1]  // Get part after prefix
-            }
-        }
-
-        return normalizeEntityValue(actualValue) == normalizeEntityValue(cleanExpected)
-    }
-
-    /**
-     * Normalize entity value for comparison
-     *
-     * Removes leading zeros from numeric parts: "flip-02" → "flip-2"
-     *
-     * @param value Entity value to normalize
-     * @return Normalized value
-     *
-     * @reference normalizeEntityValue function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L32-L46
-     */
-    static final String normalizeEntityValue(String value) {
-        if (!value || !value.contains('-')) {
-            return value
-        }
-
-        def parts = value.split('-', 2)
-        if (parts.length != 2) {
-            return value
-        }
-
-        def prefix = parts[0]
-        def suffix = parts[1]
-
-        // Remove leading zeros: "flip-02" → "flip-2"
-        if (suffix.isNumber()) {
-            try {
-                def numericSuffix = Integer.parseInt(suffix)
-                return "${prefix}-${numericSuffix}"
-            } catch (NumberFormatException e) {
-                return value
-            }
-        }
-        return value
     }
 
     /**
@@ -151,7 +52,7 @@ class BidsEntityUtils {
      * @reference Entity filtering:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L35-L70
      */
-    static List<BidsFile> filterByEntities(List<BidsFile> files, Map<String, String> entityFilter) {
+    static List<BidsFile> filterByEntities(List<BidsFile> files, List<BidsEntity> entityFilter) {
         if (!entityFilter) {
             return files
         }
@@ -170,12 +71,10 @@ class BidsEntityUtils {
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L75-L110
      */
     static Map<String, List<BidsFile>> groupByEntity(List<BidsFile> files, String entityName) {
-        Map<String, List<BidsFile>> grouped = [:].withDefault { [] as List<BidsFile> }
+        Map<String, List<BidsFile>> grouped = [:].withDefault { [] }
 
-        files.each { file ->
-            def value = file.getEntity(entityName) ?: "NA"
-            grouped[value] << file
-        }
+        BidsLogger.logProgress("nf-bids-entity-utils", "Grouping files by entity: ${entityName}")
+        files.each { file -> grouped[file.getEntityValue(BidsEntity.normalizeName(entityName))] << file }
 
         return grouped
     }
@@ -189,12 +88,13 @@ class BidsEntityUtils {
      * @param entityNames List of entity names to group by (in order)
      * @return Nested map structure with files at leaf level
      */
-    static Map<String, List<BidsFile>> groupByMultipleEntities(List<BidsFile> files, List<String> entityNames) {
-        Map<String, List<BidsFile>> grouped = [:].withDefault { [] as List<BidsFile> }
+    static Map<String, List<BidsFile>> groupByEntities(List<BidsFile> files, List<String> entityNames) {
+        Map<String, List<BidsFile>> grouped = [:].withDefault { [] }
 
+        BidsLogger.logProgress("nf-bids-entity-utils", "Grouping files by entities: ${entityNames.join(', ')}")
         files.each { file ->
-            def key = BidsEntityUtils.createGroupingKey(file, entityNames)
-            grouped[key] << file
+            BidsLogger.logProgress("nf-bids-entity-utils", "├─ Processing file with entities: ${file.entities.collect { e -> "${e.name}-${e.value}" }.join(', ')}")
+            grouped[BidsEntityUtils.groupingKey(file, entityNames)] << file
         }
 
         return grouped
@@ -211,9 +111,7 @@ class BidsEntityUtils {
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L155-L175
      */
     static List<String> extractEntityValues(BidsFile file, List<String> entityNames) {
-        return entityNames.collect { entityName ->
-            file.getEntity(entityName) ?: "NA"
-        }
+        return entityNames.collect { entityName -> file.getEntityValue(BidsEntity.normalizeName(entityName)) }
     }
 
     /**
@@ -224,8 +122,8 @@ class BidsEntityUtils {
      * @return Sorted list of unique values (excludes "NA")
      */
     static List<String> getUniqueValues(List<BidsFile> files, String entityName) {
-        return files.collect { it.getEntity(entityName) }
-            .findAll { it && it != "NA" }
+        return files*.getEntityValue(entityName)
+            .findAll { value -> value && value != "NA" }
             .unique()
             .sort()
     }
@@ -233,18 +131,16 @@ class BidsEntityUtils {
     /**
      * Build entity map from grouping key and entity names
      *
-     * @param groupingKey Tuple key from channel
+     * @param groupingKeyList Tuple key from channel
      * @param entityNames List of entity names
      * @return Map of entity name to value
      */
-    static Map<String, String> groupingKeyToMap(List groupingKey, List<String> entityNames) {
-        Map<String, String> entityMap = [:]
+    static Map<String, BidsEntity> groupingKeyToMap(List groupingKeyList, List<String> entityNames) {
+        Map<String, BidsEntity> entityMap = [:]
 
         entityNames.eachWithIndex { name, idx ->
-            if (idx < groupingKey.size()) {
-                entityMap[name] = (groupingKey[idx] as String) ?: "NA"
-            } else {
-                entityMap[name] = "NA"
+            if (idx < groupingKeyList.size() && groupingKeyList[idx]&& groupingKeyList[idx] != "NA") {
+                entityMap[name] = new BidsEntity(name, groupingKeyList[idx] as String)
             }
         }
 
@@ -265,8 +161,8 @@ class BidsEntityUtils {
             return true
         }
 
-        def firstFile = files[0]
-        def referenceValues = extractEntityValues(firstFile, entityNames)
+        BidsFile firstFile = files[0]
+        List<String> referenceValues = extractEntityValues(firstFile, entityNames)
 
         return files.every { file ->
             extractEntityValues(file, entityNames) == referenceValues
@@ -284,7 +180,7 @@ class BidsEntityUtils {
      */
     static List<BidsFile> sortByEntity(List<BidsFile> files, String entityName) {
         return files.sort { file ->
-            def value = file.getEntity(entityName)
+            String value = file.getEntityValue(entityName)
 
             // Try numeric sorting first
             if (value ==~ /\d+/) {
@@ -307,12 +203,9 @@ class BidsEntityUtils {
      */
     static String toEntityString(BidsFile file, List<String> entityNames) {
         return entityNames.collect { name ->
-            def value = file.getEntity(name)
-            if (value && value != "NA") {
-                return "${name}-${value}"
-            }
-            return null
-        }.findAll { it != null }.join('_')
+            String value = file.getEntityValue(name)
+            return (value && value != "NA") ? "${name}-${value}" : null
+        }.findAll { repr -> repr != null }.join('_')
     }
 
     /**
@@ -337,7 +230,7 @@ class BidsEntityUtils {
      * @param entityNames Entities to include in key
      * @return Comparison key string
      */
-    static String createComparisonKey(BidsFile file, List<String> entityNames) {
+    static String comparisonKey(BidsFile file, List<String> entityNames) {
         return extractEntityValues(file, entityNames).join('|')
     }
 
@@ -351,9 +244,10 @@ class BidsEntityUtils {
      * @param entities Entities to include in key (may be long or short names)
      * @return Group key string
      */
-    static String createGroupingKey(BidsFile file, List<String> entities) {
-        return BidsEntityUtils.createComparisonKey(
-            file, entities.collect { BidsEntityUtils.normalizeEntityName(it) }
+    static String groupingKey(BidsFile file, List<String> entities) {
+        return BidsEntityUtils.comparisonKey(
+            file, entities.collect { name -> BidsEntity.normalizeName(name) }
         )
     }
+
 }

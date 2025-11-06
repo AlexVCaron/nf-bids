@@ -13,16 +13,16 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class BidsFile {
 
-    public static final List<String> VALID_EXTENSIONS = [
-        'nii',
-        'nii.gz',
-        'json',
-        'bval',
-        'bvec',
-        'tsv',
-        'txt',
-        'edf',
-        'eeg'
+    public static final Map<String, String> VALID_EXTENSIONS = [
+        'nii': '',
+        'nii.gz': 'nii',
+        'json': '',
+        'bval': '',
+        'bvec': '',
+        'tsv': '',
+        'txt': '',
+        'edf': '',
+        'eeg': ''
     ]
 
     public static final List<String> PRIMARY_EXTENSIONS = [
@@ -34,7 +34,7 @@ class BidsFile {
 
     String path
     String suffix
-    Map<String, String> entities
+    List<BidsEntity> entities
     Map<String, Object> metadata
 
     // Optional file metadata
@@ -50,7 +50,7 @@ class BidsFile {
             throw new IllegalArgumentException("File path cannot be null or empty")
         }
         this.path = path
-        this.entities = [:]
+        this.entities = []
         this.metadata = [:]
         this.associatedFiles = []
 
@@ -58,19 +58,8 @@ class BidsFile {
         extractSuffixFromPath()
     }
 
-    /**
-     * Extract suffix from file path
-     * e.g., sub-01_T1w.nii.gz -> suffix = "T1w"
-     */
-    private void extractSuffixFromPath() {
-        def filename = new File(path).name
-        // Remove extensions (.nii.gz, .nii, .json, etc.)
-        def nameWithoutExt = filename.replaceAll(".${getExtensionType()}", '')
-        // Extract last part after underscore (suffix)
-        def parts = nameWithoutExt.split('_')
-        if (parts.length > 0) {
-            this.suffix = parts[-1]
-        }
+    BidsEntity getEntity(String name) {
+        return entities.find { entity -> entity.name == name }
     }
 
     /**
@@ -79,8 +68,8 @@ class BidsFile {
      * @param entityName Entity name (e.g., "sub", "ses")
      * @return Entity value or "NA" if not present
      */
-    String getEntity(String entityName) {
-        return entities.getOrDefault(entityName, "NA")
+    String getEntityValue(String entityName) {
+        return this.getEntity(entityName)?.value ?: "NA"
     }
 
     /**
@@ -91,7 +80,16 @@ class BidsFile {
      */
     void addEntity(String name, String value) {
         if (value && value != "NA") {
-            entities[name] = value
+            this.addEntity(new BidsEntity(name, value))
+        }
+    }
+
+    void addEntity(BidsEntity entity) {
+        if (this.hasEntity(entity.name)) {
+            this.getEntity(entity.name).value = entity.value
+        }
+        else {
+            this.entities << entity
         }
     }
 
@@ -102,7 +100,7 @@ class BidsFile {
      * @return true if entity is present and not "NA"
      */
     boolean hasEntity(String entityName) {
-        def value = entities[entityName]
+        String value = this.getEntityValue(entityName)
         return value && value != "NA"
     }
 
@@ -170,8 +168,9 @@ class BidsFile {
      * Get the base name of a file without extension
      */
     String getBasename() {
-        def regex = VALID_EXTENSIONS.join('|').replaceAll('.', '\\.')
-        return new File(path).name.replaceAll(/\.({$regex})$/, '')
+        String regex = VALID_EXTENSIONS.keySet().join('|').replaceAll('\\.', '\\\\.')
+        /* groovylint-disable-next-line JavaIoPackageAccess */
+        return new File(path).name.replaceAll(/\.($regex)$/, '')
     }
 
     /**
@@ -179,12 +178,17 @@ class BidsFile {
      */
     String getExtensionType() {
         def filename = new File(path).name
-        for (ext in VALID_EXTENSIONS) {
+        for (ext in VALID_EXTENSIONS.keySet()) {
             if (filename.endsWith(".${ext}")) {
                 return ext
             }
         }
         return null
+    }
+
+    String getType() {
+        String extensionType = getExtensionType()
+        return VALID_EXTENSIONS[extensionType] ?: extensionType
     }
 
     /**
@@ -235,4 +239,20 @@ class BidsFile {
     int hashCode() {
         return Objects.hash(path)
     }
+
+    /**
+     * Extract suffix from file path
+     * e.g., sub-01_T1w.nii.gz -> suffix = "T1w"
+     */
+    private void extractSuffixFromPath() {
+        def filename = new File(path).name
+        // Remove extensions (.nii.gz, .nii, .json, etc.)
+        def nameWithoutExt = filename.replaceAll(".${getExtensionType()}", '')
+        // Extract last part after underscore (suffix)
+        def parts = nameWithoutExt.split('_')
+        if (parts.length > 0) {
+            this.suffix = parts[-1]
+        }
+    }
+
 }

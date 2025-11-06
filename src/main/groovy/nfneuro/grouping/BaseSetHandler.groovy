@@ -80,8 +80,7 @@ abstract class BaseSetHandler {
         // Validate entity matching if filter specified
         def setConfigMap = setConfig as Map
         if (setConfigMap.filter) {
-            def filterMap = setConfigMap.filter as Map
-            if (!BidsEntityUtils.entitiesMatch(file.entities, filterMap)) {
+            if (!BidsEntityUtils.entitiesMatch(file.entities, setConfigMap.filter as List)) {
                 return null
             }
         }
@@ -130,11 +129,11 @@ abstract class BaseSetHandler {
             int processedCount,
             int filteredCount) {
 
-        BidsLogger.info("${handlerName}: ${processedCount} emitted, ${filteredCount} filtered")
+        BidsLogger.logProgress("nf-bids-handler", "${handlerName}: ${processedCount} emitted, ${filteredCount} filtered")
 
         if (filteredCount > 0) {
             def filterRatio = (filteredCount * 100) / (processedCount + filteredCount)
-            BidsLogger.debug("Filter ratio: ${filterRatio.round(1)}%")
+            BidsLogger.logProgress("nf-bids-handler", "Filter ratio: ${filterRatio.round(1)}%")
         }
     }
 

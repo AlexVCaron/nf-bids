@@ -1,6 +1,7 @@
 package nfneuro.plugin.grouping
 
 import groovy.transform.CompileStatic
+import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 import nfneuro.plugin.model.BidsChannelData
 import nfneuro.plugin.util.BidsEntityUtils
@@ -29,24 +30,6 @@ import groovyx.gpars.dataflow.DataflowQueue
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class SequentialSetHandler extends BaseSetHandler {
 
-    /**
-     * Build nested map for a single file grouping by extension type
-     */
-    private Map<String, String> buildNestedMapForFile(String datasetRoot, BidsFile file, List<BidsFile> allFiles) {
-        def baseName = getBaseName(file.path)
-        def nestedMap = [:]
-
-        allFiles.each { relatedFile ->
-            if (relatedFile.getBaseName() == baseName) {
-                def extensionType = relatedFile.getExtensionType()
-                def relativePath = relatedFile.relativeTo(datasetRoot)
-                nestedMap[extensionType] = relativePath
-            }
-        }
-
-        return nestedMap
-    }
-
     @Override
     DataflowQueue process(
             String datasetRoot,
@@ -55,16 +38,16 @@ class SequentialSetHandler extends BaseSetHandler {
             List<String> loopOverEntities,
             Map<String, String> suffixMapping) {
 
-        BidsLogger.debug("Processing sequential sets with ${bidsFiles.size()} files")
-        BidsLogger.debug("Loop-over entities: ${loopOverEntities}")
+        BidsLogger.logProgress("nf-bids-sequential-set", "Processing sequential sets with ${bidsFiles.size()} files")
+        BidsLogger.logProgress("nf-bids-sequential-set", "Loop-over entities: ${loopOverEntities}")
 
         def results = new DataflowQueue()
         def processedCount = 0
         def filteredCount = 0
 
         // Group files by loop-over entities first
-        def filesByGroup = BidsEntityUtils.groupByMultipleEntities(bidsFiles, loopOverEntities)
-        BidsLogger.logProgress("Created ${filesByGroup.size()} groups from ${bidsFiles.size()} files with keys: ${filesByGroup.keySet()}")
+        def filesByGroup = BidsEntityUtils.groupByEntities(bidsFiles, loopOverEntities)
+        BidsLogger.logProgress("nf-bids-sequential-set", "Created ${filesByGroup.size()} groups from ${bidsFiles.size()} files with keys: ${filesByGroup.keySet()}")
 
         // Process each group
         filesByGroup.each { groupKey, filesInGroup ->
@@ -125,7 +108,7 @@ class SequentialSetHandler extends BaseSetHandler {
             // Get the entities to sequence by (single or multiple)
             def sequenceByEntities = getSequenceByEntities(sequentialSetConfig)
             if (!sequenceByEntities || sequenceByEntities.isEmpty()) {
-                BidsLogger.warn("Sequential set config missing sequence entities for suffix: ${suffix}")
+                BidsLogger.logProgress("nf-bids-sequential-set", "Sequential set config missing sequence entities for suffix: ${suffix}")
                 return
             }
 
@@ -133,33 +116,30 @@ class SequentialSetHandler extends BaseSetHandler {
             // Normalize entity names: config uses long names (inversion),
             // but BidsFile stores short names (inv)
             def sequenceValues = sequenceByEntities.collect { entity ->
-                def normalizedEntity = BidsEntityUtils.normalizeEntityName(entity)
-                file.getEntity(normalizedEntity)
+                file.getEntityValue(BidsEntity.normalizeName(entity))
             }
 
             // Skip if any required sequence entity is missing
             if (sequenceValues.any { it == null }) {
-                BidsLogger.trace("File missing required sequence entities: ${file.filename}")
+                BidsLogger.logProgress("nf-bids-sequential-set", "File missing required sequence entities: ${file.filename}")
                 return
             }
 
             // Apply entity filters if specified
             if (sequentialSetConfig.filter) {
-                def filterMap = sequentialSetConfig.filter as Map
-                if (!BidsEntityUtils.matchesPattern(file, filterMap)) {
-                    BidsLogger.trace("File filtered by pattern: ${file.filename}")
+                if (!BidsEntityUtils.entitiesMatch(file.entities, sequentialSetConfig.filter as List)) {
+                    BidsLogger.logProgress("nf-bids-sequential-set", "File filtered by pattern: ${file.filename}")
                     return
                 }
             }
 
             // Exclude files with specific entities if specified
             if (sequentialSetConfig.exclude_entities) {
-                def excludeList = sequentialSetConfig.exclude_entities as List<String>
-                for (String entityName : excludeList) {
-                    def normalizedEntity = BidsEntityUtils.normalizeEntityName(entityName)
-                    def entityValue = file.getEntity(normalizedEntity)
+                for (String entityName : sequentialSetConfig.exclude_entities as List<String>) {
+                    String normalizedEntity = BidsEntity.normalizeName(entityName)
+                    String entityValue = file.getEntityValue(normalizedEntity)
                     if (entityValue && entityValue != "NA") {
-                        BidsLogger.trace("File excluded by entity ${entityName}: ${file.filename}")
+                        BidsLogger.logProgress("nf-bids-sequential-set", "File excluded by entity ${entityName}: ${file.filename}")
                         return
                     }
                 }
@@ -200,28 +180,27 @@ class SequentialSetHandler extends BaseSetHandler {
             if (entities.size() == 1) {
                 // Single-entity: simple sorted array (or parts map)
                 if (partsConfig) {
-                    sequentialSets[suffix] = buildSequenceWithParts(files, partsConfig, allFiles)
+                    sequentialSets[suffix] = sequenceWithParts(datasetRoot, files, partsConfig)
                 } else {
                     // Build nested map structure {nii: [...], json: [...]}
                     def sortedFiles = files.sort { a, b ->
                         compareSequenceValues(a.sequenceValues[0], b.sequenceValues[0])
                     }
-                    sequentialSets[suffix] = buildNestedSequenceMap(sortedFiles.collect { it.file }, allFiles)
+                    sequentialSets[suffix] = nestedSequenceMap(datasetRoot, sortedFiles*.file, allFiles)
                 }
-
             } else {
                 // Multi-entity: hierarchical nested arrays or flat nested arrays
                 if (order == 'flat') {
-                    sequentialSets[suffix] = buildFlatSequence(files, entities, partsConfig)
+                    sequentialSets[suffix] = flatSequence(datasetRoot, files, partsConfig)
                 } else {
                     // Build hierarchical nested arrays grouped by extension
-                    sequentialSets[suffix] = buildHierarchicalSequence(files, entities, partsConfig, allFiles)
+                    sequentialSets[suffix] = hierarchicalSequence(datasetRoot, files, allFiles)
                 }
             }
         }
 
         // Build grouping key
-        def groupingKey = BidsEntityUtils.createGroupingKey(filesInGroup[0], loopOverEntities)
+        def groupingKey = BidsEntityUtils.groupingKey(filesInGroup[0], loopOverEntities)
 
         // Create channel data
         def channelData = new BidsChannelData()
@@ -238,12 +217,12 @@ class SequentialSetHandler extends BaseSetHandler {
 
         // Add entities from the first file
         if (filesInGroup) {
-            filesInGroup[0].entities.each { k, v ->
-                channelData.addEntity(k, v)
+            filesInGroup[0].entities.each { entity ->
+                channelData.addEntity(entity.name, entity.value)
             }
         }
 
-        BidsLogger.trace("Sequential set emitted with ${sequentialSets.size()} suffixes, key: ${groupingKey}")
+        BidsLogger.logProgress("nf-bids-sequential-set", "Sequential set emitted with ${sequentialSets.size()} suffixes, key: ${groupingKey}")
 
         return channelData
     }
@@ -252,23 +231,27 @@ class SequentialSetHandler extends BaseSetHandler {
      * Build nested map structure for sequential files
      * Groups files by extension type: {nii: [...], json: [...]}
      */
-    private Map<String, List<String>> buildNestedSequenceMap(String datasetRoot, List<BidsFile> files, List<BidsFile> allFiles) {
+    private Map<String, List<String>> nestedSequenceMap(
+        String datasetRoot,
+        List<BidsFile> files,
+        List<BidsFile> allFiles
+    ) {
         def nestedMap = [:]
 
         files.each { file ->
-            def baseName = file.getBaseName()
+            def baseName = file.getBasename()
 
             // Find all related files with same base name
             allFiles.each { relatedFile ->
-                if (relatedFile.getBaseName() == baseName) {
-                    def extensionType = relatedFile.getExtensionType()
+                if (relatedFile.getBasename() == baseName) {
+                    def type = relatedFile.getType()
                     def relativePath = relatedFile.relativeTo(datasetRoot)
 
-                    if (!nestedMap[extensionType]) {
-                        nestedMap[extensionType] = []
+                    if (!nestedMap[type]) {
+                        nestedMap[type] = []
                     }
-                    if (!nestedMap[extensionType].contains(relativePath)) {
-                        nestedMap[extensionType] << relativePath
+                    if (!nestedMap[type].contains(relativePath)) {
+                        nestedMap[type] << relativePath
                     }
                 }
             }
@@ -287,7 +270,7 @@ class SequentialSetHandler extends BaseSetHandler {
      * @param allFiles All files for finding related files
      * @return Map of extension type to list (nii is list of part maps, others are simple lists)
      */
-    private Map buildSequenceWithParts(String datasetRoot, List files, List<String> partsConfig, List<BidsFile> allFiles) {
+    private Map sequenceWithParts(String datasetRoot, List files, List<String> partsConfig) {
         // Group by sequence value, then by part (only for files WITH parts)
         def grouped = [:]
         def jsonFiles = []
@@ -295,7 +278,7 @@ class SequentialSetHandler extends BaseSetHandler {
         files.each { item ->
             def file = item.file as BidsFile
             def seqValue = item.sequenceValues[0]
-            def partValue = file.getEntity("part")?.replaceFirst(/^part-/, '')
+            def partValue = file.getEntityValue("part")?.replaceFirst(/^part-/, '')
 
             if (partValue && partValue != "NA" && partsConfig.contains(partValue)) {
                 // This is a NII file with part
@@ -365,7 +348,7 @@ class SequentialSetHandler extends BaseSetHandler {
      * @reference Hierarchical structure building:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L145-L255
      */
-    private Map buildHierarchicalSequence(String datasetRoot, List files, List<String> entities, List<String> partsConfig, List<BidsFile> allFiles) {
+    private Map hierarchicalSequence(String datasetRoot, List files, List<BidsFile> allFiles) {
         // Group files by outer entity value and collect all related files
         def outerGroups = files.groupBy { item ->
             (item.sequenceValues as List)[0]
@@ -395,7 +378,7 @@ class SequentialSetHandler extends BaseSetHandler {
 
             // Collect unique base names in this group to avoid duplicates
             def baseNamesInGroup = sortedInner.collect { item ->
-                (item.file as BidsFile).getBaseName()
+                (item.file as BidsFile).getBasename()
             }.unique()
 
             // For each unique base name, find all related files by extension
@@ -404,13 +387,13 @@ class SequentialSetHandler extends BaseSetHandler {
             baseNamesInGroup.each { baseName ->
                 // Find all related files with same base name
                 allFiles.each { relatedFile ->
-                    if (relatedFile.getBaseName() == baseName) {
-                        def extensionType = relatedFile.getExtensionType()
+                    if (relatedFile.getBasename() == baseName) {
+                        def type = relatedFile.getType()
                         def relativePath = relatedFile.relativeTo(datasetRoot)
 
                         // Avoid duplicates
-                        if (!filesInGroup[extensionType].contains(relativePath)) {
-                            filesInGroup[extensionType] << relativePath
+                        if (!filesInGroup[type].contains(relativePath)) {
+                            filesInGroup[type] << relativePath
                         }
                     }
                 }
@@ -495,14 +478,13 @@ class SequentialSetHandler extends BaseSetHandler {
      *   [[{mag: file1, phase: file2}, {mag: file3, phase: file4}], ...]
      *
      * @param files List of file data with sequence values
-     * @param entities Entity names in order
      * @param partsConfig Optional list of part values to group
      * @return Nested array structure
      *
      * @reference Flat structure building:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L190-L210
      */
-    private List buildFlatSequence(String datasetRoot, List files, List<String> entities, List<String> partsConfig = null) {
+    private List flatSequence(String datasetRoot, List files, List<String> partsConfig = null) {
         // Group by outer entity first
         def groupedByOuter = files.groupBy { item ->
             (item.sequenceValues as List)[0]
@@ -522,7 +504,7 @@ class SequentialSetHandler extends BaseSetHandler {
                 innerFiles.each { item ->
                     def file = item.file as BidsFile
                     def seqKey = (item.sequenceValues as List)[1..-1].join('_')
-                    def partValue = file.getEntity("part")?.replaceFirst(/^part-/, '')
+                    def partValue = file.getEntityValue("part")?.replaceFirst(/^part-/, '')
 
                     if (partValue && partsConfig.contains(partValue)) {
                         if (!innerGrouped.containsKey(seqKey)) {

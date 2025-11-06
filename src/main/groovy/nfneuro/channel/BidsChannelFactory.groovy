@@ -2,10 +2,8 @@ package nfneuro.plugin.channel
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import nextflow.NF
 import nextflow.Channel
 import nextflow.Session
-import nextflow.extension.CH
 import nextflow.plugin.extension.Factory
 import nfneuro.plugin.parser.BidsParser
 import nfneuro.plugin.util.BidsLogger
@@ -30,12 +28,9 @@ import groovyx.gpars.dataflow.DataflowWriteChannel
 class BidsChannelFactory {
 
     private final Session session
-    private String currentBidsDir
-    private BidsLogger bidsLogger
 
     BidsChannelFactory(Session session) {
         this.session = session
-        this.bidsLogger = new BidsLogger()
     }
 
     /**
@@ -53,7 +48,7 @@ class BidsChannelFactory {
      */
     @Factory
     DataflowWriteChannel fromBIDS(String bidsDir, String configPath = null, Map options = [:]) {
-        bidsLogger.logProgress("bids2nf", "Starting BIDS dataset parsing: ${bidsDir}")
+        BidsLogger.logProgress("Starting BIDS dataset parsing: ${bidsDir}")
 
         // Pre-flight checks
         preFlightChecks(bidsDir, configPath, options)
@@ -62,54 +57,40 @@ class BidsChannelFactory {
         // if (options.bids_validation != false) {
         //     validator.validate(bidsDir, options.ignore_codes ?: [99, 36])
         // } else {
-        //     bidsLogger.logProgress("bids2nf",
+        //     BidsLogger.logProgress("nf-bids",
         //         "---------------------------\n" +
-        //         "[bids2nf] ⚠︎⚠︎⚠︎ BIDS validation disabled by configuration ⚠︎⚠︎⚠︎\n" +
-        //         "[bids2nf] ---------------------------\n")
+        //         "[nf-bids] ⚠︎⚠︎⚠︎ BIDS validation disabled by configuration ⚠︎⚠︎⚠︎\n" +
+        //         "[nf-bids] ---------------------------\n")
         // }
-
-        // Store bidsDir for later use
-        this.currentBidsDir = bidsDir
-
-        def target = CH.create()
-        final handler = new BidsHandler()
+        return new BidsHandler()
             .withConfig(configPath)
             .withBidsDir(bidsDir)
             .withOpts(options)
             .withParser(new BidsParser(session))
-            .withTarget(target)
-
-        if (NF.dsl2) {
-            session.addIgniter{ -> handler.perform(true) }
-        }
-        else {
-            handler.perform(true)
-        }
-
-        return target
+            .ignite(session)
     }
 
     /**
      * Perform pre-flight validation checks
-     * 
+     *
      * Validates BIDS directory, configuration file, and libBIDS.sh availability
-     * 
+     *
      * @param bidsDir Path to BIDS dataset
      * @param configPath Path to configuration file
      * @param options Options map
-     * 
-     * @reference Validation logic: 
+     *
+     * @reference Validation logic:
      *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf#L55-L85
      */
     private void preFlightChecks(String bidsDir, String configPath, Map options) {
-        bidsLogger.logProgress("bids2nf", "✈︎✈︎✈︎ Pre-flight checks started")
-        
+        BidsLogger.logProgress("✈︎✈︎✈︎ Pre-flight checks started")
+
         // Validate BIDS directory exists
         File bidsPath = new File(bidsDir)
         if (!bidsPath.exists() || !bidsPath.isDirectory()) {
             throw new IllegalArgumentException("BIDS directory does not exist: ${bidsDir}")
         }
-        
+
         // Validate configuration file if provided
         if (configPath) {
             def configFile = new File(configPath)
@@ -117,7 +98,7 @@ class BidsChannelFactory {
                 throw new IllegalArgumentException("Configuration file not found: ${configPath}")
             }
         }
-        
+
         // Validate libBIDS.sh if required
         if (options.libbids_sh) {
             def libBidsPath = new File(options.libbids_sh as String)
@@ -125,8 +106,8 @@ class BidsChannelFactory {
                 throw new IllegalArgumentException("libBIDS.sh not found: ${options.libbids_sh}")
             }
         }
-        
-        bidsLogger.logProgress("bids2nf", "✓ Pre-flight checks completed")
+
+        BidsLogger.logProgress("✓ Pre-flight checks completed")
     }
 
 }

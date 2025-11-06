@@ -46,19 +46,19 @@ class BidsConfigLoader {
             def validationResult = BidsConfigValidator.validate(config)
             if (!validationResult.isValid()) {
                 def errorMsg = "Configuration validation failed for ${configPath}:\n${validationResult}"
-                BidsLogger.logError(errorMsg)
+                BidsLogger.logProgress("nf-bids-config", errorMsg)
                 throw new IllegalArgumentException(errorMsg)
             }
 
             // Log warnings if any
             if (validationResult.warnings && !validationResult.warnings.isEmpty()) {
-                BidsLogger.logWarning("Configuration warnings for ${configPath}:\n${validationResult.warnings.join('\n  ')}")
+                BidsLogger.logProgress("Configuration warnings for ${configPath}:\n${validationResult.warnings.join('\n  ')}")
             }
 
-            BidsLogger.logProgress("Loaded BIDS configuration from: ${configPath}")
-            BidsLogger.logProgress("Configuration keys: ${config.keySet()}")
+            BidsLogger.logProgress("nf-bids-config", "Loaded BIDS configuration from: ${configPath}")
+            BidsLogger.logProgress("nf-bids-config", "Configuration keys: ${config.keySet()}")
             config.each { k, v ->
-                BidsLogger.logProgress("  ${k}: ${v?.getClass()?.simpleName} = ${v}")
+                BidsLogger.logProgress("nf-bids-config", "  ${k}: ${v?.getClass()?.simpleName} = ${v}")
             }
             return config
             

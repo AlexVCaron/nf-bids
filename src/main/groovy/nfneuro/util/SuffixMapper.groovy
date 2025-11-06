@@ -45,8 +45,8 @@ class SuffixMapper {
                     
                     // Map: actual file suffix -> configuration key
                     mapping[targetSuffix] = configKey as String
-                    
-                    BidsLogger.debug("Suffix mapping: ${targetSuffix} -> ${configKey}")
+
+                    BidsLogger.logProgress("suffix-mapping", "Suffix mapping: ${targetSuffix} -> ${configKey}")
                 }
             }
         }
@@ -73,7 +73,7 @@ class SuffixMapper {
         // If there's a mapping for this suffix, use it
         if (mapping.containsKey(suffix)) {
             def mappedKey = mapping[suffix]
-            BidsLogger.trace("Resolving suffix '${suffix}' to config key '${mappedKey}'")
+            BidsLogger.logProgress("suffix-mapping", "Resolving suffix '${suffix}' to config key '${mappedKey}'")
             return mappedKey
         }
         
