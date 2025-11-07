@@ -11,7 +11,7 @@ import nfneuro.plugin.util.BidsLogger
  * Loads and validates YAML configuration files
  *
  * @reference Configuration loading:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/bids2nf.yaml
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/bids2nf.yaml
  */
 @Slf4j
 @CompileStatic
@@ -30,8 +30,8 @@ class BidsConfigLoader {
      * @return Parsed configuration map
      *
      * @reference Config loading with error handling:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L46-L48
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L35-L48
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L46-L48
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L35-L48
      */
     Map load(String configPath) {
         try {

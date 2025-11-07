@@ -10,7 +10,7 @@ import nfneuro.plugin.util.BidsLogger
  * Determines how to group and emit BIDS files based on configuration
  * 
  * @reference Configuration analysis: 
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/config_analyzer.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/config_analyzer.nf
  */
 @Slf4j
 @CompileStatic
@@ -25,7 +25,7 @@ class BidsConfigAnalyzer {
      * @return Analysis map with hasNamedSets, hasSequentialSets, hasMixedSets, hasPlainSets
      * 
      * @reference analyzeConfiguration function: 
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/config_analyzer.nf#L1-L40
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/config_analyzer.nf#L1-L40
      */
     Map analyzeConfiguration(Map config) {
         def hasNamedSets = false
@@ -74,7 +74,7 @@ class BidsConfigAnalyzer {
      * @return List of entity names to loop over
      * 
      * @reference getLoopOverEntities function: 
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/config_analyzer.nf#L42-L55
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/config_analyzer.nf#L42-L55
      */
     List<String> getLoopOverEntities(Map config) {
         def loopOver = config.loop_over
@@ -98,7 +98,7 @@ class BidsConfigAnalyzer {
      * @return Summary map with counts and suffix lists
      * 
      * @reference getConfigurationSummary function: 
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/config_analyzer.nf#L57-L100
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/config_analyzer.nf#L57-L100
      */
     Map getConfigurationSummary(Map config) {
         def namedSets = []

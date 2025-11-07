@@ -10,7 +10,7 @@ import nfneuro.plugin.model.BidsFile
  * Provides common entity operations like filtering, matching, and extraction
  *
  * @reference Entity utilities from:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
  */
 @CompileStatic
 class BidsEntityUtils {
@@ -23,7 +23,7 @@ class BidsEntityUtils {
      * @return true if match
      *
      * @reference Entity matching logic from:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L15-L30
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L15-L30
      */
     static final boolean entitiesMatch(
         List<BidsEntity> entities,
@@ -50,7 +50,7 @@ class BidsEntityUtils {
      * @return Filtered list of files
      *
      * @reference Entity filtering:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L35-L70
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L35-L70
      */
     static List<BidsFile> filterByEntities(List<BidsFile> files, List<BidsEntity> entityFilter) {
         if (!entityFilter) {
@@ -68,7 +68,7 @@ class BidsEntityUtils {
      * @return Map of entity value to list of files
      *
      * @reference Grouping by entity:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L75-L110
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L75-L110
      */
     static Map<String, List<BidsFile>> groupByEntity(List<BidsFile> files, String entityName) {
         Map<String, List<BidsFile>> grouped = [:].withDefault { [] }
@@ -108,7 +108,7 @@ class BidsEntityUtils {
      * @return List of entity values in same order
      *
      * @reference Entity value extraction:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L155-L175
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L155-L175
      */
     static List<String> extractEntityValues(BidsFile file, List<String> entityNames) {
         return entityNames.collect { entityName -> file.getEntityValue(BidsEntity.normalizeName(entityName)) }

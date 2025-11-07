@@ -16,7 +16,7 @@ import groovy.util.logging.Slf4j
  * Executes BIDS validation and handles ignore codes
  * 
  * @reference BIDS validation implementation: 
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf
  */
 @Slf4j
 // @CompileStatic // TODO v1.1: Implement full validation with bids-validator integration
@@ -36,7 +36,7 @@ class BidsValidator {
      * @param ignoreCodes List of BIDS validation codes to ignore
      * 
      * @reference BIDS_VALIDATOR process: 
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf#L1-L30
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf#L1-L30
      */
     void validate(String bidsDir, List<Integer> ignoreCodes = []) {
         log.warn("⚠️ BIDS validation is not yet implemented (v1.1 feature). Skipping validation for: ${bidsDir}")
@@ -83,7 +83,7 @@ class BidsValidator {
      * @return Command string
      *
      * @reference Validation command:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf#L17-L26
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf#L17-L26
      */
     // private String buildValidationCommand(String bidsDir, List<Integer> ignoreCodes) {
     //     def ignoreFlags = ignoreCodes.collect { "--ignoreWarnings ${it}" }.join(' ')
@@ -104,7 +104,7 @@ class BidsValidator {
      * @param libBidsPath libBIDS.sh path
      * 
      * @reference preFlightChecks function: 
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/bids_validator.nf#L55-L85
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf#L55-L85
      */
     void preFlightChecks(String bidsDir, String configPath, String libBidsPath) {
         log.info("✈︎✈︎✈︎ Pre-flight checks started")

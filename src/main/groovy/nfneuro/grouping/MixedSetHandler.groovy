@@ -28,7 +28,7 @@ import groovyx.gpars.dataflow.DataflowQueue
  *     required: ["MTw", "PDw", "T1w"]
  *
  * @reference Mixed set implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class MixedSetHandler extends BaseSetHandler {
@@ -82,7 +82,7 @@ class MixedSetHandler extends BaseSetHandler {
      * @return BidsChannelData or null
      *
      * @reference Mixed set processing:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L56-L70
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L56-L70
      */
     @Override
     protected BidsChannelData processGroup(
@@ -226,7 +226,7 @@ class MixedSetHandler extends BaseSetHandler {
      * @return The matching group name (e.g., "MTw", "PDw", "T1w") or null
      *
      * @reference findMatchingMixedGrouping function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L56-L70
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L56-L70
      */
     private String findMatchingMixedGroupName(BidsFile file, Map mixedSetConfig) {
         def namedGroups = mixedSetConfig.named_groups as Map
@@ -333,7 +333,7 @@ class MixedSetHandler extends BaseSetHandler {
      * @return Comparison result
      *
      * @reference Sequence comparison from:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L60-L75
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L60-L75
      */
     private int compareSequenceValues(Object a, Object b) {
         try {

@@ -9,7 +9,7 @@ import java.nio.file.Paths
  * Represents a BIDS dataset
  *
  * @reference BIDS dataset structure:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf
  */
 @CompileStatic
 class BidsDataset {

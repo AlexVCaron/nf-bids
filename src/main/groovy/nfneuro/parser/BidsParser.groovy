@@ -17,7 +17,7 @@ import nfneuro.plugin.util.BidsLogger
  * and converts results to BidsDataset and Nextflow channels
  *
  * @reference Parser implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
  */
 @Slf4j
 @CompileStatic
@@ -43,7 +43,7 @@ class BidsParser {
      * @return BidsDataset object
      *
      * @reference libbids_sh_parse process:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
     BidsDataset parseToDataset(String bidsDir, String libBidsShPath = null) {
         BidsLogger.logProgress("nf-bids-parser", "Parsing BIDS dataset: ${bidsDir}")
@@ -79,7 +79,7 @@ class BidsParser {
      * @return DataflowQueue containing parsed BidsFile objects
      *
      * @reference libbids_sh_parse process:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
     DataflowQueue parse(String bidsDir, String libBidsShPath = null) {
         BidsLogger.logProgress("nf-bids-parser", "Parsing BIDS dataset to channel: ${bidsDir}")
@@ -120,7 +120,7 @@ class BidsParser {
      * @return Map of entity name to value
      *
      * @reference Entity parsing from:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/libBIDS.sh/libBIDS.sh
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/libBIDS.sh/libBIDS.sh
      */
     static Map<String, String> parseEntitiesFromFilename(String filename) {
         Map<String, String> entities = [:]

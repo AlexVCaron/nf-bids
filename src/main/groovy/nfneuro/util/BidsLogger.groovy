@@ -21,7 +21,7 @@ class BidsLogger {
      * @param message Message to log
      *
      * @reference logProgress function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L18-L20
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L18-L20
      */
     static void logProgress(String context, String message) {
         log.info("[${context}] ${message}")
@@ -43,7 +43,7 @@ class BidsLogger {
      * @param message Debug message
      *
      * @reference logDebug function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L22-L26
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L22-L26
      */
     static void logDebug(String context, String message) {
         if (log.isDebugEnabled()) {

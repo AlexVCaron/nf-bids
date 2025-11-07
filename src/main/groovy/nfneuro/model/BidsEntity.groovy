@@ -80,7 +80,7 @@ class BidsEntity {
      * @return Normalized value
      *
      * @reference normalizeEntityValue function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L32-L46
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L32-L46
      */
     static final String normalizeValue(String value) {
         if (!value) {

@@ -15,7 +15,7 @@ import groovyx.gpars.dataflow.DataflowQueue
  * Each handler implements specific grouping and organization logic.
  *
  * @reference Set processing implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 abstract class BaseSetHandler {
@@ -111,7 +111,7 @@ abstract class BaseSetHandler {
      * @return Matching grouping configuration or null
      *
      * @reference findMatchingGrouping function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L1-L35
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L1-L35
      */
     protected Map findMatchingGrouping(BidsFile file, Map config, Map<String, String> suffixMapping) {
         def suffix = file.suffix
@@ -163,7 +163,7 @@ abstract class BaseSetHandler {
      * @return true if valid
      *
      * @reference validateRequiredFiles function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/validation_utils.nf#L1-L25
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/validation_utils.nf#L1-L25
      */
     protected boolean validateRequiredFileCount(List<BidsFile> files, Integer requiredCount) {
         if (!requiredCount) {

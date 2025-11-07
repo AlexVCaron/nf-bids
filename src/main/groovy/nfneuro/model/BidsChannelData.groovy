@@ -8,7 +8,7 @@ import groovy.transform.CompileStatic
  * Contains grouped and organized BIDS data ready for Nextflow channels
  *
  * @reference Channel data structure from:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L98-L117
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L98-L117
  */
 @CompileStatic
 class BidsChannelData {

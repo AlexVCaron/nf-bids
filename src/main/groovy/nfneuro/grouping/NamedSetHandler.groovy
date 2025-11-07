@@ -26,8 +26,8 @@ import groovyx.gpars.dataflow.DataflowQueue
  *   required: ["T1w", "MTw", "PDw"]
  *
  * @reference Named set implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_named_sets.nf
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_named_sets.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class NamedSetHandler extends BaseSetHandler {
@@ -65,8 +65,8 @@ class NamedSetHandler extends BaseSetHandler {
      * @return BidsChannelData or null
      *
      * @reference Named set grouping:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_named_sets.nf#L1-L70
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L20-L60
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_named_sets.nf#L1-L70
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L20-L60
      */
     @Override
     protected BidsChannelData processGroup(

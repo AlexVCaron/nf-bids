@@ -255,7 +255,7 @@ Before submitting your PR, ensure:
 
 ### Before Reporting
 
-1. Check [existing issues](https://github.com/AlexVCaron/bids2nf/issues)
+1. Check [existing issues](https://github.com/nf-neuro/nf-bids/issues)
 2. Verify it's not a configuration issue
 3. Test with the latest version
 

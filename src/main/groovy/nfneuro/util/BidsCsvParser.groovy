@@ -12,7 +12,7 @@ import nfneuro.plugin.model.BidsFile
  *
  * @reference CSV format:
  *            derivatives,data_type,subject,session,sample,task,...,suffix,extension,path
- *            https://github.com/AlexVCaron/bids2nf/blob/main/libBIDS.sh/libBIDS.sh#L503-L524
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/libBIDS.sh/libBIDS.sh#L503-L524
  */
 @Slf4j
 @CompileStatic

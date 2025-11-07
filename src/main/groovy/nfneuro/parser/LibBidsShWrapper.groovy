@@ -12,7 +12,7 @@ import nfneuro.plugin.util.BidsErrorHandler
  * and handles the interface between Groovy and Bash
  *
  * @reference Bash parser wrapper:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
  */
 @Slf4j
 @CompileStatic
@@ -39,7 +39,7 @@ class LibBidsShWrapper {
      * @return File containing parsed CSV data
      *
      * @reference libbids_sh_parse process implementation:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
     File parseBidsToCSV(String bidsDir, String libBidsShPath = null) {
         // Validate inputs early to prevent command injection
@@ -180,7 +180,7 @@ class LibBidsShWrapper {
      * @return Command list for ProcessBuilder
      *
      * @reference Bash command structure:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L17-L24
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L17-L24
      */
     private List<String> buildParseCommand(String scriptPath, String bidsDir, File outputFile) {
         // Additional validation for output file path

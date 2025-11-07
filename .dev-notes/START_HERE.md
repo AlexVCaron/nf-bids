@@ -188,7 +188,7 @@ Every method has `@reference` tags linking to original code:
  * Parse BIDS dataset to CSV format
  * 
  * @reference libbids_sh_parse process: 
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
  */
 DataflowQueue parse(String bidsDir, String libBidsShPath = null) {
     // Implementation here

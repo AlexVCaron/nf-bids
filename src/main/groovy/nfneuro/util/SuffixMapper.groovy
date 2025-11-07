@@ -14,7 +14,7 @@ import groovy.transform.CompileStatic
  *     named_set: ...
  *
  * @reference Special case configurations in bids2nf.yaml:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/bids2nf.yaml#L290-L330
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/bids2nf.yaml#L290-L330
  */
 @CompileStatic
 class SuffixMapper {

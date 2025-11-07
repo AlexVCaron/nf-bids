@@ -324,6 +324,6 @@ You're ready to move forward when:
 2. View build logs: `/tmp/nf-bids-build.log`
 3. View test logs: `/tmp/nf-bids-test.log`
 4. Check Gradle docs: https://gradle.org/
-5. Review original code: https://github.com/AlexVCaron/bids2nf
+5. Review original code: https://github.com/nf-neuro/nf-bids
 
 **Next recommended action:** Run `./quick-test.sh` to verify build system

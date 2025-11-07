@@ -15,8 +15,8 @@ import groovyx.gpars.dataflow.DataflowQueue
  * Plain sets emit each file individually with its entities as grouping key.
  *
  * @reference Plain set implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_plain_sets.nf
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/grouping/plain_set_utils.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_plain_sets.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/plain_set_utils.nf
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class PlainSetHandler extends BaseSetHandler {
@@ -109,7 +109,7 @@ class PlainSetHandler extends BaseSetHandler {
      * @return BidsChannelData or null if filtered
      *
      * @reference Plain set processing:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_plain_sets.nf#L1-L50
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_plain_sets.nf#L1-L50
      */
     @Override
     protected BidsChannelData processGroup(

@@ -119,7 +119,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 ### Need help?
 
 - Check the [documentation](docs/)
-- Review [closed issues](https://github.com/AlexVCaron/bids2nf/issues?q=is%3Aissue+is%3Aclosed)
+- Review [closed issues](https://github.com/nf-neuro/nf-bids/issues?q=is%3Aissue+is%3Aclosed)
 - Open a new issue with details
 
 ---

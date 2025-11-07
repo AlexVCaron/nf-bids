@@ -264,7 +264,7 @@ When available, a method should includes `@reference` tags pointing to the origi
 /**
  * Process BIDS datasets
  *
- * @reference https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L100-L150
+ * @reference https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L100-L150
  */
 def processDatasets(Map params) {
     // Implementation based on original code

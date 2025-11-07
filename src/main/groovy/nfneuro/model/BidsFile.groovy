@@ -8,7 +8,7 @@ import groovy.transform.CompileStatic
  * Represents a BIDS file with metadata
  *
  * @reference BIDS file structure from parsing:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
  */
 @CompileStatic
 class BidsFile {

@@ -19,7 +19,7 @@ import java.nio.file.Files
  * Orchestrates BIDS parsing, grouping, and channel emission
  *
  * @reference Main workflow implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf
  */
 @Slf4j
 @CompileStatic
@@ -42,7 +42,7 @@ class BidsChannelFactory {
      * @return DataflowWriteChannel containing structured BIDS data
      *
      * @reference Workflow orchestration:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L20-L56
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L20-L56
      */
     @Factory
     DataflowWriteChannel fromBIDS(String bidsDir, String configPath = null, Map options = [:]) {

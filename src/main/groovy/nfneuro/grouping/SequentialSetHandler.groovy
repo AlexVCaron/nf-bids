@@ -25,7 +25,7 @@ import groovyx.gpars.dataflow.DataflowQueue
  *   TB1EPI -> [[echo-1_flip-1, echo-1_flip-2], [echo-2_flip-1, echo-2_flip-2]]
  *
  * @reference Sequential set implementation:
- *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class SequentialSetHandler extends BaseSetHandler {
@@ -48,7 +48,7 @@ class SequentialSetHandler extends BaseSetHandler {
      * @return BidsChannelData or null
      *
      * @reference Sequential set processing:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L95-L230
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L95-L230
      */
     @Override
     protected BidsChannelData processGroup(
@@ -316,7 +316,7 @@ class SequentialSetHandler extends BaseSetHandler {
      * @return Map of extension type to nested arrays
      *
      * @reference Hierarchical structure building:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L145-L255
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L145-L255
      */
     private Map hierarchicalSequence(String datasetRoot, List files, List<BidsFile> allFiles) {
         // Group files by outer entity value and collect all related files
@@ -452,7 +452,7 @@ class SequentialSetHandler extends BaseSetHandler {
      * @return Nested array structure
      *
      * @reference Flat structure building:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L190-L210
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L190-L210
      */
     private List flatSequence(String datasetRoot, List files, List<String> partsConfig = null) {
         // Group by outer entity first

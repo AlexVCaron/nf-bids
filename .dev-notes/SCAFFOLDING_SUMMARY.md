@@ -86,7 +86,7 @@ Example:
  * Apply demand-driven cross-modal broadcasting
  * 
  * @reference Broadcasting implementation: 
- *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L119-L236
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L119-L236
  */
 private DataflowQueue applyCrossModalBroadcasting(...) {
     // Implementation stub
@@ -278,7 +278,7 @@ The plugin is complete when:
 
 ## Contact & Support
 
-- **Original Project**: https://github.com/AlexVCaron/bids2nf
+- **Original Project**: https://github.com/agahkarakuzu/bids2nf
 - **BIDS Spec**: https://bids-specification.readthedocs.io/
 - **Nextflow Plugins**: https://www.nextflow.io/docs/latest/plugins.html
 - **Plugin Template**: https://github.com/nextflow-io/nf-hello

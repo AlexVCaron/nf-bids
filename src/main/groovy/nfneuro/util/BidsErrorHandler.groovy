@@ -9,7 +9,7 @@ import groovy.util.logging.Slf4j
  * Provides context-aware error handling with detailed messages
  * 
  * @reference Error handling: 
- *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf
+ *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf
  */
 @Slf4j
 @CompileStatic
@@ -25,7 +25,7 @@ class BidsErrorHandler {
      * @return Result of closure execution
      * 
      * @reference tryWithContext function: 
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L35-L48
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L35-L48
      */
     static <T> T tryWithContext(String context, Closure<T> closure) {
         try {
@@ -51,7 +51,7 @@ class BidsErrorHandler {
      * @return Result of closure or default value
      * 
      * @reference safeExecute function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L42-L48
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L42-L48
      */
     static <T> T safeExecute(String context, Closure<T> closure, T defaultValue = null) {
         try {
@@ -73,7 +73,7 @@ class BidsErrorHandler {
      * @param message Error message if condition fails
      * 
      * @reference validateAndThrow function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L28-L32
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L28-L32
      */
     static void validateWithContext(boolean condition, String context, String message) {
         if (!condition) {
@@ -89,7 +89,7 @@ class BidsErrorHandler {
      * @param e Exception that occurred
      * 
      * @reference handleError function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L1-L7
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L1-L7
      */
     static void handleError(String context, Exception e) {
         log.error("[${context}] Error occurred: ${e.message}")
@@ -106,7 +106,7 @@ class BidsErrorHandler {
      * @param message Error message
      * 
      * @reference handleErrorWithMessage function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L9-L12
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L9-L12
      */
     static void handleErrorWithMessage(String context, String message) {
         log.error("[${context}] ${message}")
@@ -120,7 +120,7 @@ class BidsErrorHandler {
      * @param message Warning message
      * 
      * @reference handleWarning function:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/modules/utils/error_handling.nf#L14-L16
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf#L14-L16
      */
     static void handleWarning(String context, String message) {
         log.warn("[${context}] ⚠︎ ${message}")

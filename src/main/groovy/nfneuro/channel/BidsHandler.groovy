@@ -120,7 +120,7 @@ class BidsHandler {
      * @param results Final processed results
      *
      * @reference Validation and logging:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L238-L249
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L238-L249
      */
     private void validateAndEmitChannel(DataflowQueue results) {
         int count = 0
@@ -166,7 +166,7 @@ class BidsHandler {
      * @return Combined results from all handlers
      *
      * @reference Routing logic:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L69-L92
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L69-L92
      */
     private DataflowQueue processDatasets(
             String datasetRoot,
@@ -224,7 +224,7 @@ class BidsHandler {
      * @return Channel with cross-modal data included
      *
      * @reference Broadcasting implementation:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L119-L236
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L119-L236
      */
     private DataflowQueue applyCrossModalBroadcasting(
             DataflowQueue results,
@@ -321,7 +321,7 @@ class BidsHandler {
      * @return Unified channel with merged data
      *
      * @reference Unification logic:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L94-L117
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L94-L117
      */
     private DataflowQueue unifyResults(DataflowQueue results, List<String> loopOverEntities) {
         // Group by grouping key
@@ -405,7 +405,7 @@ class BidsHandler {
      * @return Enhanced data with cross-modal includes
      *
      * @reference Cross-modal inclusion:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L166-L183
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L166-L183
      */
     private Map applyIncludeCrossModal(
             Map enrichedData,
@@ -449,7 +449,7 @@ class BidsHandler {
      * @return true if channel should be emitted
      *
      * @reference Channel filtering:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L185-L218
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L185-L218
      */
     private boolean shouldKeepChannel(Map enrichedData, Map config) {
         // Only keep if has non-requested data
@@ -482,7 +482,7 @@ class BidsHandler {
      * @return Map of entity name to value
      *
      * @reference Entity extraction:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L98-L101
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L98-L101
      */
     private Map<String, String> extractEntityValues(Object groupingKey, List<String> loopOverEntities) {
         def entityValues = [:]
@@ -501,7 +501,7 @@ class BidsHandler {
      * @return Non-task key string
      *
      * @reference Key creation:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L133-L141
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L133-L141
      */
     private String constructLoopingKey(Map<String, String> entityValues, List<String> loopOverEntities) {
         return loopOverEntities.collect { entity -> entityValues[entity] ?: "NA" }
@@ -537,7 +537,7 @@ class BidsHandler {
      * @return Parsed configuration map
      *
      * @reference Config loading:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L46-L48
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L46-L48
      */
     protected void loadConfiguration(String configPath) {
         BidsConfigLoader configLoader = new BidsConfigLoader()
@@ -568,7 +568,7 @@ class BidsHandler {
      * @param loopOverEntities List of entities to loop over
      *
      * @reference Logging format:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L61-L67
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L61-L67
      */
     private void logConfigurationSummary(Map summary, List<String> loopOverEntities) {
         final String handler = 'nf-bids-handler'

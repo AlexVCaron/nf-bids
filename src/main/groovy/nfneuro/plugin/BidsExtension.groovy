@@ -52,7 +52,7 @@ class BidsExtension extends PluginExtensionPoint {
      * @return DataflowWriteChannel containing structured BIDS data
      * 
      * @reference Main workflow implementation:
-     *            https://github.com/AlexVCaron/bids2nf/blob/main/main.nf#L20-L56
+     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L20-L56
      */
     @Factory
     DataflowWriteChannel fromBIDS(
