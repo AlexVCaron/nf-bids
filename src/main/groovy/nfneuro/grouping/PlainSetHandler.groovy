@@ -44,144 +44,42 @@ class PlainSetHandler extends BaseSetHandler {
         return nestedMap
     }
 
-    // @Override
-    // DataflowQueue process(
-    //         String datasetRoot,
-    //         List<BidsFile> bidsFiles,
-    //         Map config,
-    //         List<String> loopOverEntities,
-    //         Map<String, String> suffixMapping) {
-
-    //     BidsLogger.logProgress("nf-bids-plain-set", "Processing plain sets with ${bidsFiles.size()} files")
-    //     BidsLogger.logProgress("nf-bids-plain-set", "Loop-over entities: ${loopOverEntities}")
-
-    //     // DEBUG: Log all unique suffixes in input files
-    //     def uniqueSuffixes = bidsFiles.collect { it.suffix }.unique()
-    //     BidsLogger.logProgress("nf-bids-plain-set", "Input files have suffixes: ${uniqueSuffixes}")
-
-    //     def results = new DataflowQueue()
-    //     def processedCount = 0
-    //     def filteredCount = 0
-
-    //     // Process each file individually (only primary files to avoid duplicates)
-    //     bidsFiles.each { file ->
-    //         // Skip non-primary files (they'll be included via nestedDataMap)
-    //         if (!file.isPrimaryFile()) {
-    //             BidsLogger.logProgress("nf-bids-plain-set", "Skipping non-primary file: ${file.filename}")
-    //             filteredCount++
-    //             return
-    //         }
-
-    //         def channelData = processPlainSetFile(datasetRoot, file, config, loopOverEntities, bidsFiles)
-
-    //         if (channelData) {
-    //             // DEBUG: Log successful processing
-    //             BidsLogger.logProgress("nf-bids-plain-set", "Processed ${file.suffix} file: ${file.filename}")
-    //             BidsLogger.logProgress("nf-bids-plain-set", "  ├─ Channel data: ${channelData}")
-    //             results << channelData
-    //             processedCount++
-    //         } else {
-    //             // DEBUG: Log filtering with reason
-    //             BidsLogger.logProgress("nf-bids-plain-set", "Filtered ${file.suffix} file: ${file.filename}")
-    //             filteredCount++
-    //         }
-    //     }
-
-    //     BidsLogger.logProgress("nf-bids-plain-set", "Plain set processing: ${processedCount} emitted, ${filteredCount} filtered")
-
-    //     // Return unbound queue - will be consumed by transferQueueItems
-    //     return results
-    // }
-
     @Override
     protected String getSetName() {
         return "plain_set"
     }
 
-    /**
-     * Process a single plain set file
-     *
-     * @param file BIDS file to process
-     * @param config Configuration map
-     * @param loopOverEntities entities to group by
-     * @param suffixMapping Suffix to config key mapping (for suffix_maps_to)
-     * @param allFiles All files for finding associated files
-     * @return BidsChannelData or null if filtered
-     *
-     * @reference Plain set processing:
-     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_plain_sets.nf#L1-L50
-     */
+    @Override
+    protected List<String> getSequenceByEntities(Map config) {
+        // Plain sets do not use sequencing
+        return
+    }
+
+    @Override
+    protected Map getSetIndex(BidsFile file, Map setConfig) {
+        // For plain sets, use the suffix as the index
+        return [suffix: file.suffix]
+    }
+
+    @Override
+    protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
+        if (file.isPrimaryFile()) {
+            sets[index.suffix] = [files: [file: file]]
+        } else {
+            if (!allFiles.containsKey(index.suffix)) {
+                allFiles[index.suffix] = []
+            }
+            allFiles[index.suffix] << file
+        }
+    }
+
     @Override
     protected BidsChannelData processGroup(
             String datasetRoot,
-            List<BidsFile> filesInGroup,
-            Map config,
+            Map plainSets,
+            Map allFiles,
             List<String> loopOverEntities,
-            Map<String, String> suffixMapping) {
-
-        Map plainSets = [:].withDefault { [:] }
-        Map allFiles = [:]
-
-        filesInGroup.each{ file ->
-            String suffix = file.suffix
-            if (!suffix) {
-                BidsLogger.logProgress(getLogGroup(), "Skipping file without suffix: ${file.path}")
-                return
-            }
-
-            // For plain_set, ALWAYS use original suffix (don't use mapped key)
-            // This allows both plain_set (epi) and named_set (epi_fullreverse with suffix_maps_to)
-            // to process the same files
-            def suffixConfig = config.get(suffix) as Map
-            if (!suffixConfig) {
-                BidsLogger.logProgress(getLogGroup(), "No configuration for suffix: ${suffix} - FILTERED")
-                return
-            }
-
-            def plainSetConfig = getSetConfig(suffixConfig)
-            if (plainSetConfig == null) {
-                BidsLogger.logProgress(getLogGroup(), "No plain_set configuration for suffix: ${suffix} - FILTERED")
-                return
-            }
-
-            BidsLogger.logProgress(getLogGroup(), "Found plain_set config for ${suffix}")
-
-            // Apply entity filters if specified
-            if (plainSetConfig.filter) {
-                if (!BidsEntityUtils.entitiesMatch(file.entities, plainSetConfig.filter as List)) {
-                    BidsLogger.logProgress(getLogGroup(), "File filtered by entity pattern: ${file.path}")
-                    return
-                }
-            }
-
-            // Exclude files with specific entities if specified
-            if (plainSetConfig.exclude_entities) {
-                for (String entityName : plainSetConfig.exclude_entities as List<String>) {
-                    String normalizedEntity = BidsEntity.normalizeName(entityName)
-                    String entityValue = file.getEntityValue(normalizedEntity)
-                    if (entityValue && entityValue != "NA") {
-                        BidsLogger.logProgress(getLogGroup(), "File excluded by entity ${entityName}: ${file.path}")
-                        return
-                    }
-                }
-            }
-
-            // Validate required entities are present
-            def requiredEntities = plainSetConfig.required_entities as List<String>
-            if (requiredEntities && !BidsEntityUtils.hasRequiredEntities(file, requiredEntities)) {
-                BidsLogger.logProgress(getLogGroup(), "File missing required entities: ${file.path}")
-                return
-            }
-
-            if (file.isPrimaryFile()) {
-                plainSets[suffix] = file
-            } else {
-                if (!allFiles.containsKey(suffix)) {
-                    allFiles[suffix] = []
-                }
-                allFiles[suffix] << file
-            }
-        }
+            Map suffixMapping) {
 
         // Create channel data structure
         BidsChannelData channelData = new BidsChannelData()

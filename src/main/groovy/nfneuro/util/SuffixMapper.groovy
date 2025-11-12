@@ -2,6 +2,8 @@ package nfneuro.plugin.util
 
 import groovy.transform.CompileStatic
 
+import nfneuro.plugin.grouping.BaseSetHandler
+
 /**
  * Utility for mapping suffixes via suffix_maps_to configuration
  *
@@ -28,8 +30,8 @@ class SuffixMapper {
      * @param config Full configuration map
      * @return Map of suffix -> config key (e.g., "dwi" -> "dwi_fullreverse")
      */
-    static Map<String, String> suffixMapping(Map config) {
-        Map<String, String> mapping = [:]
+    static Map<String, Map<String, String>> suffixMapping(Map config) {
+        Map<String, Map<String, String>> mapping = [:].withDefault { [:] }
 
         if (!config) {
             return mapping
@@ -42,11 +44,12 @@ class SuffixMapper {
                 // Check if this config has suffix_maps_to
                 if (suffixConfig.suffix_maps_to) {
                     String targetSuffix = suffixConfig.suffix_maps_to as String
+                    String setType = BaseSetHandler.getSetType(suffixConfig)
 
                     // Map: actual file suffix -> configuration key
-                    mapping[targetSuffix] = configKey as String
+                    mapping[setType][targetSuffix] = configKey as String
 
-                    BidsLogger.logProgress("suffix-mapping", "Suffix mapping: ${targetSuffix} -> ${configKey}")
+                    BidsLogger.logProgress("suffix-mapping", "Suffix mapping for ${setType}: ${targetSuffix} -> ${configKey}")
                 }
             }
         }
@@ -60,19 +63,20 @@ class SuffixMapper {
      * If suffix has a mapping (via suffix_maps_to), returns the mapped config key.
      * Otherwise, returns the suffix itself as the config key.
      *
+     * @param setType Type of set (e.g., "plain_set", "named_set")
      * @param suffix File suffix from BIDS file
      * @param mapping Suffix mapping from suffixMapping()
      * @return Configuration key to look up
      */
-    static String resolveConfigKey(String suffix, Map<String, String> mapping) {
+    static String resolveConfigKey(String setType, String suffix, Map<String, Map<String, String>> mapping) {
         // Handle null or empty mapping
         if (!mapping) {
             return suffix
         }
 
         // If there's a mapping for this suffix, use it
-        if (mapping.containsKey(suffix)) {
-            String mappedKey = mapping[suffix]
+        if (mapping[setType].containsKey(suffix)) {
+            String mappedKey = mapping[setType][suffix]
             BidsLogger.logProgress("suffix-mapping", "Resolving suffix '${suffix}' to config key '${mappedKey}'")
             return mappedKey
         }

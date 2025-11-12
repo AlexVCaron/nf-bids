@@ -53,6 +53,37 @@ class NamedSetHandler extends BaseSetHandler {
         return "named_set"
     }
 
+    @Override
+    protected List<String> getSequenceByEntities(Map config) {
+        // Named sets do not use sequencing
+        return
+    }
+
+    @Override
+    protected Map getSetIndex(BidsFile file, Map setConfig) {
+        // For named sets, use the suffix, plus grouping entities as index
+        def groupName = findMatchingGroupName(file, setConfig)
+        return [suffix: file.suffix, group: groupName]
+    }
+
+    @Override
+    protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
+        if (!index.group) {
+            BidsLogger.logProgress(getLogGroup(), "No group name found for file: ${file.path}")
+            return
+        }
+
+        if (!sets[index.suffix]) {
+            sets[index.suffix] = [files: [:]]
+        }
+        sets[index.suffix].files[index.group] = [file: file]
+
+        if (!allFiles.containsKey(index.suffix)) {
+            allFiles[index.suffix] = []
+        }
+        allFiles[index.suffix] << file
+    }
+
     /**
      * Process a group of files for named set configuration
      *
@@ -71,124 +102,42 @@ class NamedSetHandler extends BaseSetHandler {
     @Override
     protected BidsChannelData processGroup(
             String datasetRoot,
-            List<BidsFile> filesInGroup,
-            Map config,
+            Map namedSets,
+            Map allFiles,
             List<String> loopOverEntities,
-            Map<String, String> suffixMapping) {
-
-        // Organize files by suffix and group name using pattern matching
-        def namedSets = [:].withDefault { [:] }
-        def allFiles = []
-
-        filesInGroup.each { file ->
-            def suffix = file.suffix
-            BidsLogger.logProgress(getLogGroup(), "Processing file: ${file.filename} with suffix: ${suffix}")
-            if (!suffix) return
-
-            // Resolve config key using suffix mapping
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(suffix, suffixMapping ?: [:])
-
-            def suffixConfig = config.get(configKey) as Map
-            BidsLogger.logProgress(getLogGroup(), "Suffix config (key: ${configKey}): ${suffixConfig}")
-            if (!suffixConfig) return
-
-            def namedSetConfig = getSetConfig(suffixConfig)
-            BidsLogger.logProgress(getLogGroup(), "Named set config: ${namedSetConfig}")
-            if (!namedSetConfig) return
-
-            // Use pattern matching to find matching group name
-            // Find which named group this file belongs to
-            def groupName = findMatchingGroupName(file, namedSetConfig)
-            BidsLogger.logProgress(getLogGroup(), "Matched group name: ${groupName}")
-            if (!groupName) {
-                BidsLogger.logProgress(getLogGroup(), "No matching group pattern for file: ${file.filename}")
-                return
-            }
-
-            // Add to named set structure (only one file per group for named sets)
-            if (!namedSets[suffix]) {
-                namedSets[suffix] = [:]
-            }
-            namedSets[suffix][groupName] = file
-            allFiles << file
-        }
-
-        if (namedSets.isEmpty()) {
-            return null
-        }
-
-        // Validate required groups are present for each suffix
-        def validSuffixes = [:]
-
-        namedSets.each { suffix, groups ->
-            // Resolve config key using suffix mapping
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(suffix, suffixMapping ?: [:])
-
-            def suffixConfig = config.get(configKey) as Map
-            // required is at suffix config level, not inside named_set
-            def requiredGroups = suffixConfig?.required as List<String>
-
-            // Only validate if requiredGroups is explicitly defined and non-empty
-            if (requiredGroups != null && !requiredGroups.isEmpty()) {
-                def foundGroups = groups.keySet()
-                def hasAllRequired = requiredGroups.every { foundGroups.contains(it) }
-
-                if (hasAllRequired) {
-                    validSuffixes[suffix] = groups
-                } else {
-                    def missing = requiredGroups - foundGroups
-                    def entityMap = [:]
-                    loopOverEntities.eachWithIndex { entity, index ->
-                        entityMap[entity] = filesInGroup[0]?.getEntityValue(entity) ?: "NA"
-                    }
-                    def entityDesc = loopOverEntities.collect { entity -> "${entity}: ${entityMap[entity]}" }.join(", ")
-                    BidsLogger.logProgress(getLogGroup(), "Entities ${entityDesc}, Suffix ${suffix}: Missing required groups: ${missing}. Found: ${foundGroups}")
-                }
-            } else {
-                // No required groups specified, accept all groups
-                validSuffixes[suffix] = groups
-            }
-        }
-
-        if (validSuffixes.isEmpty()) {
-            return null
-        }
-
-        // Build grouping key
-        def groupingKey = BidsEntityUtils.groupingKey(filesInGroup[0], loopOverEntities)
-
+            Map suffixMapping) {
         // Create channel data
         def channelData = new BidsChannelData()
 
         // Add suffix data as maps of {groupName -> {extension: filePath}}
         // Use the resolved config key (virtual suffix) for output, not the file suffix
-        validSuffixes.each { suffix, groups ->
+        namedSets.each { suffix, groups ->
+            BidsLogger.logProgress(getLogGroup(), "Emitting named set for suffix: ${suffix}, file: ${file.path}")
+
             // Resolve to the config key (e.g., "epi" -> "epi_fullreverse")
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(suffix, suffixMapping ?: [:])
+            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(getSetName(), suffix, suffixMapping ?: [:])
 
             def groupMap = groups.collectEntries { groupName, file ->
                 // Build nested file data map by extension type
                 [groupName, nestedMapForFile(datasetRoot, file, allFiles)]
             }
             channelData.addSuffixData(configKey, groupMap)  // Use config key, not file suffix
-        }
 
-        // Add all file paths (with relative paths)
-        allFiles.each { file ->
-            channelData.addFilePath(file.relativeTo(datasetRoot))
-            if (file.sidecarPath) {
-                channelData.addFilePath(file.sidecarPath.relativeTo(datasetRoot))
+            // Get all related files for this suffix
+            List<BidsFile> relatedFiles = allFiles.get(suffix, [])
+
+            // Add all file paths (with relative paths)
+            relatedFiles.each { file ->
+                channelData.addFilePath(file.relativeTo(datasetRoot))
+                if (file.sidecarPath) {
+                    channelData.addFilePath(file.sidecarPath.relativeTo(datasetRoot))
+                }
+
+                file.entities.each { entity ->
+                    channelData.addEntity(entity.name, entity.value)
+                }
             }
         }
-
-        // Add entities from the first file (all files in group should have same loop-over entities)
-        if (filesInGroup) {
-            filesInGroup[0].entities.each { entity ->
-                channelData.addEntity(entity.name, entity.value)
-            }
-        }
-
-        BidsLogger.logProgress(getLogGroup(), "Named set emitted with ${validSuffixes.size()} suffixes, key: ${groupingKey}")
 
         return channelData
     }

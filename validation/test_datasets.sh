@@ -37,7 +37,7 @@ set +e
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BIDS2NF_ROOT="$(cd "${PLUGIN_DIR}/../.." && pwd)"
-TEST_DATA="${BIDS2NF_ROOT}/tests/data"
+TEST_DATA="$(dirname "${BASH_SOURCE[0]}")/data"
 
 # Parse arguments
 VERBOSE=false
@@ -166,7 +166,6 @@ test_dataset() {
         nextflow run "${PLUGIN_DIR}/validation/main.nf" \
             --bids_dir "${dataset}" \
             --config "${config}" \
-            --libbids_sh "${BIDS2NF_ROOT}/libBIDS.sh/libBIDS.sh" \
             2>&1
         local exit_code=$?
         output=$(echo "")  # Empty for verbose mode
@@ -174,7 +173,6 @@ test_dataset() {
         output=$(nextflow run "${PLUGIN_DIR}/validation/main.nf" \
             --bids_dir "${dataset}" \
             --config "${config}" \
-            --libbids_sh "${BIDS2NF_ROOT}/libBIDS.sh/libBIDS.sh" \
             2>&1)
         local exit_code=$?
     fi
