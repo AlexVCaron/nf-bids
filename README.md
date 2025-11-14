@@ -4,7 +4,7 @@
 
 A Nextflow plugin that provides native BIDS (Brain Imaging Data Structure) dataset support through channel factories, enabling seamless integration of neuroimaging data into Nextflow pipelines.
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.2-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.2)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.3-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.3)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;23.x-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -26,7 +26,7 @@ To install it, add the lines below in your `nextflow.config` file :
 
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.2'
+    id 'nf-bids@0.1.0-beta.3'
 }
 ```
 
