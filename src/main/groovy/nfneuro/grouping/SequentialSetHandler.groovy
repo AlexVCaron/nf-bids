@@ -1,13 +1,9 @@
 package nfneuro.plugin.grouping
 
 import groovy.transform.CompileStatic
-import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 import nfneuro.plugin.model.BidsChannelData
-import nfneuro.plugin.util.BidsEntityUtils
 import nfneuro.plugin.util.BidsLogger
-import nfneuro.plugin.util.SuffixMapper
-import groovyx.gpars.dataflow.DataflowQueue
 
 /**
  * Handler for sequential BIDS sets
@@ -31,7 +27,7 @@ import groovyx.gpars.dataflow.DataflowQueue
 class SequentialSetHandler extends BaseSetHandler {
 
     @Override
-    protected String getSetName() {
+    protected String setName() {
         return "sequential_set"
     }
 
@@ -52,12 +48,12 @@ class SequentialSetHandler extends BaseSetHandler {
         }
 
         if (sets[index.suffix].entities != ordering.entities) {
-            BidsLogger.logProgress(getLogGroup(), "Warning: Inconsistent sequencing entities for suffix ${index.suffix}")
+            BidsLogger.logProgress(logGroup(), "Warning: Inconsistent sequencing entities for suffix ${index.suffix}")
             return
         }
 
         if (sets[index.suffix].order != ordering.order) {
-            BidsLogger.logProgress(getLogGroup(), "Warning: Inconsistent sequencing order for suffix ${index.suffix}")
+            BidsLogger.logProgress(logGroup(), "Warning: Inconsistent sequencing order for suffix ${index.suffix}")
             return
         }
 
@@ -75,49 +71,43 @@ class SequentialSetHandler extends BaseSetHandler {
     @Override
     protected BidsChannelData processGroup(
             String datasetRoot,
-            Map sequentialSets,
+            Map sets,
             Map allFiles,
+            Map config,
             List<String> loopOverEntities,
             Map<String, Map<String, String>> suffixMapping) {
-
-        // // Build the final structure for each suffix
-        // sequentialSets.each { suffix, setData ->
-        //     def files = setData.files as List
-        //     def entities = setData.entities as List<String>
-        //     def order = setData.order as String
-
-        //     // Get parts configuration if specified
-        //     def suffixConfig = config.get(SuffixMapper.resolveConfigKey(getSetName(), suffix, suffixMapping))
-        //     def sequentialSetConfig = getSetConfig(suffixConfig)
-        //     def partsConfig = sequentialSetConfig?.parts as List<String>
-
-        //     if (entities.size() == 1) {
-        //         // Single-entity: simple sorted array (or parts map)
-        //         if (partsConfig) {
-        //             sequentialSets[suffix] = sequenceWithParts(datasetRoot, files, partsConfig)
-        //         } else {
-        //             // Build nested map structure {nii: [...], json: [...]}
-        //             def sortedFiles = files.sort { a, b ->
-        //                 compareSequenceValues(a.sequenceValues[0], b.sequenceValues[0])
-        //             }
-        //             sequentialSets[suffix] = nestedSequenceMap(datasetRoot, sortedFiles*.file, allFiles)
-        //         }
-        //     } else {
-        //         // Multi-entity: hierarchical nested arrays or flat nested arrays
-        //         if (order == 'flat') {
-        //             sequentialSets[suffix] = flatSequence(datasetRoot, files, partsConfig)
-        //         } else {
-        //             // Build hierarchical nested arrays grouped by extension
-        //             sequentialSets[suffix] = hierarchicalSequence(datasetRoot, files, allFiles)
-        //         }
-        //     }
-        // }
         // Create channel data
         def channelData = new BidsChannelData()
 
         // Add suffix data (arrays or nested structures)
-        sequentialSets.each { suffix, data ->
-            Map dataMap = nestedSequenceMap(datasetRoot, data, allFiles)
+        sets.each { suffix, setData ->
+            // Get parts configuration for this suffix
+            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
+                setName(), suffix, suffixMapping)
+            BidsLogger.logProgress(logGroup(), "Config key for suffix ${suffix}: ${configKey}")
+            def suffixConfig = config.get(configKey) as Map
+            BidsLogger.logProgress(logGroup(), "Suffix config: ${suffixConfig}")
+            def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
+            BidsLogger.logProgress(logGroup(), "Parts config for suffix ${suffix}: ${partsConfig}")
+
+            // Use hierarchical mapper which handles both flat and nested structures
+            Map dataMap = nestedSequenceMapHierarchical(
+                datasetRoot,
+                setData.files,
+                allFiles.get(suffix, [])
+            )
+
+            BidsLogger.logProgress(logGroup(), "Data map before parts grouping: ${dataMap}")
+
+            // Apply parts grouping if configured
+            if (partsConfig) {
+                BidsLogger.logProgress(logGroup(), "Applying parts grouping with config: ${partsConfig}")
+                dataMap = applyPartsGrouping(dataMap, partsConfig, allFiles.get(suffix, []), datasetRoot)
+                BidsLogger.logProgress(logGroup(), "Data map after parts grouping: ${dataMap}")
+            } else {
+                BidsLogger.logProgress(logGroup(), "No parts config, skipping parts grouping")
+            }
+
             channelData.addSuffixData(suffix, dataMap)
 
             // Get all related files for this suffix
@@ -132,9 +122,79 @@ class SequentialSetHandler extends BaseSetHandler {
             }
         }
 
-        BidsLogger.logProgress(getLogGroup(), "Sequential set emitted with ${sequentialSets.size()} suffixes")
+        BidsLogger.logProgress(logGroup(), "Sequential set emitted with ${sets.size()} suffixes")
 
         return channelData
+    }
+
+    /**
+     * Build nested map structure for hierarchical sequential files
+     * Recursively handles nested list structures from hierarchical ordering
+     *
+     * @param datasetRoot Root directory for relative paths
+     * @param fileStructure Either flat list of file entries or nested list structure
+     * @param allFiles All files for finding related extensions
+     * @return Map of extension type to nested arrays preserving hierarchy
+     */
+    private Map nestedSequenceMapHierarchical(
+        String datasetRoot,
+        def fileStructure,
+        List<BidsFile> allFiles
+    ) {
+        if (fileStructure.isEmpty()) return [:]
+
+        def first = fileStructure[0]
+
+        // Base case: flat list of file entries [file: BidsFile, sequenceValues: ...]
+        if (first instanceof Map && first.containsKey('file')) {
+            def files = fileStructure.collect { it.file }
+            return nestedSequenceMap(datasetRoot, files, allFiles)
+        }
+
+        // Recursive case: nested list structure [[...], [...], ...]
+        if (first instanceof List) {
+            def result = [:].withDefault { [] }
+
+            fileStructure.each { innerStructure ->
+                // Recurse for each group
+                def innerMap = nestedSequenceMapHierarchical(
+                    datasetRoot,
+                    innerStructure,
+                    allFiles
+                )
+
+                // Add as nested array element for each extension
+                innerMap.each { extension, filesOrNested ->
+                    result[extension] << filesOrNested
+                }
+            }
+
+            return result
+        }
+
+        return [:]
+    }
+
+    /**
+     * Get sequence entities from config (single or multiple)
+     *
+     * @param config Sequential set configuration
+     * @return List of entity names to sequence by
+     */
+    @Override
+    protected List<String> getSequenceByEntities(Map config) {
+        if (config.by_entities && config.by_entities instanceof List) {
+            return config.by_entities as List<String>
+        }
+        if (config.by_entity) {
+            return [config.by_entity as String]
+        }
+        return []
+    }
+
+    @Override
+    protected Map getSetConfig(Map suffixConfig) {
+        return suffixConfig?.sequential_set as Map
     }
 
     /**
@@ -168,345 +228,6 @@ class SequentialSetHandler extends BaseSetHandler {
         }
 
         return nestedMap
-    }
-
-    // /**
-    //  * Build sequence with parts for single-entity sequences
-    //  *
-    //  * Example output: {json: ["file1.json", "file2.json"], nii: [{mag: "file1.nii", phase: "file2.nii"}, {mag: "file3.nii", phase: "file4.nii"}]}
-    //  *
-    //  * @param files List of file data
-    //  * @param partsConfig List of part values (e.g., ["mag", "phase"])
-    //  * @param allFiles All files for finding related files
-    //  * @return Map of extension type to list (nii is list of part maps, others are simple lists)
-    //  */
-    // private Map sequenceWithParts(String datasetRoot, List files, List<String> partsConfig) {
-    //     // Group by sequence value, then by part (only for files WITH parts)
-    //     def grouped = [:]
-    //     def jsonFiles = []
-
-    //     files.each { item ->
-    //         def file = item.file as BidsFile
-    //         def seqValue = item.sequenceValues[0]
-    //         def partValue = file.getEntityValue("part")?.replaceFirst(/^part-/, '')
-
-    //         if (partValue && partValue != "NA" && partsConfig.contains(partValue)) {
-    //             // This is a NII file with part
-    //             if (!grouped.containsKey(seqValue)) {
-    //                 grouped[seqValue] = [:]
-    //             }
-    //             grouped[seqValue][partValue] = file
-    //         } else if ((!partValue || partValue == "NA") && file.getExtensionType() == 'json') {
-    //             // This is a JSON file without part - add to json list
-    //             jsonFiles << file.relativeTo(datasetRoot)
-    //         }
-    //     }
-
-    //     // Filter out incomplete sets and build sorted list of part maps for NII
-    //     def niiSequence = grouped.keySet().sort { a, b ->
-    //         compareSequenceValues(a, b)
-    //     }.collect { seqValue ->
-    //         def partsMap = grouped[seqValue]
-    //         // Only include if all parts present
-    //         if (partsMap.keySet().containsAll(partsConfig)) {
-    //             // Convert absolute paths to relative
-    //             return partsMap.collectEntries { partName, file ->
-    //                 [partName, file.relativeTo(datasetRoot)]
-    //             }
-    //         }
-    //         return null
-    //     }.findAll { it != null }
-
-    //     // Build result map with extension types
-    //     def result = [:]
-
-    //     // Add nii with parts structure
-    //     if (!niiSequence.isEmpty()) {
-    //         result.nii = niiSequence
-    //     }
-
-    //     // Add JSON files (already collected above)
-    //     if (!jsonFiles.isEmpty()) {
-    //         result.json = jsonFiles.sort()
-    //     }
-
-    //     return result
-    // }
-
-    // /**
-    //  * Build hierarchical nested array structure for multi-entity sequences
-    //  *
-    //  * Baseline format: Nested arrays grouped by extension type
-    //  * Example for [echo, flip]:
-    //  *   {
-    //  *     json: [
-    //  *       ["echo-1_flip-1.json", "echo-1_flip-2.json"],  // First outer entity
-    //  *       ["echo-2_flip-1.json", "echo-2_flip-2.json"]   // Second outer entity
-    //  *     ],
-    //  *     nii: [
-    //  *       ["echo-1_flip-1.nii", "echo-1_flip-2.nii"],
-    //  *       ["echo-2_flip-1.nii", "echo-2_flip-2.nii"]
-    //  *     ]
-    //  *   }
-    //  *
-    //  * @param files List of file data with sequence values (only primary files)
-    //  * @param entities Entity names in order (e.g., [echo, flip])
-    //  * @param partsConfig Optional list of part values to group (e.g., ["mag", "phase"])
-    //  * @param allFiles All files for finding related extensions
-    //  * @return Map of extension type to nested arrays
-    //  *
-    //  * @reference Hierarchical structure building:
-    //  *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L145-L255
-    //  */
-    // private Map hierarchicalSequence(String datasetRoot, List files, List<BidsFile> allFiles) {
-    //     // Group files by outer entity value and collect all related files
-    //     def outerGroups = files.groupBy { item ->
-    //         (item.sequenceValues as List)[0]
-    //     }
-
-    //     // Sort outer groups
-    //     def sortedOuterKeys = outerGroups.keySet().sort { a, b ->
-    //         compareSequenceValues(a, b)
-    //     }
-
-    //     // Build structure: {extension: [[outer1_files...], [outer2_files...]]}
-    //     def result = [:].withDefault { [] }
-
-    //     sortedOuterKeys.each { outerKey ->
-    //         def innerFiles = outerGroups[outerKey]
-
-    //         // Sort inner files by remaining sequence entities
-    //         def sortedInner = innerFiles.sort { a, b ->
-    //             def aValues = (a.sequenceValues as List)[1..-1]
-    //             def bValues = (b.sequenceValues as List)[1..-1]
-    //             for (int i = 0; i < aValues.size(); i++) {
-    //                 def cmp = compareSequenceValues(aValues[i], bValues[i])
-    //                 if (cmp != 0) return cmp
-    //             }
-    //             return 0
-    //         }
-
-    //         // Collect unique base names in this group to avoid duplicates
-    //         def baseNamesInGroup = sortedInner.collect { item ->
-    //             (item.file as BidsFile).getBasename()
-    //         }.unique()
-
-    //         // For each unique base name, find all related files by extension
-    //         def filesInGroup = [:].withDefault { [] }
-
-    //         baseNamesInGroup.each { baseName ->
-    //             // Find all related files with same base name
-    //             allFiles.each { relatedFile ->
-    //                 if (relatedFile.getBasename() == baseName) {
-    //                     def type = relatedFile.getType()
-    //                     def relativePath = relatedFile.relativeTo(datasetRoot)
-
-    //                     // Avoid duplicates
-    //                     if (!filesInGroup[type].contains(relativePath)) {
-    //                         filesInGroup[type] << relativePath
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         // Add this outer group's files to result
-    //         filesInGroup.each { extensionType, paths ->
-    //             result[extensionType] << paths
-    //         }
-    //     }
-
-    //     return result
-    // }
-
-    // /**
-    //  * Filter out incomplete parts from nested map structure
-    //  *
-    //  * Recursively removes entries that don't have all required parts
-    //  *
-    //  * @param map Nested map structure
-    //  * @param partsConfig Required parts (e.g., ["mag", "phase"])
-    //  * @return Filtered map with only complete parts
-    //  */
-    // private Map filterIncompleteParts(Map map, List<String> partsConfig) {
-    //     def filtered = [:]
-
-    //     map.each { key, value ->
-    //         if (value instanceof Map) {
-    //             // Check if this is a parts map (has part keys)
-    //             def isPartsMap = partsConfig.any { value.containsKey(it) }
-
-    //             if (isPartsMap) {
-    //                 // Validate all parts are present
-    //                 if (partsConfig.every { value.containsKey(it) }) {
-    //                     filtered[key] = value
-    //                 }
-    //                 // Skip if incomplete
-    //             } else {
-    //                 // Recurse deeper
-    //                 def nestedFiltered = filterIncompleteParts(value, partsConfig)
-    //                 if (!nestedFiltered.isEmpty()) {
-    //                     filtered[key] = nestedFiltered
-    //                 }
-    //             }
-    //         } else {
-    //             // Leaf value (file path), keep it
-    //             filtered[key] = value
-    //         }
-    //     }
-
-    //     return filtered
-    // }
-
-    // /**
-    //  * Recursively sort a hierarchical map by keys
-    //  *
-    //  * @param map Map to sort
-    //  * @return Sorted map
-    //  */
-    // private Map sortHierarchicalMap(Map map) {
-    //     def sortedMap = map.sort { a, b ->
-    //         compareSequenceValues(a.key, b.key)
-    //     }
-
-    //     // Recursively sort nested maps
-    //     sortedMap.each { key, value ->
-    //         if (value instanceof Map) {
-    //             sortedMap[key] = sortHierarchicalMap(value as Map)
-    //         }
-    //     }
-
-    //     return sortedMap
-    // }
-
-    // /**
-    //  * Build flat nested array structure for multi-entity sequences
-    //  *
-    //  * Example for [echo, flip] with order: flat:
-    //  *   [[echo-1_flip-1, echo-1_flip-2], [echo-2_flip-1, echo-2_flip-2]]
-    //  *
-    //  * With parts configuration:
-    //  *   [[{mag: file1, phase: file2}, {mag: file3, phase: file4}], ...]
-    //  *
-    //  * @param files List of file data with sequence values
-    //  * @param partsConfig Optional list of part values to group
-    //  * @return Nested array structure
-    //  *
-    //  * @reference Flat structure building:
-    //  *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf#L190-L210
-    //  */
-    // private List flatSequence(String datasetRoot, List files, List<String> partsConfig = null) {
-    //     // Group by outer entity first
-    //     def groupedByOuter = files.groupBy { item ->
-    //         (item.sequenceValues as List)[0]
-    //     }
-
-    //     // Sort outer groups and build nested arrays
-    //     def sortedOuterKeys = groupedByOuter.keySet().sort { a, b ->
-    //         compareSequenceValues(a, b)
-    //     }
-
-    //     return sortedOuterKeys.collect { outerKey ->
-    //         def innerFiles = groupedByOuter[outerKey]
-
-    //         if (partsConfig) {
-    //             // Group inner files by remaining sequence values, then by part
-    //             def innerGrouped = [:]
-    //             innerFiles.each { item ->
-    //                 def file = item.file as BidsFile
-    //                 def seqKey = (item.sequenceValues as List)[1..-1].join('_')
-    //                 def partValue = file.getEntityValue("part")?.replaceFirst(/^part-/, '')
-
-    //                 if (partValue && partsConfig.contains(partValue)) {
-    //                     if (!innerGrouped.containsKey(seqKey)) {
-    //                         innerGrouped[seqKey] = [:]
-    //                     }
-    //                     innerGrouped[seqKey][partValue] = file.relativeTo(datasetRoot)
-    //                 }
-    //             }
-
-    //             // Sort and filter for complete parts
-    //             return innerGrouped.keySet().sort().collect { seqKey ->
-    //                 def partsMap = innerGrouped[seqKey]
-    //                 if (partsConfig.every { partsMap.containsKey(it) }) {
-    //                     return partsMap
-    //                 }
-    //                 return null
-    //             }.findAll { it != null }
-    //         } else {
-    //             // Sort inner files by remaining entities
-    //             return innerFiles.sort { a, b ->
-    //                 def aValues = (a.sequenceValues as List)[1..-1]
-    //                 def bValues = (b.sequenceValues as List)[1..-1]
-
-    //                 for (int i = 0; i < aValues.size(); i++) {
-    //                     def cmp = compareSequenceValues(aValues[i], bValues[i])
-    //                     if (cmp != 0) return cmp
-    //                 }
-    //                 return 0
-    //             }.collect { it.file.relativeTo(datasetRoot) }
-    //         }
-    //     }
-    // }
-
-    /**
-     * Get sequence entities from config (single or multiple)
-     *
-     * @param config Sequential set configuration
-     * @return List of entity names to sequence by
-     */
-    @Override
-    protected List<String> getSequenceByEntities(Map config) {
-        if (config.by_entities && config.by_entities instanceof List) {
-            return config.by_entities as List<String>
-        }
-        if (config.by_entity) {
-            return [config.by_entity as String]
-        }
-        return []
-    }
-
-    /**
-     * Compare sequence values for sorting
-     *
-     * Attempts numeric comparison first by extracting numbers from entity values.
-     * For example, "echo-10" and "echo-2" will be compared as 10 and 2 (not alphabetically).
-     * Falls back to string comparison if values are not numeric.
-     *
-     * @param a First value to compare
-     * @param b Second value to compare
-     * @return Negative if a < b, positive if a > b, zero if equal
-     */
-    private int compareSequenceValues(Object a, Object b) {
-        // Extract numeric portion from entity values (e.g., "echo-10" -> 10)
-        def extractNumber = { val ->
-            def str = val.toString()
-            // Match pattern like "entity-123" or just "123"
-            def matcher = str =~ /(\d+)$/
-            if (matcher.find()) {
-                try {
-                    return matcher.group(1).toInteger()
-                } catch (Exception e) {
-                    return null
-                }
-            }
-            return null
-        }
-
-        def numA = extractNumber(a)
-        def numB = extractNumber(b)
-
-        // If both values have numeric components, compare numerically
-        if (numA != null && numB != null) {
-            return numA <=> numB
-        }
-
-        // Otherwise fall back to string comparison
-        return a.toString() <=> b.toString()
-    }
-
-    @Override
-    protected Map getSetConfig(Map suffixConfig) {
-        return suffixConfig?.sequential_set as Map
     }
 
 }

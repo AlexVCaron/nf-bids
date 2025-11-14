@@ -4,9 +4,7 @@ import groovy.transform.CompileStatic
 import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 import nfneuro.plugin.model.BidsChannelData
-import nfneuro.plugin.util.BidsEntityUtils
 import nfneuro.plugin.util.BidsLogger
-import groovyx.gpars.dataflow.DataflowQueue
 
 /**
  * Handler for mixed BIDS sets
@@ -33,40 +31,8 @@ import groovyx.gpars.dataflow.DataflowQueue
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class MixedSetHandler extends BaseSetHandler {
 
-    /**
-     * Build nested map for files grouping by extension type
-     */
-    private static Map<String, List<String>> nestedMapForFiles(
-        String datasetRoot,
-        List<BidsFile> files,
-        List<BidsFile> allFiles
-    ) {
-        Map nestedMap = [:]
-
-        files.each { file ->
-            String baseName = file.getBasename()
-
-            // Find all related files with same base name
-            allFiles.each { relatedFile ->
-                if (relatedFile.getBasename() == baseName) {
-                    String type = relatedFile.getType()
-                    String relativePath = relatedFile.relativeTo(datasetRoot)
-
-                    if (!nestedMap[type]) {
-                        nestedMap[type] = []
-                    }
-                    if (!nestedMap[type].contains(relativePath)) {
-                        nestedMap[type] << relativePath
-                    }
-                }
-            }
-        }
-
-        return nestedMap
-    }
-
     @Override
-    protected String getSetName() {
+    protected String setName() {
         return "mixed-set"
     }
 
@@ -80,7 +46,7 @@ class MixedSetHandler extends BaseSetHandler {
     @Override
     protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
         if (!index.group) {
-            BidsLogger.logProgress(getLogGroup(), "No group name found for file: ${file.path}")
+            BidsLogger.logProgress(logGroup(), "No group name found for file: ${file.path}")
             return
         }
 
@@ -123,47 +89,32 @@ class MixedSetHandler extends BaseSetHandler {
     @Override
     protected BidsChannelData processGroup(
             String datasetRoot,
-            Map sequentialSets,
+            Map sets,
             Map allFiles,
+            Map config,
             List<String> loopOverEntities,
             Map<String, Map<String, String>> suffixMapping) {
-        // Validate required groups are present for each suffix
-        // mixedSets.each { suffix, groups ->
-        //     // Resolve config key using suffix mapping
-        //     def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(getSetName(), suffix, suffixMapping ?: [:])
-
-        //     def suffixConfig = config.get(configKey) as Map
-        //     def mixedSetConfig = getSetConfig(suffixConfig)
-
-        //     // Only validate if requiredGroups is explicitly defined and non-empty
-        //     if (mixedSetConfig?.required && !(mixedSetConfig.required as List).isEmpty()) {
-        //         def requiredGroups = mixedSetConfig.required as List<String>
-        //         def missingGroups = requiredGroups.findAll { !groups.containsKey(it) }
-
-        //         if (missingGroups) {
-        //             BidsLogger.logProgress(getLogGroup(), "Suffix ${suffix} missing required groups: ${missingGroups}")
-        //             mixedSets.remove(suffix)
-        //             return
-        //         }
-        //     }
-        // }
-
-        // // Sort each sequential array within each named group
-        // mixedSets.each { suffix, groups ->
-        //     groups.each { groupName, items ->
-        //         mixedSets[suffix][groupName] = items.sort { a, b ->
-        //             compareSequenceValues(a.sequenceValues, b.sequenceValues)
-        //         }.collect { it.file }
-        //     }
-        // }
-
         // Create channel data
         def channelData = new BidsChannelData()
 
         // Add suffix data as maps of {groupName -> {extension: [paths]}}
-        mixedSets.each { suffix, groups ->
-            def groupMap = groups.collectEntries { groupName, files ->
-                [groupName, nestedMapForFiles(datasetRoot, files, allFiles)]
+        sets.each { suffix, setData ->
+            // Get parts configuration for this suffix
+            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
+                setName(), suffix, suffixMapping)
+            def suffixConfig = config.get(configKey) as Map
+            def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
+
+            def groupMap = setData.files.collectEntries { groupName, items ->
+                List<BidsFile> files = items.collect { it.file }
+                def nestedMap = nestedMapForFiles(datasetRoot, files, allFiles.get(suffix, []))
+
+                // Apply parts grouping if configured
+                if (partsConfig) {
+                    nestedMap = applyPartsGrouping(nestedMap, partsConfig, allFiles.get(suffix, []))
+                }
+
+                [groupName, nestedMap]
             }
             channelData.addSuffixData(suffix, groupMap)
 
@@ -179,9 +130,63 @@ class MixedSetHandler extends BaseSetHandler {
             }
         }
 
-        BidsLogger.logProgress(getLogGroup(), "Mixed set emitted with ${mixedSets.size()} suffixes, key: ${groupingKey}")
+        BidsLogger.logProgress(logGroup(), "Mixed set emitted with ${sets.size()} suffixes")
 
         return channelData
+    }
+
+    /**
+     * Get sequential_dimension entity from config
+     *
+     * @param config Mixed set configuration
+     * @return Entity name to sequence by
+     */
+    @Override
+    protected List<String> getSequenceByEntities(Map config) {
+        if (config.sequential_dimension) {
+            if (BidsEntity.longEntityExists(config.sequential_dimension as String)) {
+                return [config.sequential_dimension as String]
+            }
+            BidsLogger.logProgress(logGroup(), "Sequential dimension entity '${config.sequential_dimension}' is not a valid BIDS entity.")
+        }
+        return
+    }
+
+    @Override
+    protected Map getSetConfig(Map suffixConfig) {
+        return suffixConfig?.mixed_set as Map
+    }
+
+    /**
+     * Build nested map for files grouping by extension type
+     */
+    private static Map<String, List<String>> nestedMapForFiles(
+        String datasetRoot,
+        List<BidsFile> files,
+        List<BidsFile> allFiles
+    ) {
+        Map nestedMap = [:]
+
+        files.each { file ->
+            String baseName = file.getBasename()
+
+            // Find all related files with same base name
+            allFiles.each { relatedFile ->
+                if (relatedFile.getBasename() == baseName) {
+                    String type = relatedFile.getType()
+                    String relativePath = relatedFile.relativeTo(datasetRoot)
+
+                    if (!nestedMap[type]) {
+                        nestedMap[type] = []
+                    }
+                    if (!nestedMap[type].contains(relativePath)) {
+                        nestedMap[type] << relativePath
+                    }
+                }
+            }
+        }
+
+        return nestedMap
     }
 
     /**
@@ -200,7 +205,7 @@ class MixedSetHandler extends BaseSetHandler {
     private String findMatchingMixedGroupName(BidsFile file, Map mixedSetConfig) {
         def namedGroups = mixedSetConfig.named_groups as Map
         if (!namedGroups) {
-            BidsLogger.logProgress(getLogGroup(), "Mixed set config missing 'named_groups'")
+            BidsLogger.logProgress(logGroup(), "Mixed set config missing 'named_groups'")
             return null
         }
 
@@ -260,23 +265,6 @@ class MixedSetHandler extends BaseSetHandler {
     }
 
     /**
-     * Get sequential_dimension entity from config
-     *
-     * @param config Mixed set configuration
-     * @return Entity name to sequence by
-     */
-    @Override
-    protected List<String> getSequenceByEntities(Map config) {
-        if (config.sequential_dimension) {
-            if (BidsEntity.longEntityExists(config.sequential_dimension as String)) {
-                return [config.sequential_dimension as String]
-            }
-            BidsLogger.logProgress(getLogGroup(), "Sequential dimension entity '${config.sequential_dimension}' is not a valid BIDS entity.")
-        }
-        return
-    }
-
-    /**
      * Get named dimension entity from config
      *
      * The named_dimension specifies which entity should be used for pattern-based
@@ -290,34 +278,9 @@ class MixedSetHandler extends BaseSetHandler {
             if (BidsEntity.longEntityExists(config.named_dimension as String)) {
                 return config.named_dimension as String
             }
-            BidsLogger.logProgress(getLogGroup(), "Named dimension entity '${config.named_dimension}' is not a valid BIDS entity.")
+            BidsLogger.logProgress(logGroup(), "Named dimension entity '${config.named_dimension}' is not a valid BIDS entity.")
         }
         return null  // Pattern match on all entities
-    }
-
-    /**
-     * Compare sequence values for sorting
-     *
-     * @param a First value
-     * @param b Second value
-     * @return Comparison result
-     *
-     * @reference Sequence comparison from:
-     *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L60-L75
-     */
-    private int compareSequenceValues(Object a, Object b) {
-        try {
-            def numA = a as Double
-            def numB = b as Double
-            return numA <=> numB
-        } catch (Exception e) {
-            return a.toString() <=> b.toString()
-        }
-    }
-
-    @Override
-    protected Map getSetConfig(Map suffixConfig) {
-        return suffixConfig?.mixed_set as Map
     }
 
 }

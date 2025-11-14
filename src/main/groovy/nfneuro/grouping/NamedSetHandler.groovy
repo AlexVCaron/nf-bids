@@ -4,9 +4,7 @@ import groovy.transform.CompileStatic
 import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 import nfneuro.plugin.model.BidsChannelData
-import nfneuro.plugin.util.BidsEntityUtils
 import nfneuro.plugin.util.BidsLogger
-import groovyx.gpars.dataflow.DataflowQueue
 
 /**
  * Handler for named BIDS sets
@@ -32,24 +30,8 @@ import groovyx.gpars.dataflow.DataflowQueue
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class NamedSetHandler extends BaseSetHandler {
 
-    /**
-     * Build nested map for a file grouping by extension type
-     */
-    private Map<String, String> nestedMapForFile(String datasetRoot, BidsFile file, List<BidsFile> allFiles) {
-        def baseName = file.getBasename()
-        def nestedMap = [:]
-
-        allFiles.each { relatedFile ->
-            if (relatedFile.getBasename() == baseName) {
-                nestedMap[relatedFile.getType()] = relatedFile.relativeTo(datasetRoot)
-            }
-        }
-
-        return nestedMap
-    }
-
     @Override
-    protected String getSetName() {
+    protected String setName() {
         return "named_set"
     }
 
@@ -69,7 +51,7 @@ class NamedSetHandler extends BaseSetHandler {
     @Override
     protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
         if (!index.group) {
-            BidsLogger.logProgress(getLogGroup(), "No group name found for file: ${file.path}")
+            BidsLogger.logProgress(logGroup(), "No group name found for file: ${file.path}")
             return
         }
 
@@ -104,6 +86,7 @@ class NamedSetHandler extends BaseSetHandler {
             String datasetRoot,
             Map namedSets,
             Map allFiles,
+            Map config,
             List<String> loopOverEntities,
             Map suffixMapping) {
         // Create channel data
@@ -111,20 +94,33 @@ class NamedSetHandler extends BaseSetHandler {
 
         // Add suffix data as maps of {groupName -> {extension: filePath}}
         // Use the resolved config key (virtual suffix) for output, not the file suffix
-        namedSets.each { suffix, groups ->
-            BidsLogger.logProgress(getLogGroup(), "Emitting named set for suffix: ${suffix}, file: ${file.path}")
+        namedSets.each { suffix, setData ->
+            BidsLogger.logProgress(logGroup(), "Emitting named set for suffix: ${suffix}")
 
             // Resolve to the config key (e.g., "epi" -> "epi_fullreverse")
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(getSetName(), suffix, suffixMapping ?: [:])
-
-            def groupMap = groups.collectEntries { groupName, file ->
-                // Build nested file data map by extension type
-                [groupName, nestedMapForFile(datasetRoot, file, allFiles)]
-            }
-            channelData.addSuffixData(configKey, groupMap)  // Use config key, not file suffix
+            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
+                setName(), suffix, suffixMapping ?: [:])
 
             // Get all related files for this suffix
             List<BidsFile> relatedFiles = allFiles.get(suffix, [])
+
+            // Get parts configuration for this suffix
+            def suffixConfig = config.get(configKey) as Map
+            def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
+
+            def groupMap = setData.files.collectEntries { groupName, item ->
+                BidsFile file = item.file
+                // Build nested file data map by extension type
+                def nestedMap = nestedMapForFile(datasetRoot, file, relatedFiles)
+
+                // Apply parts grouping if configured
+                if (partsConfig) {
+                    nestedMap = applyPartsGrouping(nestedMap, partsConfig, relatedFiles)
+                }
+
+                [groupName, nestedMap]
+            }
+            channelData.addSuffixData(configKey, groupMap)  // Use config key, not file suffix
 
             // Add all file paths (with relative paths)
             relatedFiles.each { file ->
@@ -140,6 +136,27 @@ class NamedSetHandler extends BaseSetHandler {
         }
 
         return channelData
+    }
+
+    @Override
+    protected Map getSetConfig(Map suffixConfig) {
+        return suffixConfig?.named_set as Map
+    }
+
+    /**
+     * Build nested map for a file grouping by extension type
+     */
+    private Map<String, String> nestedMapForFile(String datasetRoot, BidsFile file, List<BidsFile> allFiles) {
+        def baseName = file.getBasename()
+        def nestedMap = [:]
+
+        allFiles.each { relatedFile ->
+            if (relatedFile.getBasename() == baseName) {
+                nestedMap[relatedFile.getType()] = relatedFile.relativeTo(datasetRoot)
+            }
+        }
+
+        return nestedMap
     }
 
     /**
@@ -194,11 +211,6 @@ class NamedSetHandler extends BaseSetHandler {
         }
 
         return null  // No matching group found
-    }
-
-    @Override
-    protected Map getSetConfig(Map suffixConfig) {
-        return suffixConfig?.named_set as Map
     }
 
 }

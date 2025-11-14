@@ -406,6 +406,10 @@
                     {
                         "data": {
                             "MP2RAGE": {
+                                "json": [
+                                    "qmri_mp2rage/sub-1/anat/sub-1_inv-1_MP2RAGE.json",
+                                    "qmri_mp2rage/sub-1/anat/sub-1_inv-2_MP2RAGE.json"
+                                ],
                                 "nii": [
                                     {
                                         "mag": "qmri_mp2rage/sub-1/anat/sub-1_inv-1_part-mag_MP2RAGE.nii",
@@ -415,10 +419,6 @@
                                         "mag": "qmri_mp2rage/sub-1/anat/sub-1_inv-2_part-mag_MP2RAGE.nii",
                                         "phase": "qmri_mp2rage/sub-1/anat/sub-1_inv-2_part-phase_MP2RAGE.nii"
                                     }
-                                ],
-                                "json": [
-                                    "qmri_mp2rage/sub-1/anat/sub-1_inv-1_MP2RAGE.json",
-                                    "qmri_mp2rage/sub-1/anat/sub-1_inv-2_MP2RAGE.json"
                                 ]
                             },
                             "UNIT1": {
@@ -449,6 +449,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.0"
         },
-        "timestamp": "2025-11-06T12:15:28.426980683"
+        "timestamp": "2025-11-13T01:05:05.885777371"
     }
 }

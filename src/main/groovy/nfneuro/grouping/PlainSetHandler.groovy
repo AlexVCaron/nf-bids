@@ -4,9 +4,7 @@ import groovy.transform.CompileStatic
 import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 import nfneuro.plugin.model.BidsChannelData
-import nfneuro.plugin.util.BidsEntityUtils
 import nfneuro.plugin.util.BidsLogger
-import groovyx.gpars.dataflow.DataflowQueue
 
 /**
  * Handler for plain BIDS sets
@@ -21,31 +19,8 @@ import groovyx.gpars.dataflow.DataflowQueue
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class PlainSetHandler extends BaseSetHandler {
 
-    /**
-     * Build a nested map structure grouping files by extension type
-     * e.g., {nii: 'path/to/file.nii.gz', json: 'path/to/file.json', bval: '...', bvec: '...'}
-     */
-    private Map<String, String> nestedDataMap(String datasetRoot, BidsFile primaryFile, List<BidsFile> allFiles) {
-        def baseName = primaryFile.getBasename()
-        def nestedMap = [:]
-
-        BidsLogger.logProgress(getLogGroup(), "Building nested data map for primary file: ${primaryFile.path}")
-
-        // Find all files with the same base name
-        allFiles.each { file ->
-            BidsLogger.logProgress(getLogGroup(), "  ├─ Checking associated file: ${file.path}")
-            if (file.getBasename() == baseName) {
-                nestedMap[file.getType()] = file.relativeTo(datasetRoot)
-            }
-        }
-
-        nestedMap[primaryFile.getType()] = primaryFile.relativeTo(datasetRoot)
-
-        return nestedMap
-    }
-
     @Override
-    protected String getSetName() {
+    protected String setName() {
         return "plain_set"
     }
 
@@ -78,20 +53,44 @@ class PlainSetHandler extends BaseSetHandler {
             String datasetRoot,
             Map plainSets,
             Map allFiles,
+            Map config,
             List<String> loopOverEntities,
             Map suffixMapping) {
+
+        BidsLogger.logProgress(logGroup(), "processGroup called with ${plainSets.size()} plain sets: ${plainSets.keySet()}")
+        BidsLogger.logProgress(logGroup(), "allFiles has ${allFiles.size()} suffixes: ${allFiles.keySet()}")
 
         // Create channel data structure
         BidsChannelData channelData = new BidsChannelData()
 
-        plainSets.each { suffix, file ->
-            BidsLogger.logProgress(getLogGroup(), "Emitting plain set for suffix: ${suffix}, file: ${file.path}")
+        plainSets.each { suffix, setData ->
+            BidsLogger.logProgress(logGroup(), "Processing suffix: ${suffix}, setData: ${setData}")
+            // Extract the file from the setData structure
+            BidsFile file = setData.files?.file as BidsFile
+            if (!file) {
+                BidsLogger.logProgress(logGroup(), "No primary file found for suffix: ${suffix}, setData.files: ${setData.files}")
+                return
+            }
+
+            BidsLogger.logProgress(logGroup(), "Emitting plain set for suffix: ${suffix}, file: ${file.path}")
 
             // Get all related files for this suffix
             List<BidsFile> relatedFiles = allFiles.get(suffix, [])
 
+            // Get parts configuration for this suffix
+            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
+                setName(), suffix, suffixMapping)
+            def suffixConfig = config.get(configKey) as Map
+            def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
+
             // Build nested data map grouping files by extension type
             Map nestedDataMap = nestedDataMap(datasetRoot, file, relatedFiles)
+
+            // Apply parts grouping if configured
+            if (partsConfig) {
+                nestedDataMap = applyPartsGrouping(nestedDataMap, partsConfig, relatedFiles)
+            }
+
             channelData.addSuffixData(suffix, nestedDataMap)
 
             // Add all related files to filePaths list
@@ -123,6 +122,29 @@ class PlainSetHandler extends BaseSetHandler {
     @Override
     protected Map getSetConfig(Map suffixConfig) {
         return suffixConfig?.plain_set as Map
+    }
+
+    /**
+     * Build a nested map structure grouping files by extension type
+     * e.g., {nii: 'path/to/file.nii.gz', json: 'path/to/file.json', bval: '...', bvec: '...'}
+     */
+    private Map<String, String> nestedDataMap(String datasetRoot, BidsFile primaryFile, List<BidsFile> allFiles) {
+        def baseName = primaryFile.getBasename()
+        def nestedMap = [:]
+
+        BidsLogger.logProgress(logGroup(), "Building nested data map for primary file: ${primaryFile.path}")
+
+        // Find all files with the same base name
+        allFiles.each { file ->
+            BidsLogger.logProgress(logGroup(), "  ├─ Checking associated file: ${file.path}")
+            if (file.getBasename() == baseName) {
+                nestedMap[file.getType()] = file.relativeTo(datasetRoot)
+            }
+        }
+
+        nestedMap[primaryFile.getType()] = primaryFile.relativeTo(datasetRoot)
+
+        return nestedMap
     }
 
 }

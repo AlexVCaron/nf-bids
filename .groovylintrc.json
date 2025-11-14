@@ -1,0 +1,14 @@
+{
+    "extends": "recommended",
+    "rules": {
+        "Instanceof": {
+            "enabled": false
+        },
+        "UnnecessaryGString": {
+            "enabled": false
+        },
+        "UnnecessaryGetter": {
+            "enabled": false
+        }
+    }
+}
