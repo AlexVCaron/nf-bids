@@ -33,6 +33,11 @@ class BidsFile {
         'eeg'
     ]
 
+    public static final List<String> TYPE_ALLOWING_PARTS = [
+        'nii',
+        'nii.gz'
+    ]
+
     String path
     String suffix
     List<BidsEntity> entities
@@ -45,6 +50,10 @@ class BidsFile {
     // Associated files (JSON sidecar, TSV files, etc.)
     String jsonSidecar
     List<String> associatedFiles
+
+    public static boolean typeAllowsParts(String type) {
+        return TYPE_ALLOWING_PARTS.contains(type)
+    }
 
     BidsFile(String path) {
         if (!path) {
@@ -172,6 +181,23 @@ class BidsFile {
         String regex = VALID_EXTENSIONS.keySet().join('|').replaceAll('\\.', '\\\\.')
         /* groovylint-disable-next-line JavaIoPackageAccess */
         return new File(path).name.replaceAll(/\.($regex)$/, '')
+    }
+
+    /**
+     * Get the base name of a file without extension
+     */
+    String getBasename(List<String> excludeEntities) {
+        String basename = getBasename()
+
+        excludeEntities.each { entityName ->
+            BidsEntity entity = getEntity(entityName)
+            if (entity) {
+                String entityPattern = "_${entity.name}-${entity.value}"
+                basename = basename.replace(entityPattern, '')
+            }
+        }
+
+        return basename
     }
 
     /**

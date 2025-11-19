@@ -523,16 +523,16 @@
                             }
                         },
                         "filePaths": [
-                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.bval",
-                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.bvec",
-                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.json",
-                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.nii.gz",
                             "ds-dwi3/sub-01/ses-005/fmap/sub-01_ses-005_dir-AP_epi.json",
                             "ds-dwi3/sub-01/ses-005/fmap/sub-01_ses-005_dir-AP_epi.nii.gz",
                             "ds-dwi3/sub-01/ses-005/fmap/sub-01_ses-005_dir-PA_epi.json",
                             "ds-dwi3/sub-01/ses-005/fmap/sub-01_ses-005_dir-PA_epi.nii.gz",
                             "ds-dwi3/sub-01/ses-005/anat/sub-01_ses-005_T1w.json",
-                            "ds-dwi3/sub-01/ses-005/anat/sub-01_ses-005_T1w.nii.gz"
+                            "ds-dwi3/sub-01/ses-005/anat/sub-01_ses-005_T1w.nii.gz",
+                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.bval",
+                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.bvec",
+                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.json",
+                            "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.nii.gz"
                         ],
                         "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
@@ -547,7 +547,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.0"
         },
-        "timestamp": "2025-11-06T12:13:41.844337951"
+        "timestamp": "2025-11-12T13:33:26.580725888"
     },
     "ds-dwi4 - Plugin output": {
         "content": [
@@ -661,12 +661,12 @@
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.bvec",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.json",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.nii.gz",
-                            "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_sbref.json",
-                            "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_sbref.nii.gz",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_dwi.bval",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_dwi.bvec",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_dwi.json",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_dwi.nii.gz",
+                            "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_sbref.json",
+                            "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_sbref.nii.gz",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_sbref.json",
                             "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_sbref.nii.gz",
                             "ds-dwi4/sub-01/ses-005/fmap/sub-01_ses-005_acq-anat_TB1TFL.json",
@@ -802,12 +802,12 @@
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_dwi.bvec",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_dwi.json",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_dwi.nii.gz",
-                            "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_sbref.json",
-                            "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_sbref.nii.gz",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_dwi.bval",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_dwi.bvec",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_dwi.json",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_dwi.nii.gz",
+                            "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_sbref.json",
+                            "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-AP_sbref.nii.gz",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_sbref.json",
                             "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_sbref.nii.gz",
                             "ds-dwi4/sub-06/ses-009/fmap/sub-06_ses-009_acq-anat_TB1TFL.json",
@@ -840,7 +840,7 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.0"
         },
-        "timestamp": "2025-11-06T12:13:48.991463547"
+        "timestamp": "2025-11-12T13:33:35.536579778"
     },
     "ds-dwi2 - Plugin output": {
         "content": [

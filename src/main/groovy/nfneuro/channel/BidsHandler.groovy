@@ -31,7 +31,7 @@ class BidsHandler {
     private Map config
     private Map configAnalysis
     private List<String> loopOverEntities
-    private Map<String, String> suffixMapping
+    private Map<String, Map<String, String>> suffixMapping
     private BidsParser parser
 
     BidsHandler withConfig(String configPath) {
