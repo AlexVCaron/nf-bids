@@ -1,9 +1,10 @@
-# Implementation Checklist: Phases 3 & 4
+# Implementation Checklist: Phases 3, 4 & 5
 ## Closure-Based Channel Grouping Operators
 
 **Project**: Extend Nextflow with closure-based key extraction for channel operators  
 **Start Date**: 2025-01-20  
-**Estimated Duration**: 3-4 weeks  
+**Completion Date**: 2025-11-21  
+**Duration**: 3 weeks (Phases 3-5 complete)  
 
 ---
 

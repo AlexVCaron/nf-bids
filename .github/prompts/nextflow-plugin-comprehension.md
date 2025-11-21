@@ -6,6 +6,51 @@
 
 ## ⚠️ CRITICAL TERMINAL COMMAND GUIDELINES ⚠️
 
+### Rule 1: ALWAYS Use Absolute Paths
+
+**NEVER use relative paths in terminal commands:**
+- ❌ **FORBIDDEN**: `cd validation/edge_cases` (assumes current directory)
+- ❌ **FORBIDDEN**: `rm -f test_debug.nf` (will fail if not in correct directory)
+- ❌ **FORBIDDEN**: `./gradlew test` from wrong directory (command not found)
+
+**ALWAYS use absolute paths:**
+- ✅ **REQUIRED**: `cd /home/local/USHERBROOKE/vala2004/dev/nf-bids` (explicit project root)
+- ✅ **REQUIRED**: `rm /home/local/USHERBROOKE/vala2004/dev/nf-bids/validation/edge_cases/test_debug.nf`
+- ✅ **REQUIRED**: `/home/local/USHERBROOKE/vala2004/dev/nf-bids/gradlew test`
+
+**Why this matters:**
+- Terminal sessions can be in any directory (validation/, edge_cases/, etc.)
+- Relative paths fail silently or operate on wrong files
+- Absolute paths work regardless of current working directory
+- Prevents "No such file or directory" errors
+
+**Pattern to follow:**
+```bash
+# ALWAYS start with cd to project root using absolute path
+cd /home/local/USHERBROOKE/vala2004/dev/nf-bids
+
+# Then use relative paths if needed, or continue with absolute
+./gradlew test
+# OR
+/home/local/USHERBROOKE/vala2004/dev/nf-bids/gradlew test
+```
+
+**Example - BAD:**
+```bash
+rm validation/edge_cases/test_debug.nf  # Fails if cwd is validation/edge_cases/
+cd validation  # Ambiguous - validation of what?
+```
+
+**Example - GOOD:**
+```bash
+rm /home/local/USHERBROOKE/vala2004/dev/nf-bids/validation/edge_cases/test_debug.nf
+cd /home/local/USHERBROOKE/vala2004/dev/nf-bids/validation
+```
+
+---
+
+### Rule 2: Never Obfuscate CLI Output
+
 **NEVER obfuscate CLI output with pipes that hide information:**
 - ❌ **FORBIDDEN**: `| head`, `| tail`, `| grep -A/B/C` (hides context)
 - ❌ **FORBIDDEN**: `2>&1 | head -100` (truncates critical error messages)
@@ -184,6 +229,154 @@ nfneuro.plugin.BidsExtension
 ---
 
 ## Build System (Gradle)
+
+### ⚠️ CRITICAL: Gradle Build Directory Requirements ⚠️
+
+**YOU MUST BE IN THE PROJECT ROOT DIRECTORY TO RUN GRADLE COMMANDS**
+
+Gradle requires being in the directory containing `build.gradle` and `settings.gradle` to function correctly. Running from subdirectories causes build failures.
+
+**Project Root**: `/home/local/USHERBROOKE/vala2004/dev/nf-bids`
+
+**MANDATORY PRE-BUILD CHECKS:**
+1. **ALWAYS check terminal working directory before running gradle**
+2. **ALWAYS navigate to project root if not already there**
+3. **Use `cd /` first to reset path, then navigate to project root**
+
+**Terminal Working Directory Issues:**
+- Terminal sessions cache their working directory
+- `cd` alone may not be sufficient if terminal is in a subdirectory
+- Use `cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids` to force reset
+
+**WRONG (causes errors):**
+```bash
+# Terminal is in: /home/local/USHERBROOKE/vala2004/dev/nf-bids/validation
+./gradlew compileGroovy
+# ERROR: Project directory 'validation' is not part of the build
+
+# Terminal is in: /home/local/USHERBROOKE/vala2004/dev/nf-bids/validation/edge_cases
+cd /home/local/USHERBROOKE/vala2004/dev/nf-bids
+./gradlew compileGroovy
+# May still ERROR if terminal didn't actually change directory!
+
+# Using absolute path from wrong directory
+/home/local/USHERBROOKE/vala2004/dev/nf-bids/gradlew compileGroovy
+# ERROR: Gradle checks PWD, not where gradlew is located!
+```
+
+**CORRECT (guaranteed to work):**
+```bash
+# STEP 1: Force terminal to reset by going to root first
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids
+
+# STEP 2: Verify you're in the right place
+pwd
+# Must output: /home/local/USHERBROOKE/vala2004/dev/nf-bids
+
+# STEP 3: Now run gradle
+./gradlew compileGroovy
+
+# Or in one command:
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && pwd && ./gradlew compileGroovy
+```
+
+**All Gradle Commands Must Follow This Pattern:**
+```bash
+# Compilation only
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && ./gradlew compileGroovy
+
+# Clean build
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && ./gradlew clean compileGroovy
+
+# Build JAR
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && ./gradlew jar
+
+# Run tests
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && ./gradlew test
+```
+
+**Why This Matters:**
+- Gradle uses the current working directory (`PWD`) to locate configuration files
+- Even with absolute paths to `gradlew`, Gradle still checks `PWD`
+- Terminal sessions retain their working directory across commands
+- Must explicitly reset terminal location before every gradle command
+
+---
+
+### 🔥 CRITICAL: Installing Plugin into Nextflow 🔥
+
+**AFTER ANY CODE CHANGES, YOU MUST INSTALL THE PLUGIN FOR NEXTFLOW TO USE IT**
+
+Simply compiling (`./gradlew compileGroovy`) or building JARs (`./gradlew jar`) is **NOT ENOUGH**. Nextflow loads plugins from `~/.nextflow/plugins/`, and you must install the plugin there.
+
+**Installation Command:**
+```bash
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && make install
+```
+
+Or directly with gradle:
+```bash
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids && ./gradlew install
+```
+
+**Complete Development Workflow:**
+```bash
+# After editing operator source code:
+
+# 1. Navigate to project root
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids
+
+# 2. Clean build and install
+make clean && make install
+
+# Or with gradle:
+./gradlew clean install
+
+# 3. Run tests
+cd validation && nextflow run test_joinby.nf
+```
+
+**What `make install` / `./gradlew install` Does:**
+- Compiles all Groovy source files
+- Builds the plugin JAR
+- Copies the plugin to `~/.nextflow/plugins/nf-bids-0.1.0-beta.4/`
+- Nextflow will load the plugin from this location
+
+**Common Mistake:**
+```bash
+# ❌ WRONG - Changes won't be used by Nextflow!
+./gradlew compileGroovy
+nextflow run test_joinby.nf
+# Uses OLD cached plugin, not your changes!
+
+# ✅ CORRECT - Install first!
+./gradlew install
+nextflow run test_joinby.nf
+# Uses NEW installed plugin with your changes!
+```
+
+**When to Run `make install`:**
+- After modifying any `.groovy` file in `src/main/groovy/`
+- After changing operator logic
+- After updating plugin configuration
+- Before running any Nextflow tests that use the plugin
+
+**Quick Reference:**
+- `make install` = Compile + Install plugin into Nextflow
+- `make clean` = Remove build artifacts and cache
+- `make test` = Run unit tests only (not integration tests)
+
+**Why this matters:**
+- Gradle looks for `settings.gradle` to determine project root
+- Running from subdirectory confuses Gradle's project structure detection
+- Error message: "Project directory '...' is not part of the build defined by settings file"
+- Solution: ALWAYS `cd` to project root before running any `gradlew` command
+
+**Quick verification:**
+```bash
+pwd  # Should show: /home/local/USHERBROOKE/vala2004/dev/nf-bids
+ls build.gradle settings.gradle  # Both should exist
+```
 
 ### build.gradle Structure
 
@@ -881,6 +1074,46 @@ make release          # ./gradlew releasePlugin
 ./gradlew installPlugin --rerun
 ```
 
+### Performance Benchmarking
+
+**Location**: `validation/benchmark/`
+
+**Structure**:
+```
+validation/benchmark/
+├── nextflow.config              # Plugin config for benchmarks
+├── benchmark_grouptuple.nf      # groupTuple vs groupTupleBy
+├── benchmark_join.nf            # join vs joinBy  
+├── benchmark_combine.nf         # combine vs combineBy
+└── BENCHMARK_RESULTS.md         # Detailed analysis
+```
+
+**Running Benchmarks**:
+```bash
+cd validation/benchmark
+
+# Individual benchmarks
+nextflow run benchmark_grouptuple.nf
+nextflow run benchmark_join.nf
+nextflow run benchmark_combine.nf
+
+# Clean between runs
+rm -rf .nextflow* work
+```
+
+**Benchmark Design Principles**:
+1. Test multiple dataset sizes (100, 1K, 10K items)
+2. Measure execution time with `System.currentTimeMillis()`
+3. Use realistic BIDS-like data structures
+4. Test both index-based and semantic key extraction
+5. Document results with performance deltas
+
+**Lessons Learned**:
+- Simple data structures (2-element tuples) work best for comparing with built-in operators
+- Complex tuples (5+ elements) can cause issues with Nextflow's standard operators
+- Our closure-based operators handle complex data more robustly
+- Performance varies significantly with duplicate key frequency (joinBy issue)
+
 ### Debugging Tips
 
 #### 1. Enable Debug Logging
@@ -1143,6 +1376,82 @@ echo $JAVA_HOME
 4. **Testing**: Unit tests (Spock) for logic, integration tests (nf-test) for workflows
 5. **Development**: Edit → Test → Build → Install → Validate cycle
 6. **Async Channels**: Use `DataflowHelper.subscribeImpl()`, avoid blocking operations
+
+**Critical Thread-Safety Patterns**:
+
+7. **Race Conditions in Operators**: 
+   - ❌ NEVER use `if (!map.containsKey(key)) { map[key] = value }` pattern
+   - ✅ ALWAYS use `map.computeIfAbsent(key, { k -> initialValue })`
+   - ✅ For counters: use `map[key] = (map[key] ?: 0) + 1` (atomic read-modify-write)
+   
+8. **Synchronized Methods**:
+   - All methods accessing shared mutable state MUST be `synchronized`
+   - This includes: `processItem()`, `emitGroup()`, `completeGrouping()`
+   - Race conditions manifest as NullPointerExceptions during concurrent access
+
+9. **Testing for Concurrency**:
+   - Unit tests may not catch race conditions (single-threaded execution)
+   - Integration tests with real Nextflow execution reveal concurrency bugs
+   - Benchmark tests with large datasets stress-test thread safety
+
+**Async Testing Patterns**:
+
+10. **Testing with Callbacks**:
+    - ❌ NEVER assume workflow blocks until channels complete
+    - ✅ ALWAYS use `subscribe(onNext: {...}, onComplete: {...})` pattern
+    - ✅ Add `Thread.sleep(timeInMs)` after subscribe to wait for processing
+    - ✅ Place assertions in `onComplete` block, not after subscribe call
+    - Example:
+      ```groovy
+      channel.groupTupleBy { it.key }
+          .subscribe(
+              onNext: { grouped -> /* process */ },
+              onComplete: { /* verify assertions here */ }
+          )
+      Thread.sleep(2000)  // Wait for async processing
+      ```
+
+11. **Plugin Import Requirements**:
+    - ❌ Workflow config alone is NOT enough: `plugins { id 'nf-bids@...' }`
+    - ✅ MUST include operators explicitly in workflow scripts:
+      ```groovy
+      include { groupTupleBy } from 'plugin/nf-bids'
+      include { joinBy } from 'plugin/nf-bids'
+      include { combineBy } from 'plugin/nf-bids'
+      ```
+    - Forgetting include causes "Missing process or function" errors
+
+12. **Operator Output Structures**:
+    - `groupTupleBy`: emits `[key, [items]]` (2 elements)
+    - `joinBy`: emits `[leftItem, rightItem]` (2 elements, NO key)
+      - ❌ WRONG: `joined[1]`, `joined[2]` (assumes key is first)
+      - ✅ CORRECT: `joined[0]`, `joined[1]` (left and right items)
+    - `combineBy`: emits items to channel, then apply `.filter()`
+      - ❌ WRONG: `combineBy(right) { filter }` (filter as parameter)
+      - ✅ CORRECT: `combineBy(right).filter { left, right -> predicate }`
+
+13. **Dataset Sizing for Tests**:
+    - Small (100 items): Logic verification, fast feedback
+    - Medium (1-10k items): Performance validation, realistic load
+    - Large (50k+ items): Stress testing, use sparingly (long run times)
+    - Balance: 10k items is sweet spot for edge case testing
+
+14. **Background Test Execution**:
+    - ❌ NEVER inject commands in active terminal (gets prefixed with CTRL+C)
+    - ✅ Use `nohup command > log 2>&1 &` for long-running tests
+    - ✅ Check status with `cat log` after appropriate wait time
+    - Example:
+      ```bash
+      nohup ./run_all_tests.sh > test_output.log 2>&1 &
+      sleep 150  # Wait for tests
+      cat test_output.log  # Check results
+      ```
+
+15. **Groovy Null-Safe Field Access**:
+    - ✅ Use Elvis operator for defaults: `item.field ?: "default"`
+    - ✅ Safe navigation: `item?.nested?.field` (no NPE)
+    - ✅ Works in closures: `{ it.subject ?: "unknown" }`
+    - Gracefully handles missing fields in complex structures
 
 **Essential Commands**:
 ```bash

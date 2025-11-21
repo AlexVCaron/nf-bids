@@ -4,6 +4,62 @@ All notable changes and development history for the nf-bids plugin.
 
 ---
 
+## [Unreleased] v0.1.0-beta.5
+
+### ⚠️ BREAKING CHANGES
+
+#### combineBy Operator Redesign
+
+The `combineBy` operator has been completely redesigned to use **key extraction** instead of **filter predicates**, aligning with `groupTupleBy` and `joinBy` patterns.
+
+**Old API (v0.1.0-beta.4):**
+```nextflow
+subjects.combineBy(sessions) { subj, sess ->
+    subj.id == sess.subject  // Filter predicate
+}
+.view { subj, sess -> "${subj} with ${sess}" }  // 2 elements
+```
+
+**New API (v0.1.0-beta.5+):**
+```nextflow
+subjects.combineBy(
+    sessions,
+    { it.id },      // Left key extractor
+    { it.subject }  // Right key extractor
+)
+.view { key, subj, sess -> "${key}: ${subj} with ${sess}" }  // 3 elements
+```
+
+**Changes:**
+- ❌ Removed: Filter predicate parameter
+- ✅ Added: Dual key extractors (left and right)
+- ✅ Changed: Output from `[left, right]` to `[key, left, right]`
+- ✅ Feature: Cartesian product within matching key groups
+- ✅ Consistency: Aligns with Nextflow's `combine(by:)` operator
+
+**Migration Required:** All existing `combineBy` usage must be updated. See [docs/channel-operators.md](docs/channel-operators.md#combineby-migration-beta4-to-beta5) for migration guide.
+
+### Added
+- Key-based combination logic in `CombineByOp.groovy`
+- Support for different key extractors for left/right channels
+- Cartesian product generation within matching key groups
+- Comprehensive test suite for new combineBy behavior
+- Research documentation for Nextflow's `combine(by:)` operator
+- API design specification for combineBy redesign
+
+### Changed
+- `CombineByOp`: Replaced `List` buffers with `Map<Object, List>` for key-based storage
+- `BidsExtension.combineBy()`: Updated signature to accept dual key extractors
+- Documentation: Complete rewrite of combineBy section in channel-operators.md
+- Tests: Updated `test_combineby.nf` with 8 new test cases
+- Benchmark: Added `benchmark_combineby_new.nf` for performance validation
+
+### Fixed
+- Operator consistency: All three operators (`groupTupleBy`, `joinBy`, `combineBy`) now use key extraction
+- Output structure: `combineBy` now includes key in output (matches `joinBy` pattern)
+
+---
+
 ## [0.2.0] - 2025-10-29 🎉 100% BASELINE ALIGNMENT
 
 ### 🏆 Achievement: Production Ready
