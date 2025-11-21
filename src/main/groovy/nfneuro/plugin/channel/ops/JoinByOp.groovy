@@ -114,18 +114,16 @@ class JoinByOp {
             return
         }
         
-        // Buffer left item
-        if (!leftBuffer.containsKey(key)) {
-            leftBuffer[key] = []
-        }
-        leftBuffer[key].add(item)
+        // Buffer left item (use computeIfAbsent for thread safety)
+        def leftList = leftBuffer.computeIfAbsent(key, { k -> [] })
+        leftList.add(item)
         
         // Check right buffer for matches
         def rightItems = rightBuffer[key]
         if (rightItems) {
             // Emit cartesian product of left item with all matching right items
             rightItems.each { rightItem ->
-                target.bind([item, rightItem])
+                target.bind([key, item, rightItem])
             }
             matchedKeys.add(key)
         }
@@ -145,18 +143,16 @@ class JoinByOp {
             return
         }
         
-        // Buffer right item
-        if (!rightBuffer.containsKey(key)) {
-            rightBuffer[key] = []
-        }
-        rightBuffer[key].add(item)
+        // Buffer right item (use computeIfAbsent for thread safety)
+        def rightList = rightBuffer.computeIfAbsent(key, { k -> [] })
+        rightList.add(item)
         
         // Check left buffer for matches
         def leftItems = leftBuffer[key]
         if (leftItems) {
             // Emit cartesian product of right item with all matching left items
             leftItems.each { leftItem ->
-                target.bind([leftItem, item])
+                target.bind([key, leftItem, item])
             }
             matchedKeys.add(key)
         }
@@ -209,7 +205,7 @@ class JoinByOp {
         leftBuffer.each { key, items ->
             if (!matchedKeys.contains(key)) {
                 items.each { leftItem ->
-                    target.bind([leftItem, null])
+                    target.bind([key, leftItem, null])
                 }
             }
         }
@@ -218,7 +214,7 @@ class JoinByOp {
         rightBuffer.each { key, items ->
             if (!matchedKeys.contains(key)) {
                 items.each { rightItem ->
-                    target.bind([null, rightItem])
+                    target.bind([key, null, rightItem])
                 }
             }
         }

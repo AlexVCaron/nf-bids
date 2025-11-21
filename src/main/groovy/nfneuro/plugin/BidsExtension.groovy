@@ -127,7 +127,7 @@ class BidsExtension extends PluginExtensionPoint {
      * @param leftKeyExtractor Closure extracting key from left channel items
      * @param rightKeyExtractor Optional closure for right items (defaults to leftKeyExtractor)
      * @param opts Optional configuration (remainder, failOnDuplicate, failOnMismatch)
-     * @return Channel emitting [leftItem, rightItem] pairs where keys match
+     * @return Channel emitting [key, leftItem, rightItem] tuples where keys match
      * 
      * @example
      * <pre>
@@ -135,7 +135,7 @@ class BidsExtension extends PluginExtensionPoint {
      * functional = Channel.of([subject: 'sub-01', file: 'bold.nii'])
      * 
      * anatomical.joinBy(functional) { it.subject }
-     * // Emits: [[subject:'sub-01', file:'t1.nii'], [subject:'sub-01', file:'bold.nii']]
+     * // Emits: ['sub-01', [subject:'sub-01', file:'t1.nii'], [subject:'sub-01', file:'bold.nii']]
      * </pre>
      */
     @Operator
@@ -157,25 +157,39 @@ class BidsExtension extends PluginExtensionPoint {
     }
     
     /**
-     * Combine two channels with optional filtering predicate.
+     * Combine two channels by extracting and matching keys.
      * 
-     * Similar to combine but allows filtering combinations using a predicate closure.
-     * Without a filter, produces all combinations (cartesian product).
+     * Similar to Nextflow's combine(by:) operator but uses closures to extract
+     * keys from each item instead of tuple indices. Emits the cartesian product
+     * of items within each key group.
      * 
      * @param left Left input channel
      * @param right Right input channel
-     * @param filterPredicate Optional closure to filter combinations (receives [left, right])
-     * @param opts Optional configuration (TBD)
-     * @return Channel emitting [leftItem, rightItem] for valid combinations
+     * @param leftKeyExtractor Closure that extracts the key from left items
+     * @param rightKeyExtractor Closure that extracts the key from right items
+     * @param opts Optional configuration (reserved for future: remainder)
+     * @return Channel emitting [key, leftItem, rightItem] tuples
      * 
      * @example
      * <pre>
-     * subjects = Channel.of('sub-01', 'sub-02')
-     * sessions = Channel.of('ses-01', 'ses-02')
+     * subjects = Channel.of(
+     *   [id: 'sub-01', age: 25],
+     *   [id: 'sub-02', age: 30]
+     * )
+     * sessions = Channel.of(
+     *   [id: 'sub-01', session: 'ses-01'],
+     *   [id: 'sub-01', session: 'ses-02'],
+     *   [id: 'sub-02', session: 'ses-01']
+     * )
      * 
-     * // Only combine if session number <= subject number
-     * subjects.combineBy(sessions) { subj, sess ->
-     *   sess.split('-')[1] <= subj.split('-')[1]
+     * // Combine by subject ID (produces cartesian product for duplicates)
+     * subjects.combineBy(
+     *   sessions,
+     *   { it.id },     // extract key from left
+     *   { it.id }      // extract key from right
+     * )
+     * .view { key, subj, sess ->
+     *   "Subject ${key}: age=${subj.age}, session=${sess.session}"
      * }
      * </pre>
      */
@@ -183,22 +197,15 @@ class BidsExtension extends PluginExtensionPoint {
     DataflowWriteChannel combineBy(
         DataflowReadChannel left,
         DataflowReadChannel right,
-        Closure filterPredicate = null,
+        Closure leftKeyExtractor,
+        Closure rightKeyExtractor,
         Map opts = [:]
     ) {
-        // Validate filter if provided
-        if (filterPredicate != null) {
-            int params = filterPredicate.getMaximumNumberOfParameters()
-            if (params < 2) {
-                throw new IllegalArgumentException(
-                    "combineBy: filterPredicate must accept 2 parameters [leftItem, rightItem]\n" +
-                    "  Expected: { left, right -> ... }\n" +
-                    "  Found: closure with ${params} parameter(s)"
-                )
-            }
-        }
+        // Validate key extractors
+        KeyExtractor.validateKeyExtractor(leftKeyExtractor, 'combineBy(leftKeyExtractor)')
+        KeyExtractor.validateKeyExtractor(rightKeyExtractor, 'combineBy(rightKeyExtractor)')
         
-        def op = new CombineByOp(left, right, filterPredicate, opts)
+        def op = new CombineByOp(left, right, leftKeyExtractor, rightKeyExtractor, opts)
         return op.apply()
     }
 

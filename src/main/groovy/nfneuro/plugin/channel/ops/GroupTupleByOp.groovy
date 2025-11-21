@@ -83,7 +83,7 @@ class GroupTupleByOp {
      * 
      * @param item The item to process
      */
-    private void processItem(Object item) {
+    private synchronized void processItem(Object item) {
         // Extract key using the keyExtractor closure
         def key = KeyExtractor.extractKey(item, keyExtractor, 'groupTupleBy')
         
@@ -92,15 +92,14 @@ class GroupTupleByOp {
             return
         }
         
-        // Initialize group if not exists
-        if (!groups.containsKey(key)) {
-            groups[key] = []
-            counts[key] = 0
-        }
+        // Initialize group if not exists (use computeIfAbsent for thread safety)
+        def itemList = groups.computeIfAbsent(key, { k -> [] })
         
         // Add item to group
-        groups[key].add(item)
-        counts[key]++
+        itemList.add(item)
+        
+        // Increment count atomically
+        counts[key] = (counts[key] ?: 0) + 1
         
         // Check if group is complete (size option)
         def expectedSize = opts.size as Integer
@@ -113,7 +112,7 @@ class GroupTupleByOp {
      * Called when the source channel is complete.
      * Emits all remaining groups if remainder option is true.
      */
-    private void completeGrouping() {
+    private synchronized void completeGrouping() {
         // Check remainder option (default true)
         def remainder = opts.remainder != null ? opts.remainder : true
         
@@ -133,7 +132,7 @@ class GroupTupleByOp {
      * 
      * @param key The grouping key
      */
-    private void emitGroup(Object key) {
+    private synchronized void emitGroup(Object key) {
         def items = groups.remove(key)
         counts.remove(key)
         

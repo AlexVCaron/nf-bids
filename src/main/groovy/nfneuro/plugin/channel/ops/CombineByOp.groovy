@@ -23,18 +23,35 @@ import groovyx.gpars.dataflow.DataflowWriteChannel
 import nextflow.Channel
 import nextflow.extension.CH
 import nextflow.extension.DataflowHelper
+import nfneuro.plugin.channel.KeyExtractor
 
 /**
- * Combines two channels with optional filtering.
+ * Combines two channels by extracting and matching keys.
  * 
- * This operator produces the cartesian product of two channels,
- * optionally filtered by a predicate closure. Without a filter,
- * all possible [left, right] combinations are emitted.
+ * This operator implements combine logic similar to Nextflow's combine(by:) operator,
+ * but uses closures to dynamically extract the join key from each item
+ * instead of requiring tuple indices.
+ * 
+ * Key features:
+ * - Uses closures for flexible key extraction from both channels
+ * - Emits [key, leftItem, rightItem] tuples (includes the matching key)
+ * - Produces full cartesian product for items with matching keys
+ * - Drops unmatched keys (inner join semantics)
  * 
  * Use cases:
- * - Combine subjects with sessions
- * - Combine parameters with datasets
- * - Generate all pairwise combinations with custom filtering
+ * - Combine subjects with sessions by subject ID
+ * - Combine scans with parameters by matching fields
+ * - Generate all pairwise combinations within groups
+ * 
+ * Example:
+ * <pre>
+ * subjects.combineBy(
+ *     sessions,
+ *     { it.subject },    // extract key from left items
+ *     { it.subject }     // extract key from right items
+ * )
+ * .view { key, subj, sess -> "Subject ${key}: ${subj} × ${sess}" }
+ * </pre>
  * 
  * @author Alex Valcourt Caron
  */
@@ -44,13 +61,14 @@ class CombineByOp {
     
     private final DataflowReadChannel left
     private final DataflowReadChannel right
-    private final Closure filterPredicate
+    private final Closure leftKeyExtractor
+    private final Closure rightKeyExtractor
     private final Map opts
     private DataflowWriteChannel target
     
-    // Buffers to store all items from both channels
-    private final List<Object> leftBuffer = []
-    private final List<Object> rightBuffer = []
+    // Buffers to store items grouped by key (thread-safe access required)
+    private final Map<Object, List<Object>> leftBuffer = new HashMap<>()
+    private final Map<Object, List<Object>> rightBuffer = new HashMap<>()
     
     // Completion tracking
     private boolean leftComplete = false
@@ -61,16 +79,19 @@ class CombineByOp {
      * 
      * @param left The left input channel
      * @param right The right input channel
-     * @param filterPredicate Optional closure to filter combinations (receives [left, right])
-     * @param opts Optional configuration (reserved for future use)
+     * @param leftKeyExtractor Closure that extracts the key from left items
+     * @param rightKeyExtractor Closure that extracts the key from right items
+     * @param opts Optional configuration (reserved for future use: remainder, filter)
      */
     CombineByOp(DataflowReadChannel left, 
                 DataflowReadChannel right,
-                Closure filterPredicate,
+                Closure leftKeyExtractor,
+                Closure rightKeyExtractor,
                 Map opts) {
         this.left = left
         this.right = right
-        this.filterPredicate = filterPredicate
+        this.leftKeyExtractor = leftKeyExtractor
+        this.rightKeyExtractor = rightKeyExtractor
         this.opts = opts ?: [:]
     }
     
@@ -100,12 +121,25 @@ class CombineByOp {
      * @param item The item to process
      */
     private synchronized void onLeftItem(Object item) {
-        // Add to buffer
-        leftBuffer.add(item)
+        // Extract key from left item
+        def key = KeyExtractor.extractKey(item, leftKeyExtractor, 'combineBy(left)')
         
-        // Combine with all existing right items
-        rightBuffer.each { rightItem ->
-            emitIfValid(item, rightItem)
+        if (key == null) {
+            log.trace("combineBy: Skipping left item with null key: ${item}")
+            return
+        }
+        
+        // Buffer left item by key (use computeIfAbsent for thread safety)
+        def leftList = leftBuffer.computeIfAbsent(key, { k -> [] })
+        leftList.add(item)
+        
+        // Check right buffer for matching key
+        def rightItems = rightBuffer[key]
+        if (rightItems) {
+            // Emit cartesian product: this left item × all right items with same key
+            rightItems.each { rightItem ->
+                target.bind([key, item, rightItem])
+            }
         }
     }
     
@@ -115,45 +149,25 @@ class CombineByOp {
      * @param item The item to process
      */
     private synchronized void onRightItem(Object item) {
-        // Add to buffer
-        rightBuffer.add(item)
+        // Extract key from right item
+        def key = KeyExtractor.extractKey(item, rightKeyExtractor, 'combineBy(right)')
         
-        // Combine with all existing left items
-        leftBuffer.each { leftItem ->
-            emitIfValid(leftItem, item)
+        if (key == null) {
+            log.trace("combineBy: Skipping right item with null key: ${item}")
+            return
         }
-    }
-    
-    /**
-     * Emit combination if it passes the filter (or if no filter).
-     * 
-     * @param leftItem The left item
-     * @param rightItem The right item
-     */
-    private void emitIfValid(Object leftItem, Object rightItem) {
-        try {
-            // If no filter, emit all combinations
-            if (filterPredicate == null) {
-                target.bind([leftItem, rightItem])
-                return
+        
+        // Buffer right item by key (use computeIfAbsent for thread safety)
+        def rightList = rightBuffer.computeIfAbsent(key, { k -> [] })
+        rightList.add(item)
+        
+        // Check left buffer for matching key
+        def leftItems = leftBuffer[key]
+        if (leftItems) {
+            // Emit cartesian product: this right item × all left items with same key
+            leftItems.each { leftItem ->
+                target.bind([key, leftItem, item])
             }
-            
-            // Apply filter predicate
-            def result = filterPredicate.call(leftItem, rightItem)
-            
-            // Emit if predicate returns true
-            if (result) {
-                target.bind([leftItem, rightItem])
-            }
-        } catch (Exception e) {
-            log.error("combineBy: Error evaluating filter predicate for items [${leftItem}, ${rightItem}]: ${e.message}", e)
-            throw new IllegalStateException(
-                "combineBy: Filter predicate failed\n" +
-                "  Left item: ${leftItem}\n" +
-                "  Right item: ${rightItem}\n" +
-                "  Error: ${e.message}",
-                e
-            )
         }
     }
     
@@ -183,7 +197,16 @@ class CombineByOp {
             return
         }
         
-        log.trace("combineBy: Both channels complete, emitted ${leftBuffer.size() * rightBuffer.size()} total combinations")
+        // Count total combinations emitted (sum of cartesian products per key)
+        def totalCombinations = 0
+        leftBuffer.each { key, leftItems ->
+            def rightItems = rightBuffer[key]
+            if (rightItems) {
+                totalCombinations += leftItems.size() * rightItems.size()
+            }
+        }
+        
+        log.trace("combineBy: Both channels complete, emitted ${totalCombinations} combinations across ${leftBuffer.keySet().size()} keys")
         
         // Signal completion
         target.bind(Channel.STOP)
