@@ -1,10 +1,14 @@
 #!/usr/bin/env nextflow
 
 /*
- * Integration test for combineBy operator
+ * Integration test for combineBy operator (v0.1.0-beta.5+)
  * 
- * Tests the cartesian product with optional filtering functionality.
+ * Tests key-based combination with cartesian product within groups.
  * This validates that the operator works correctly in a pipeline context.
+ * 
+ * BREAKING CHANGE from beta.4:
+ * - Now uses key extractors instead of filter predicates
+ * - Emits [key, leftItem, rightItem] tuples (includes key)
  */
 
 nextflow.enable.dsl=2
@@ -14,121 +18,190 @@ include { combineBy } from 'plugin/nf-bids'
 
 workflow {
     
-    println "\nTest 1: Basic combine without filter (cartesian product)\n"
+    println "\n=== Test 1: Basic key-based combination ===\n"
     
-    subjects = channel.of('sub-01', 'sub-02', 'sub-03')
-    sessions = channel.of('ses-01', 'ses-02')
+    subjects = channel.of(
+        [id: 'sub-01', age: 25],
+        [id: 'sub-02', age: 30]
+    )
+    sessions = channel.of(
+        [id: 'sub-01', session: 'ses-01'],
+        [id: 'sub-02', session: 'ses-01']
+    )
     
     subjects
-        .combineBy(sessions)
-        .map { subj, sess ->
-            println "  Combined: ${subj} with ${sess}"
-            [subject: subj, session: sess]
+        .combineBy(
+            sessions,
+            { it.id },      // extract key from left
+            { it.id }       // extract key from right
+        )
+        .map { key, subj, sess ->
+            println "  Key=${key}: Subject(age=${subj.age}) × Session(${sess.session})"
+            [key: key, age: subj.age, session: sess.session]
         }
         .collect()
     
-    println "\nTest 2: Combine with filter (conditional combinations)\n"
+    println "\n=== Test 2: Cartesian product within groups ===\n"
     
-    subjects2 = channel.of('sub-01', 'sub-02', 'sub-03')
-    sessions2 = channel.of('ses-01', 'ses-02', 'ses-03')
-    
-    // Only combine if session number <= subject number
-    subjects2
-        .combineBy(sessions2) { subj, sess ->
-            def subjNum = subj.split('-')[1] as Integer
-            def sessNum = sess.split('-')[1] as Integer
-            sessNum <= subjNum
-        }
-        .map { subj, sess ->
-            println "  Filtered: ${subj} with ${sess}"
-            [subject: subj, session: sess]
-        }
-        .collect()
-    
-    println "\nTest 3: Combine with complex maps\n"
-    
-    anatomical = channel.of(
-        [type: 'T1w', params: [res: '1mm']],
-        [type: 'T2w', params: [res: '1mm']]
+    scans = channel.of(
+        [subject: 'sub-01', scan: 'T1w'],
+        [subject: 'sub-01', scan: 'T2w'],
+        [subject: 'sub-02', scan: 'dwi']
     )
     
-    contrasts = channel.of(
-        [contrast: 'high', value: 0.8],
-        [contrast: 'low', value: 0.2]
+    params = channel.of(
+        [subject: 'sub-01', tr: 2000],
+        [subject: 'sub-01', tr: 3000],
+        [subject: 'sub-02', tr: 2500]
     )
     
-    anatomical
-        .combineBy(contrasts)
-        .map { anat, contrast ->
-            println "  Combined: ${anat.type} (${anat.params.res}) with ${contrast.contrast} contrast (${contrast.value})"
-            [type: anat.type, params: anat.params, contrast: contrast.contrast, value: contrast.value]
+    // Should produce 2×2=4 combinations for sub-01, 1×1=1 for sub-02
+    scans
+        .combineBy(
+            params,
+            { it.subject },
+            { it.subject }
+        )
+        .map { key, scan, param ->
+            println "  Key=${key}: ${scan.scan} with TR=${param.tr}ms"
+            [key: key, scan: scan.scan, tr: param.tr]
         }
         .collect()
     
-    println "\nTest 4: Combine with matching filter\n"
+    println "\n=== Test 3: Different key extractors (asymmetric) ===\n"
     
     images = channel.of(
-        [id: 'A', modality: 'anat'],
-        [id: 'B', modality: 'func']
+        [subjectId: 'sub-01', modality: 'anat'],
+        [subjectId: 'sub-02', modality: 'func']
     )
     
     processing = channel.of(
-        [id: 'A', method: 'method1'],
-        [id: 'B', method: 'method2'],
-        [id: 'C', method: 'method3']
+        [subjId: 'sub-01', method: 'method1'],
+        [subjId: 'sub-02', method: 'method2']
     )
     
-    // Only combine if IDs match
+    // Use different fields for key extraction
     images
-        .combineBy(processing) { img, proc -> img.id == proc.id }
-        .map { img, proc ->
-            println "  Matched: ${img.id} -> ${img.modality} with ${proc.method}"
-            [id: img.id, modality: img.modality, method: proc.method]
+        .combineBy(
+            processing,
+            { it.subjectId },   // extract from 'subjectId' field
+            { it.subjId }       // extract from 'subjId' field
+        )
+        .map { key, img, proc ->
+            println "  Key=${key}: ${img.modality} + ${proc.method}"
+            [key: key, modality: img.modality, method: proc.method]
         }
         .collect()
     
-    println "\nTest 5: Combine all parameters with all datasets\n"
+    println "\n=== Test 4: Unmatched keys (should be dropped) ===\n"
     
-    parameters = channel.of(
-        [threshold: 0.5, smoothing: 'low'],
-        [threshold: 0.7, smoothing: 'high']
+    left = channel.of(
+        [id: 'A', value: 1],
+        [id: 'B', value: 2],
+        [id: 'C', value: 3]
     )
     
-    datasets = channel.of('dataset1', 'dataset2')
+    right = channel.of(
+        [id: 'A', value: 10],
+        [id: 'B', value: 20],
+        [id: 'D', value: 30]  // D has no match in left
+    )
     
-    parameters
-        .combineBy(datasets)
-        .map { param, dataset ->
-            println "  Config: threshold=${param.threshold}, smoothing=${param.smoothing}, dataset=${dataset}"
-            [threshold: param.threshold, smoothing: param.smoothing, dataset: dataset]
-        }
-        .collect()
-    
-    println "\nTest 6: Empty result with strict filter\n"
-    
-    left = channel.of('A', 'B', 'C')
-    right = channel.of(1, 2, 3)
-    
-    // Filter that rejects everything
+    // Only A and B should produce output (C and D dropped)
     left
-        .combineBy(right) { l, r -> false }
-        .map { l, r ->
-            println "  This should never print"
-            [left: l, right: r]
+        .combineBy(
+            right,
+            { it.id },
+            { it.id }
+        )
+        .map { key, l, r ->
+            println "  Key=${key}: left=${l.value}, right=${r.value}"
+            [key: key, left: l.value, right: r.value]
         }
         .collect()
     
-    println "\nTest 7: Combine with numeric comparison\n"
+    println "\n=== Test 5: Composite key extraction ===\n"
     
-    values1 = channel.of(1, 2, 3)
-    values2 = channel.of(2, 4, 6)
+    dwi = channel.of(
+        [sub: 'sub-01', ses: 'ses-01', type: 'dwi'],
+        [sub: 'sub-01', ses: 'ses-02', type: 'dwi']
+    )
     
-    // Only combine if left < right
-    values1
-        .combineBy(values2) { v1, v2 -> v1 < v2 }
-        .map { v1, v2 ->
-            println "  Valid pair: ${v1} < ${v2}"
-            [v1: v1, v2: v2]
+    anat = channel.of(
+        [sub: 'sub-01', ses: 'ses-01', type: 'T1w'],
+        [sub: 'sub-01', ses: 'ses-02', type: 'T1w']
+    )
+    
+    // Extract composite key (subject + session)
+    dwi
+        .combineBy(
+            anat,
+            { "${it.sub}_${it.ses}" },  // composite key
+            { "${it.sub}_${it.ses}" }
+        )
+        .map { key, dwiScan, anatScan ->
+            println "  Key=${key}: ${dwiScan.type} + ${anatScan.type}"
+            [key: key, dwi: dwiScan.type, anat: anatScan.type]
+        }
+        .collect()
+    
+    println "\n=== Test 6: String key extraction from simple values ===\n"
+    
+    subjects_simple = channel.of('sub-01', 'sub-02', 'sub-03')
+    sessions_simple = channel.of('ses-01', 'ses-02', 'ses-03')
+    
+    // Extract numeric part as key (combine sub-N with ses-N)
+    subjects_simple
+        .combineBy(
+            sessions_simple,
+            { it.split('-')[1] },   // extract '01', '02', '03'
+            { it.split('-')[1] }
+        )
+        .map { key, subj, sess ->
+            println "  Key=${key}: ${subj} × ${sess}"
+            [key: key, subject: subj, session: sess]
+        }
+        .collect()
+    
+    println "\n=== Test 7: Empty channel (no output expected) ===\n"
+    
+    populated = channel.of([id: 'A', val: 1])
+    empty = channel.empty()
+    
+    populated
+        .combineBy(
+            empty,
+            { it.id },
+            { it.id }
+        )
+        .map { key, l, r ->
+            println "  ERROR: This should never print"
+            [key: key, l: l, r: r]
+        }
+        .ifEmpty { println "  ✓ Empty result as expected" }
+        .collect()
+    
+    println "\n=== Test 8: Complex map keys ===\n"
+    
+    experiments = channel.of(
+        [id: [project: 'P1', exp: 'E1'], data: 'exp1_data'],
+        [id: [project: 'P1', exp: 'E2'], data: 'exp2_data']
+    )
+    
+    analyses = channel.of(
+        [id: [project: 'P1', exp: 'E1'], method: 'GLM'],
+        [id: [project: 'P1', exp: 'E2'], method: 'ICA']
+    )
+    
+    experiments
+        .combineBy(
+            analyses,
+            { it.id },
+            { it.id }
+        )
+        .map { key, exp, ana ->
+            println "  Key=${key}: ${exp.data} → ${ana.method}"
+            [key: key, data: exp.data, method: ana.method]
         }
         .collect()
     

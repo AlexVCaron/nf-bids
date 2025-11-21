@@ -28,9 +28,9 @@ workflow {
     
     anatomical
         .joinBy(functional) { it.subject }
-        .map { left, right -> 
-            println "  Joined: ${left.subject} -> T1w + bold"
-            [subject: left.subject, t1: left.file, bold: right.file]
+        .map { key, left, right -> 
+            println "  Joined: ${key} -> T1w + bold"
+            [subject: key, t1: left.file, bold: right.file]
         }
         .collect()
     
@@ -48,9 +48,9 @@ workflow {
     
     subjects
         .joinBy(participants, { it.id }, { it.participant_id })
-        .map { left, right ->
-            println "  Joined: ${left.id} with ${right.participant_id}"
-            [id: left.id, data: left.data, info: right.info]
+        .map { key, left, right ->
+            println "  Joined: ${key} (${left.id} with ${right.participant_id})"
+            [id: key, data: left.data, info: right.info]
         }
         .collect()
     
@@ -68,9 +68,9 @@ workflow {
     
     images
         .joinBy(masks) { it.meta.sub }
-        .map { img, mask ->
-            println "  Joined: sub-${img.meta.sub} -> ${img.file} + ${mask.file}"
-            [subject: img.meta.sub, image: img.file, mask: mask.file]
+        .map { key, img, mask ->
+            println "  Joined: sub-${key} -> ${img.file} + ${mask.file}"
+            [subject: key, image: img.file, mask: mask.file]
         }
         .collect()
     
@@ -88,8 +88,8 @@ workflow {
     
     runs1
         .joinBy(runs2) { [it.subject, it.session] }
-        .map { anat, func ->
-            println "  Joined: ${anat.subject}/${anat.session} -> ${anat.type} + ${func.type}"
+        .map { key, anat, func ->
+            println "  Joined: ${key} -> ${anat.type} + ${func.type}"
             [subject: anat.subject, session: anat.session, anat: anat.type, func: func.type]
         }
         .collect()
@@ -110,9 +110,9 @@ workflow {
     
     left
         .joinBy(right, { it.id }, { it.id }, [remainder: false])
-        .map { l, r ->
-            println "  Matched: ${l.id} -> val=${l.val}, data=${r.data}"
-            [id: l.id, val: l.val, data: r.data]
+        .map { key, l, r ->
+            println "  Matched: ${key} -> val=${l.val}, data=${r.data}"
+            [id: key, val: l.val, data: r.data]
         }
         .collect()
     
@@ -132,13 +132,13 @@ workflow {
     
     left2
         .joinBy(right2, { it.id }, { it.id }, [remainder: true])
-        .map { l, r ->
+        .map { key, l, r ->
             def leftId = l?.id ?: 'null'
             def rightId = r?.id ?: 'null'
             def val = l?.val ?: 'null'
             def data = r?.data ?: 'null'
-            println "  Result: left=${leftId}, right=${rightId}, val=${val}, data=${data}"
-            [left_id: leftId, right_id: rightId, val: val, data: data]
+            println "  Result: key=${key}, left=${leftId}, right=${rightId}, val=${val}, data=${data}"
+            [key: key, left_id: leftId, right_id: rightId, val: val, data: data]
         }
         .collect()
     
