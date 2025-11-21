@@ -3,6 +3,7 @@ package nfneuro.plugin.model
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -25,10 +26,7 @@ class BidsDataset {
             throw new IllegalArgumentException("Dataset path cannot be null or empty")
         }
 
-        // Validate and normalize path to prevent path traversal attacks
-        def normalizedPath = validateAndNormalizePath(path)
-
-        this.path = normalizedPath
+        this.path = validateAndNormalizePath(path)
         this.files = []
         this.description = [:]
         this.participants = []
