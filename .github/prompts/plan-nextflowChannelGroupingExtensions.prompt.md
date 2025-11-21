@@ -135,6 +135,8 @@ channel1.join(channel2) { [it.subject, it.session] }
 - `src/main/groovy/nfneuro/channel/KeyExtractor.groovy`
 - `src/test/groovy/nfneuro/channel/KeyExtractorTest.groovy`
 
+**Important Note**: Nextflow plugins can only have **one extension point** per plugin. All operators must be added to the same extension class (e.g., `BidsExtension`), not split into separate extension classes.
+
 #### Step 3.2: Implement High-Priority Operators
 **Recommended Order** (most impactful first):
 1. `groupTupleBy` - extends groupTuple with closure
@@ -151,10 +153,19 @@ channel1.join(channel2) { [it.subject, it.session] }
 
 **Example Implementation Skeleton**:
 ```groovy
-@Extension
-class ChannelGroupingExtension {
+@CompileStatic
+class BidsExtension extends PluginExtensionPoint {
     
-    static DataflowReadChannel groupTupleBy(
+    // Note: This class combines both @Factory and @Operator methods
+    // because Nextflow plugins can only have ONE extension point
+    
+    @Factory
+    DataflowWriteChannel fromBIDS(...) {
+        // Existing factory method
+    }
+    
+    @Operator
+    DataflowWriteChannel groupTupleBy(
         DataflowReadChannel source,
         Closure keyExtractor,
         Map opts = [:]
@@ -173,9 +184,11 @@ class ChannelGroupingExtension {
 - Configure operator visibility and namespace
 - Update plugin version and changelog
 
+**Important**: Ensure `META-INF/extensions.idx` contains **only one extension point** (e.g., `nfneuro.plugin.BidsExtension`). Nextflow enforces a single extension point per plugin.
+
 **Files to Modify**:
-- `src/resources/META-INF/MANIFEST.MF`
-- Plugin descriptor file
+- `src/resources/META-INF/extensions.idx` (should have only ONE line)
+- `build.gradle` (extensionPoints should have only ONE entry)
 - Version configuration
 
 ---

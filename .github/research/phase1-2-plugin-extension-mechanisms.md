@@ -13,8 +13,9 @@
 2. ❌ Plugins **CANNOT** overload existing core operators - only add **new** operator names
 3. ✅ Can add **factory methods** (@Factory) and **functions** (@Function) with same pattern
 4. ✅ Extension mechanism is well-defined and tested in production plugins (nf-sqldb)
+5. ⚠️ Plugins can only have **ONE extension point** - all methods must be in the same class
 
-**Implication for Project**: Must create NEW operator names (e.g., `joinBy`, `groupTupleBy`) instead of extending existing signatures.
+**Implication for Project**: Must create NEW operator names (e.g., `joinBy`, `groupTupleBy`) instead of extending existing signatures. All operators must be in a single extension class (e.g., `BidsExtension`).
 
 ---
 
@@ -254,17 +255,20 @@ We MUST create:
 
 ### Recommended Structure for Our Plugin
 
+**IMPORTANT**: Nextflow plugins can only have **one extension point**. All factory and operator methods must be in the same class.
+
 ```groovy
-// src/main/groovy/nfneuro/extension/ChannelGroupingExtension.groovy
-package nfneuro.extension
+// src/main/groovy/nfneuro/plugin/BidsExtension.groovy
+package nfneuro.plugin
 
 import groovyx.gpars.dataflow.DataflowReadChannel
 import groovyx.gpars.dataflow.DataflowWriteChannel
 import nextflow.Session
+import nextflow.plugin.extension.Factory
 import nextflow.plugin.extension.Operator
 import nextflow.plugin.extension.PluginExtensionPoint
 
-class ChannelGroupingExtension extends PluginExtensionPoint {
+class BidsExtension extends PluginExtensionPoint {
     
     private Session session
     
@@ -273,6 +277,14 @@ class ChannelGroupingExtension extends PluginExtensionPoint {
         this.session = session
     }
     
+    // Factory method for BIDS dataset parsing
+    @Factory
+    DataflowWriteChannel fromBIDS(String bidsDir, String configPath = null, Map opts = [:]) {
+        // Implementation for BIDS parsing
+        return new BidsChannelFactory(session).fromBIDS(bidsDir, configPath, opts)
+    }
+    
+    // Operator methods for channel grouping
     @Operator
     DataflowWriteChannel groupTupleBy(
         DataflowReadChannel source, 
@@ -329,8 +341,11 @@ class ChannelGroupingExtension extends PluginExtensionPoint {
 ### Plugin Descriptor
 
 **File**: `src/resources/META-INF/extensions.idx`
+
+**IMPORTANT**: This file must contain **only ONE extension point** per plugin.
+
 ```
-nfneuro.extension.ChannelGroupingExtension
+nfneuro.plugin.BidsExtension
 ```
 
 ### Plugin Class
@@ -363,10 +378,11 @@ Plugin-Version: 0.2.0
 ```groovy
 // In nextflow.config
 plugins {
-    id 'nf-bids@0.2.0'
+    id 'nf-bids@0.1.0-beta.4'
 }
 
 // In workflow script
+// REQUIRED: Must include operators from plugin explicitly
 include { groupTupleBy; joinBy; combineBy } from 'plugin/nf-bids'
 
 workflow {
@@ -545,7 +561,7 @@ import nextflow.Session
 import spock.lang.Specification
 
 @Slf4j
-class ChannelGroupingExtensionTest extends Specification {
+class BidsExtensionTest extends Specification {
     
     def setupSpec() {
         new Session()
@@ -553,7 +569,7 @@ class ChannelGroupingExtensionTest extends Specification {
     
     def 'should group by closure key extractor'() {
         given:
-        def ext = new ChannelGroupingExtension()
+        def ext = new BidsExtension()
         ext.init(Mock(Session))
         
         def channel = Channel.of(
@@ -688,6 +704,29 @@ class GroupTupleByOp {
 
 ---
 
+## Single Extension Point Constraint
+
+### Critical Limitation Discovered
+
+**Nextflow plugins can only have ONE extension point**. This means:
+- Cannot have separate `BidsExtension` and `ChannelGroupingExtension` classes
+- All `@Factory`, `@Operator`, and `@Function` methods must be in the same class
+- The `extensions.idx` file must contain only one entry
+- The `build.gradle` `extensionPoints` array must have only one entry
+
+**Impact on Architecture**:
+- Must consolidate all functionality into `BidsExtension`
+- `BidsExtension` contains both:
+  - Factory methods: `fromBIDS()`
+  - Operator methods: `groupTupleBy()`, `joinBy()`, `combineBy()`
+
+**Why This Matters**:
+- Early designs had separate extension classes for different concerns
+- Plugin loading will fail if multiple extensions are registered
+- This is a framework constraint, not a design choice
+
+---
+
 ## Key Takeaways
 
 ### What We Learned
@@ -696,6 +735,7 @@ class GroupTupleByOp {
    - Well-documented pattern
    - Production-tested in nf-sqldb
    - Clear rules and validation
+   - **But limited to one extension point per plugin**
 
 2. **Cannot Overload Core Operators**:
    - Must use new names

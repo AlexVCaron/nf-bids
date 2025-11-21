@@ -35,9 +35,12 @@ Phase 1 research has determined the **feasibility** and **technical approach** f
 
 **Plugin Extension Pattern**:
 ```groovy
-class ChannelGroupingExtension extends PluginExtensionPoint {
+class BidsExtension extends PluginExtensionPoint {
     @Override
     protected void init(Session session) { /* ... */ }
+    
+    @Factory
+    DataflowWriteChannel fromBIDS(...) { /* ... */ }
     
     @Operator
     DataflowWriteChannel groupTupleBy(
@@ -50,10 +53,11 @@ class ChannelGroupingExtension extends PluginExtensionPoint {
 
 **Key Requirements**:
 - Extend `PluginExtensionPoint` base class
-- Use `@Operator` annotation
-- First parameter MUST be `DataflowReadChannel`
+- Use `@Factory` or `@Operator` annotations
+- First parameter of operators MUST be `DataflowReadChannel`
 - Return `DataflowWriteChannel`
 - Public, non-static methods only
+- **CRITICAL**: Nextflow plugins can only have **ONE extension point** - all factories and operators must be in the same class
 
 ---
 

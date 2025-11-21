@@ -14,9 +14,9 @@
 nf-bids/
 ├── src/main/groovy/nfneuro/
 │   ├── plugin/
-│   │   ├── BidsExtension.groovy              [EXISTS - extend]
+│   │   ├── BidsExtension.groovy              [MODIFY - add operators]
 │   │   └── channel/
-│   │       ├── ChannelGroupingExtension.groovy  [NEW]
+│   │       ├── BidsChannelFactory.groovy        [EXISTS]
 │   │       ├── KeyExtractor.groovy              [NEW]
 │   │       ├── ops/
 │   │       │   ├── GroupTupleByOp.groovy        [NEW]
@@ -33,8 +33,10 @@ nf-bids/
 │   │   └── CombineByOpTest.groovy               [NEW]
 │   └── ...
 └── src/resources/META-INF/
-    └── extensions.idx                        [MODIFY - add new extension]
+    └── extensions.idx                        [NO CHANGE - single extension]
 ```
+
+**IMPORTANT NOTE**: Nextflow plugins can only have **ONE extension point**. This means we cannot create a separate `ChannelGroupingExtension` class. Instead, all new operators must be added to the existing `BidsExtension` class.
 
 ---
 
@@ -181,31 +183,37 @@ class CompositeKey {
 
 ---
 
-### 3. ChannelGroupingExtension
+### 3. BidsExtension (Modify Existing)
 
-**Purpose**: Plugin extension point that registers new operators
+**Purpose**: Single plugin extension point that provides both BIDS parsing and grouping operators
 
-**File**: `src/main/groovy/nfneuro/plugin/channel/ChannelGroupingExtension.groovy`
+**File**: `src/main/groovy/nfneuro/plugin/BidsExtension.groovy`
+
+**IMPORTANT**: Since Nextflow plugins can only have one extension point, we add the new operators to the existing `BidsExtension` class instead of creating a separate `ChannelGroupingExtension`.
 
 **Class Structure**:
 ```groovy
-package nfneuro.plugin.channel
+package nfneuro.plugin
 
 import groovy.transform.CompileStatic
 import groovyx.gpars.dataflow.DataflowReadChannel
 import groovyx.gpars.dataflow.DataflowWriteChannel
 import nextflow.Session
+import nextflow.plugin.extension.Factory
 import nextflow.plugin.extension.Operator
 import nextflow.plugin.extension.PluginExtensionPoint
+import nfneuro.plugin.channel.BidsChannelFactory
+import nfneuro.plugin.channel.KeyExtractor
 import nfneuro.plugin.channel.ops.GroupTupleByOp
 import nfneuro.plugin.channel.ops.JoinByOp
 import nfneuro.plugin.channel.ops.CombineByOp
 
 /**
- * Extends Nextflow with closure-based channel grouping operators
+ * Extends Nextflow with BIDS dataset parsing and closure-based channel grouping operators.
+ * Combines both factory and operator methods in a single extension point.
  */
 @CompileStatic
-class ChannelGroupingExtension extends PluginExtensionPoint {
+class BidsExtension extends PluginExtensionPoint {
     
     private Session session
     
@@ -213,6 +221,26 @@ class ChannelGroupingExtension extends PluginExtensionPoint {
     protected void init(Session session) {
         this.session = session
     }
+    
+    // ========================================================================
+    // BIDS Channel Factory (existing functionality)
+    // ========================================================================
+    
+    /**
+     * Parse BIDS dataset and return channel
+     */
+    @Factory
+    DataflowWriteChannel fromBIDS(
+        String bidsDir,
+        String configPath = null,
+        Map options = [:]
+    ) {
+        return new BidsChannelFactory(session).fromBIDS(bidsDir, configPath, options) as DataflowWriteChannel
+    }
+    
+    // ========================================================================
+    // Channel Grouping Operators (new functionality)
+    // ========================================================================
     
     /**
      * Group channel items by dynamically extracted keys
@@ -719,23 +747,41 @@ class CombineByOp {
 
 ## Plugin Registration
 
-### Modify Extension Index
+### Extension Index (No Changes Required)
 
 **File**: `src/resources/META-INF/extensions.idx`
 
-**Add**:
+**Current content** (no changes needed):
 ```
-nfneuro.plugin.channel.ChannelGroupingExtension
+nfneuro.plugin.BidsExtension
 ```
 
-### Include Statement Usage
+**IMPORTANT**: Do NOT add a second extension. Nextflow plugins can only have one extension point. The new operators are added to the existing `BidsExtension` class.
 
-Users will include operators like:
+### Critical Usage Note
+
+**MANDATORY**: To use plugin operators in workflows, you MUST include them explicitly:
 ```groovy
-include { groupTupleBy; joinBy; combineBy } from 'plugin/nf-bids'
+include { groupTupleBy } from 'plugin/nf-bids'
+```
+
+This is required even though the plugin is declared in `nextflow.config`. Without the include statement, operators will not be available and you'll get "Missing process or function" errors.
+
+### Usage (Include Statement Required)
+
+**Plugin configuration in `nextflow.config`**:
+```groovy
+plugins {
+    id 'nf-bids@0.1.0-beta.4'
+}
+```
+
+**In workflow script - MUST include operators**:
+```groovy
+include { groupTupleBy } from 'plugin/nf-bids'
 
 workflow {
-    channel
+    Channel
         .of([subject: 'sub-01', file: 'file.nii'])
         .groupTupleBy { it.subject }
 }
@@ -809,7 +855,7 @@ Create test workflows:
 1. **CompositeKey** (1 hour)
 2. **KeyExtractor** (2-3 hours)
 3. **Tests for above** (3-4 hours)
-4. **ChannelGroupingExtension skeleton** (2 hours)
+4. **Add operator methods to BidsExtension** (2 hours)
 
 **Total**: ~10 hours
 
@@ -853,7 +899,7 @@ Create test workflows:
 |-----------|-----------|----------|----------|
 | KeyExtractor | LOW | 2-3 hours | HIGH |
 | CompositeKey | LOW | 1 hour | HIGH |
-| ChannelGroupingExtension | LOW | 3-4 hours | HIGH |
+| BidsExtension (add operators) | LOW | 3-4 hours | HIGH |
 | GroupTupleByOp | MEDIUM | 6-8 hours | HIGH |
 | JoinByOp | HIGH | 10-12 hours | HIGH |
 | CombineByOp | MEDIUM | 6-8 hours | HIGH |
