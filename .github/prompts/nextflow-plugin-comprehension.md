@@ -99,7 +99,7 @@ cd /home/local/USHERBROOKE/vala2004/dev/nf-bids/validation
 ## Plugin Overview
 
 **Plugin Name**: `nf-bids`  
-**Version**: `0.1.0-beta.4`  
+**Version**: `0.1.0-beta.5`  
 **Provider**: `nf-neuro`  
 **Nextflow Version**: 24.10.0+  
 **Gradle Version**: 8.14  
@@ -219,11 +219,12 @@ nfneuro.plugin.BidsExtension
 #### BidsExtension
 - **Type**: Combined Factory + Operator extension
 - **Factory Methods**: 
-  - `Channel.fromBIDS(bidsDir, configPath, options)` - Create channels from BIDS datasets
+    - `Channel.fromBIDS(bidsDir, configPath, options)` - Create channels from BIDS datasets
+        - Note: By default (beta.6+), the plugin emits flattened maps with a `meta` map and top-level suffix keys. To preserve legacy tuple format, set `options.flatten_output = false`.
 - **Operator Methods**:
   - `channel.groupTupleBy(keyExtractor, opts)` - Group channel items by dynamic keys
   - `channel.joinBy(right, leftKey, rightKey, opts)` - Join channels by dynamic keys (stub)
-  - `channel.combineBy(right, filterPredicate, opts)` - Combine channels with filtering (stub)
+    - `channel.combineBy(right, leftKeyExtractor, rightKeyExtractor, opts)` - Combine channels by extracting keys using closures and emitting `[key, leftList, rightList]` tuples. Use a single closure for left-only key extraction or two closures to extract keys from both sides.
 - **Purpose**: Provide BIDS dataset parsing and enhanced channel operators
 
 ---
@@ -1426,9 +1427,9 @@ echo $JAVA_HOME
     - `joinBy`: emits `[leftItem, rightItem]` (2 elements, NO key)
       - ❌ WRONG: `joined[1]`, `joined[2]` (assumes key is first)
       - ✅ CORRECT: `joined[0]`, `joined[1]` (left and right items)
-    - `combineBy`: emits items to channel, then apply `.filter()`
-      - ❌ WRONG: `combineBy(right) { filter }` (filter as parameter)
-      - ✅ CORRECT: `combineBy(right).filter { left, right -> predicate }`
+        - `combineBy`: emits `[key, leftItem, rightItem]` tuples using key extractors
+            - ❌ WRONG: `combineBy(right) { left, right -> predicate }` (filter predicate)
+            - ✅ CORRECT: `combineBy(right, { left -> left.key }, { right -> right.key })` - use key extractors, then optionally `.filter { key, left, right -> predicate }`
 
 13. **Dataset Sizing for Tests**:
     - Small (100 items): Logic verification, fast feedback

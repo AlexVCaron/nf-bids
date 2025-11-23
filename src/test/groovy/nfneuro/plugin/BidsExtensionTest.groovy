@@ -120,47 +120,45 @@ class BidsExtensionTest extends Specification {
     // combineBy Validation Tests
     // ========================================================================
 
-    def "combineBy accepts null filter predicate"() {
+    def "combineBy rejects null left key extractor"() {
         when:
-        def result = extension.combineBy(channel1, channel2, null)
+        extension.combineBy(channel1, channel2, null)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("keyExtractor closure is required")
+    }
+
+    def "combineBy validates left key extractor has at least one parameter"() {
+        when:
+        extension.combineBy(channel1, channel2, { -> 'key' })
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("keyExtractor must accept at least one parameter")
+    }
+
+    def "combineBy validates provided right key extractor when present"() {
+        when:
+        extension.combineBy(channel1, channel2, { it.id }, { -> 'key' })
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("keyExtractor must accept at least one parameter")
+    }
+
+    def "combineBy accepts valid key extractors"() {
+        when:
+        def result = extension.combineBy(channel1, channel2, { it.id }, { it.id })
 
         then:
         noExceptionThrown()
         result != null
     }
 
-    def "combineBy validates filter has at least 2 parameters"() {
+    def "combineBy accepts key extractors with more than 1 param (warns but ok)"() {
         when:
-        extension.combineBy(channel1, channel2, { left -> true })
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message.contains("filterPredicate must accept 2 parameters")
-        e.message.contains("Found: closure with 1 parameter")
-    }
-
-    def "combineBy rejects filter with no parameters"() {
-        when:
-        extension.combineBy(channel1, channel2, { -> true })
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message.contains("filterPredicate must accept 2 parameters")
-        e.message.contains("Found: closure with 0 parameter")
-    }
-
-    def "combineBy accepts valid filter predicate with 2 parameters"() {
-        when:
-        def result = extension.combineBy(channel1, channel2, { left, right -> left.id == right.id })
-
-        then:
-        noExceptionThrown()
-        result != null
-    }
-
-    def "combineBy accepts filter predicate with more than 2 parameters"() {
-        when:
-        def result = extension.combineBy(channel1, channel2, { left, right, extra -> left.id == right.id })
+        def result = extension.combineBy(channel1, channel2, { left, right, extra -> left.id == right.id }, { it.id })
 
         then:
         noExceptionThrown()

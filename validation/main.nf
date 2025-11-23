@@ -271,7 +271,7 @@ def generateItemStats(item) {
 workflow main_workflow {
     println "🧪 Testing Channel.fromBIDS..."
     
-    def options = params.libbids_sh ? [libbids_sh: params.libbids_sh] : [:]
+    def options = params.libbids_sh ? [libbids_sh: params.libbids_sh, flatten_output: false] : [flatten_output: false]
     def ch = Channel.fromBIDS(params.bids_dir, params.config, options)
     
     // Process and output statistics for each item

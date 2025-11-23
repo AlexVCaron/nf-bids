@@ -1,6 +1,6 @@
 # Channel Operators - Closure-Based Extensions
 
-**nf-bids Plugin** - Version 0.1.0-beta.4
+**nf-bids Plugin** - Version 0.1.0-beta.5
 
 This document provides comprehensive documentation for the closure-based channel grouping operators provided by the nf-bids plugin. These operators extend Nextflow's built-in channel operators with flexible, closure-based key extraction for complex data structures.
 
@@ -158,8 +158,8 @@ workflow {
     analyses = Channel.of('volumetry', 'connectivity')
     
     subjects
-        .combineBy(analyses)
-        .view { subj, analysis -> "Process ${subj} with ${analysis}" }
+        .combineBy(analyses, { it }, { it })
+        .view { key, subj, analysis -> "Process ${subj} with ${analysis}" }
 }
 
 // Output:
@@ -700,11 +700,8 @@ contrasts = Channel.of(
 )
 
 scans
-    .combineBy(contrasts)
-    .filter { scan, contrast ->
-        scan.modality == contrast.requires
-    }
-    .view { scan, contrast ->
+    .combineBy(contrasts, { it.modality }, { it.requires })
+    .view { key, scan, contrast ->
         "Extract ${contrast.name} from ${scan.subject} ${scan.modality}"
     }
 
@@ -731,7 +728,7 @@ pipelines = Channel.of(
 )
 
 datasets
-    .combineBy(pipelines)
+    .combineBy(pipelines, { 0 })
     .filter { ds, pipe ->
         ds.subjects <= pipe.max_subjects && 
         ds.sessions <= pipe.max_sessions
@@ -764,7 +761,7 @@ datasets = Channel.of(
 )
 
 parameters
-    .combineBy(datasets)
+    .combineBy(datasets, { 0 })
     .view { params, dataset ->
         "Test smoothing=${params.smoothing} on ${dataset.name}"
     }
@@ -776,32 +773,32 @@ parameters
 
 **1. All Subjects × All Analysis Types**
 ```nextflow
-subjects.combineBy(analysis_types)
+ subjects.combineBy(analysis_types, { it }, { it })
 ```
 
 **2. Parameter Grid Search**
 ```nextflow
 learning_rates
-    .combineBy(batch_sizes)
-    .combineBy(optimizers)
+    .combineBy(batch_sizes, { it }, { it })
+    .combineBy(optimizers, { it }, { it })
 ```
 
 **3. Quality-Based Processing**
 ```nextflow
 images
-    .combineBy(pipelines)
+    .combineBy(pipelines, { 0 })
     .filter { img, pipe -> img.quality >= pipe.min_quality }
 ```
 
 **4. Cross-Dataset Validation**
 ```nextflow
-train_sets.combineBy(test_sets).filter { train, test -> train.id != test.id }
+train_sets.combineBy(test_sets, { 0 }).filter { key, train, test -> train.id != test.id }
 ```
 
 **5. Conditional Workflows**
 ```nextflow
 scans
-    .combineBy(protocols)
+    .combineBy(protocols, { it.modality }, { it.modality })
     .filter { scan, proto -> 
         scan.modality == proto.modality &&
         scan.resolution >= proto.min_resolution
@@ -1208,12 +1205,12 @@ nextflow run workflow.nf
 ```nextflow
 // ❌ BAD: Combine then filter
 large_channel1
-    .combineBy(large_channel2)
+    .combineBy(large_channel2, { 0 })
     .filter { ... }
 
 // ✅ GOOD: Filter then combine
 large_channel1.filter { ... }
-    .combineBy(large_channel2.filter { ... })
+    .combineBy(large_channel2.filter { ... }, { 0 })
 ```
 
 3. **Use standard operators:**
@@ -1269,7 +1266,7 @@ nextflow run workflow.nf --dump-channels
 |----------|---------|---------------|-------------|
 | `groupTupleBy` | Group by key | `[key, [items]]` | ✅ Excellent (30-40% faster than groupTuple) |
 | `joinBy` | Join by key | `[key, leftItem, rightItem]` | ✅ Good for 1:1, ⚠️ Slower for many:many |
-| `combineBy` | Cartesian product with filter | `[leftItem, rightItem]` | ✅ Excellent (1-39% faster than combine) |
+| `combineBy` | Cartesian product by matching keys | `[key, leftItem, rightItem]` | ✅ Excellent (1-39% faster than combine) |
 
 ### When to Use Each Operator
 
@@ -1299,6 +1296,6 @@ nextflow run workflow.nf --dump-channels
 
 ---
 
-**Version:** 0.1.0-beta.4  
+**Version:** 0.1.0-beta.5  
 **Last Updated:** November 2025  
 **License:** Apache 2.0

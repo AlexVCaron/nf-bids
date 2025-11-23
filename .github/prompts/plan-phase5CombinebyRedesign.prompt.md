@@ -89,7 +89,8 @@ The `combineBy` operator currently uses closures as **filter predicates** to fil
 1. **Update Fields:**
    ```groovy
    // REMOVE:
-   private final Closure filterPredicate
+   private final Closure leftKeyExtractor
+   private final Closure rightKeyExtractor
    private final List leftBuffer
    private final List rightBuffer
    
@@ -141,7 +142,8 @@ The `combineBy` operator currently uses closures as **filter predicates** to fil
    DataflowWriteChannel combineBy(
        DataflowReadChannel left, 
        DataflowReadChannel right,
-       Closure filterPredicate
+      Closure leftKeyExtractor
+      Closure rightKeyExtractor
    )
    
    // NEW:

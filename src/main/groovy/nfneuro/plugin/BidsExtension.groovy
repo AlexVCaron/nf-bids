@@ -203,6 +203,26 @@ class BidsExtension extends PluginExtensionPoint {
         return op.apply()
     }
 
+    // Overloads to support single-key extractor and optional opts map
+    @Operator
+    DataflowWriteChannel combineBy(
+        DataflowReadChannel left,
+        DataflowReadChannel right,
+        Closure keyExtractor
+    ) {
+        return combineBy(left, right, keyExtractor, keyExtractor, [:])
+    }
+
+    @Operator
+    DataflowWriteChannel combineBy(
+        DataflowReadChannel left,
+        DataflowReadChannel right,
+        Closure keyExtractor,
+        Map opts
+    ) {
+        return combineBy(left, right, keyExtractor, keyExtractor, opts)
+    }
+
     @Override
     protected void init(Session session) {
         this.session = session

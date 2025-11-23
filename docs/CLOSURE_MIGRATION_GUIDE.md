@@ -1,6 +1,6 @@
 # Closure-Based Operators Migration Guide
 
-**nf-bids Plugin** - Version 0.1.0-beta.4
+**nf-bids Plugin** - Version 0.1.0-beta.5
 
 Migrate from Nextflow's index-based operators (`groupTuple`, `join`, `combine`) to closure-based alternatives (`groupTupleBy`, `joinBy`, `combineBy`).
 
@@ -57,7 +57,7 @@ channel
 **nextflow.config:**
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.4'
+    id 'nf-bids@0.1.0-beta.5'
 }
 ```
 
@@ -300,7 +300,7 @@ subjects.combine(sessions).view()
 subjects = channel.of('sub-01', 'sub-02')
 sessions = channel.of('ses-01', 'ses-02')
 
-subjects.combineBy(sessions).view()
+subjects.combineBy(sessions, { it }) .view()
 // Identical output
 ```
 
@@ -328,7 +328,7 @@ analyses = channel.of([name: 'basic', min_quality: 0.70],
                       [name: 'advanced', min_quality: 0.90])
 
 images
-    .combineBy(analyses)
+    .combineBy(analyses, { 0 })
     .filter { img, analysis ->
         img.quality >= analysis.min_quality
     }
@@ -361,7 +361,7 @@ protocols = channel.of([name: 'proto1', modality: 'T1w'],
                        [name: 'proto2', modality: 'T2w'])
 
 scans
-    .combineBy(protocols)
+    .combineBy(protocols, { it.modality }, { it.modality })
     .filter { scan, proto ->
         scan.modality == proto.modality
     }
@@ -420,8 +420,8 @@ scans_ch
 **Before/After:** (Functionally equivalent)
 ```nextflow
 subjects
-    .combine(smoothing_values)
-    .combine(threshold_values)
+    .combineBy(smoothing_values, { it }, { it })
+    .combineBy(threshold_values, { it }, { it })
 
 // Same as:
 subjects
@@ -438,7 +438,7 @@ subjects
 - [ ] Identify all `groupTuple`, `join`, `combine` uses
 - [ ] Document current tuple structures
 - [ ] Note complex `.map()` operations
-- [ ] Install plugin: `nf-bids@0.1.0-beta.4`
+- [ ] Install plugin: `nf-bids@0.1.0-beta.5`
 
 ### During Migration
 
@@ -611,6 +611,6 @@ Migrate one operator at a time, test, then proceed.
 
 ---
 
-**Version:** 0.1.0-beta.4  
+**Version:** 0.1.0-beta.5  
 **Last Updated:** November 2025  
 **License:** Apache 2.0

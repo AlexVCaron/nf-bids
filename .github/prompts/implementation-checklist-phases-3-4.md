@@ -510,14 +510,15 @@ workflow {
   - [x] Private fields:
     - [x] `DataflowReadChannel left`
     - [x] `DataflowReadChannel right`
-    - [x] `Closure filterPredicate`
+    - [x] `Closure leftKeyExtractor`
+    - [x] `Closure rightKeyExtractor`
     - [x] `Map opts`
     - [x] `DataflowWriteChannel target`
     - [x] `List<Object> leftBuffer`
     - [x] `List<Object> rightBuffer`
     - [x] `boolean leftComplete = false`
     - [x] `boolean rightComplete = false`
-  - [x] Constructor accepting `(left, right, filterPredicate, opts)`
+  - [x] Constructor accepting `(left, right, leftKeyExtractor, rightKeyExtractor, opts)`
   - [x] `DataflowWriteChannel apply()` method:
     - [x] Create target channel
     - [x] Subscribe to left
@@ -563,7 +564,7 @@ workflow {
 **Requirements**:
 - [x] Import `CombineByOp`
 - [x] Replace `combineBy` stub implementation:
-  - [x] Validate filterPredicate if not null
+  - [x] Validate left/right key extractors
   - [x] Check arity >= 2
   - [x] Create `CombineByOp` instance
   - [x] Call `apply()` and return result

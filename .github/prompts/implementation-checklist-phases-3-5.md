@@ -511,14 +511,15 @@ workflow {
   - [x] Private fields:
     - [x] `DataflowReadChannel left`
     - [x] `DataflowReadChannel right`
-    - [x] `Closure filterPredicate`
+    - [x] `Closure leftKeyExtractor`
+    - [x] `Closure rightKeyExtractor`
     - [x] `Map opts`
     - [x] `DataflowWriteChannel target`
     - [x] `List<Object> leftBuffer`
     - [x] `List<Object> rightBuffer`
     - [x] `boolean leftComplete = false`
     - [x] `boolean rightComplete = false`
-  - [x] Constructor accepting `(left, right, filterPredicate, opts)`
+  - [x] Constructor accepting `(left, right, leftKeyExtractor, rightKeyExtractor, opts)`
   - [x] `DataflowWriteChannel apply()` method:
     - [x] Create target channel
     - [x] Subscribe to left
@@ -552,7 +553,7 @@ workflow {
 - [x] Class compiles
 - [x] Thread-safe with synchronized methods
 - [x] Follows pattern from Nextflow's CombineOp
-- [x] Filter optional (null = all combinations)
+- [x] Key extractors validated and defaulting (right defaults to left if null)
 
 **Actual Time**: 4 hours
 
@@ -563,17 +564,16 @@ workflow {
 
 **Requirements**:
 - [x] Import `CombineByOp`
-- [x] Replace `combineBy` stub implementation:
-  - [x] Validate filterPredicate if not null
-  - [x] Check arity >= 2
+  - [x] Replace `combineBy` stub implementation:
+    - [x] Validate left/right key extractors (arity >= 1)
   - [x] Create `CombineByOp` instance
   - [x] Call `apply()` and return result
 - [x] Register right channel as input (for DAG)
 
 **Acceptance Criteria**:
 - [x] Method compiles
-- [x] Filter validation correct (validated in BidsExtensionTest)
-- [x] Works with and without filter
+- [x] Key extractor validation correct (validated in BidsExtensionTest)
+- [x] Works with both single-extractor and dual-extractor variants
 
 **Actual Time**: Already integrated
 
@@ -583,14 +583,14 @@ workflow {
 **File**: `src/test/groovy/nfneuro/plugin/channel/ops/CombineByOpTest.groovy`
 
 **Test Cases** (Smoke tests - comprehensive testing via integration tests):
-- [x] Test operator instantiation without filter
-- [x] Test with filter
+- [x] Test operator instantiation with single extractor
+- [x] Test operator instantiation with dual extractors
 - [x] Test return type
 - [x] Test null opts handling
 - [x] Test buffer initialization
 - [x] Test completion flags
-- [x] Test complex filter predicates
-- [x] Test null filter acceptance
+- [x] Test complex key extractors
+- [x] Test null right-extractor acceptance
 
 **Note**: Comprehensive functional tests (cartesian product, filtering logic, empty channels, exception handling) are covered in integration test `validation/test_combineby.nf`.
 

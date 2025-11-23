@@ -2,7 +2,7 @@
 
 **Date**: November 20, 2025
 **Nextflow Version**: 25.10.0
-**Plugin Version**: nf-bids@0.1.0-beta.4
+**Plugin Version**: nf-bids@0.1.0-beta.5
 
 ## Summary
 

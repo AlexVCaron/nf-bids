@@ -6,7 +6,7 @@ A Nextflow plugin that provides:
 - **BIDS dataset parsing** through channel factories
 - **Closure-based channel operators** for flexible data grouping and joining
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.4-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.4)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.5-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.5)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -28,7 +28,7 @@ To install it, add the lines below in your `nextflow.config` file:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.4'
+    id 'nf-bids@0.1.0-beta.5'
 }
 ```
 
@@ -63,6 +63,7 @@ Load and parse a BIDS dataset into a Nextflow channel.
 |`options.validate`|`boolean`|(Not implemented) Run the [BIDS Validator](https://github.com/bids-standard/bids-validator) on the input dataset before parsing.|
 |`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|
 |`options.ignore_codes`|`path-like`|(Not implemented) [BIDS Validator](https://github.com/bids-standard/bids-validator) error codes to ignore.|
+|`options.flatten_output`|`boolean`|(Optional) When true (default), `Channel.fromBIDS()` emits flattened maps (with `meta` top-level key and top-level suffixes); when false, the original `[groupingKey, enrichedData]` tuples are emitted (legacy behavior).|
 
 #### Closure-Based Channel Operators
 
@@ -90,13 +91,13 @@ anatomical
 // Matches items from both channels by subject field
 ```
 
-**`combineBy(rightChannel, [filterPredicate], [options])`**  
-Combine channels with optional filtering.
+**`combineBy(rightChannel, leftKeyExtractor, [rightKeyExtractor], [options])`**  
+Combine channels by extracting keys from left/right items and emitting `[key, leftItem, rightItem]` tuples. Optionally supply a single `leftKeyExtractor` when left/right items share the same key structure.
 
 ```groovy
 subjects
-    .combineBy(sessions)
-    .filter { subj, sess -> 
+    .combineBy(sessions, { it }, { it })
+    .filter { key, subj, sess ->
         // Custom pairing logic
         sess.number <= subj.max_sessions
     }

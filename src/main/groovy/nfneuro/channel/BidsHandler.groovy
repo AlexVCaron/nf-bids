@@ -124,12 +124,36 @@ class BidsHandler {
      */
     private void validateAndEmitChannel(DataflowQueue results) {
         int count = 0
+        boolean shouldFlatten = true
+        if (options?.containsKey('flatten_output')) {
+            shouldFlatten = (options.flatten_output as Boolean)
+        }
 
         // Consume items from results queue and bind each valid one to output
         results.each { item ->
             // CRITICAL: Never allow null into the channel
             if (item != null) {
-                target << item
+                // If item is a tuple [groupingKey, enrichedData], flatten it
+                try {
+                    def tuple = item instanceof BidsChannelData ? item.toChannelTuple(loopOverEntities) : item
+                    if (!shouldFlatten) {
+                        target << item
+                    } else {
+                        if (tuple instanceof List && tuple.size() >= 2) {
+                            def groupingKey = tuple[0]
+                            def enrichedData = tuple[1] as Map
+                            def entityValues = extractEntityValues(groupingKey, loopOverEntities)
+                            def flat = flattenTupleToMap([groupingKey, enrichedData], entityValues)
+                            target << flat
+                        } else {
+                            // Item is already flattened map; emit as-is
+                            target << item
+                        }
+                    }
+                } catch (Exception e) {
+                    def entityValues = (item instanceof List && item.size() >= 1) ? extractEntityValues(item[0], loopOverEntities) : [:]
+                    throw new RuntimeException("Failed to flatten BIDS data for entities ${entityValues}: ${e.message}", e)
+                }
                 count++
             }
         }
@@ -150,6 +174,69 @@ class BidsHandler {
 
         // Signal completion with poison pill - this is the ONLY way to close the channel
         target << Channel.STOP
+    }
+
+    /**
+     * Flatten a channel tuple into nested map structure with `meta` and `data` keys.
+     *
+     * @param tuple A tuple of [groupingKey, enrichedData]
+     * @param entityValues Map of loop entity values (used to build meta)
+     * @return Map with keys [meta: {...}, data: {...}]
+     */
+    private Map flattenTupleToMap(List tuple, Map<String, String> entityValues) {
+        List groupingKey = tuple[0] as List
+        Map enrichedData = tuple[1] as Map
+
+        String bidsParentDir = enrichedData.bidsParentDir as String
+
+        // Build meta map from entity values and enrich with any entity keys present in enrichedData
+        Map meta = [:]
+        (entityValues ?: [:]).each { k, v -> meta[k] = v }
+
+        // Merge any top-level entries from enrichedData (excluding known control keys)
+        List reserved = ['data', 'filePaths', 'bidsParentDir']
+        (enrichedData as Map).each { k, v ->
+            if (!(k in reserved) && v != null) {
+                // Only add scalar or simple entries (strings, numbers) to meta
+                if (!(v instanceof Map) && !(v instanceof List)) {
+                    meta[(String)k] = v
+                }
+            }
+        }
+
+        // Clone data map so original structure is not mutated; we will move suffixes to top level
+        Map dataCopy = [:]
+
+        Closure convertValue
+        convertValue = { Object val ->
+            if (val == null) return null
+            if (val instanceof File) return val
+            if (val instanceof String) {
+                File f = new File(val)
+                if (f.isAbsolute()) return f
+                return new File(bidsParentDir ?: '', val)
+            }
+            if (val instanceof List) {
+                return (val as List).collect { convertValue.call(it) }
+            }
+            if (val instanceof Map) {
+                Map nested = [:]
+                (val as Map).each { k2, v2 -> nested[(String)k2] = convertValue.call(v2) }
+                return nested
+            }
+            return val
+        }
+
+        (enrichedData.data as Map).each { suffix, suffixData ->
+            dataCopy[(String)suffix] = convertValue.call(suffixData)
+        }
+
+        // Build final flattened map and return; embed suffix maps at top level (not under 'data')
+        Map<String, Object> flat = new LinkedHashMap<String, Object>()
+        flat.put('meta', meta)
+        (dataCopy as Map<String, Object>).each { String k, Object v -> flat.put(k, v) }
+
+        return flat
     }
 
     /**
