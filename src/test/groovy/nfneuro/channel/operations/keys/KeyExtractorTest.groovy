@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package nfneuro.plugin.channel
+package nfneuro.plugin.channel.operations.keys
 
-import nfneuro.plugin.channel.keys.CompositeKey
 import spock.lang.Specification
 
 /**

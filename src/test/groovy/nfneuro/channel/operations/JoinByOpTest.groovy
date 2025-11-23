@@ -1,3 +1,4 @@
+/* groovylint-disable all */
 /*
  * Copyright 2025, Seqera Labs
  *
@@ -13,8 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package nfneuro.plugin.channel.ops
+package nfneuro.plugin.channel.operations
 
 import nextflow.Channel
 import spock.lang.Specification
@@ -22,11 +22,11 @@ import groovyx.gpars.dataflow.DataflowQueue
 
 /**
  * Unit tests for JoinByOp operator
- * 
+ *
  * NOTE: These are SMOKE TESTS only. Attempting to block on DataflowQueue.getVal()
  * in unit tests causes hangs. Comprehensive functional testing should be done via
  * integration tests with real Nextflow execution.
- * 
+ *
  * These tests verify:
  * - Operator instantiation
  * - Parameter handling
@@ -41,27 +41,27 @@ class JoinByOpTest extends Specification {
         def right = Channel.of([id: 'A'])
         def leftExtractor = { it.id }
         def rightExtractor = { it.id }
-        
+
         when:
-        def op = new JoinByOp(left, right, leftExtractor, rightExtractor, [:])
-        
+        def op = new JoinByOp(left, right, leftExtractor, rightExtractor)
+
         then:
         op != null
         op.@leftKeyExtractor == leftExtractor
         op.@rightKeyExtractor == rightExtractor
         op.@opts == [:]
     }
-    
+
     def 'should create operator with options'() {
         given:
         def left = Channel.of([id: 'A'])
         def right = Channel.of([id: 'A'])
         def extractor = { it.id }
         def opts = [remainder: true]
-        
+
         when:
         def op = new JoinByOp(left, right, extractor, extractor, opts)
-        
+
         then:
         op != null
         op.@opts.remainder == true
@@ -72,38 +72,38 @@ class JoinByOpTest extends Specification {
         def left = Channel.of([id: 'A'])
         def right = Channel.of([id: 'A'])
         def extractor = { it.id }
-        
+
         when:
-        def op = new JoinByOp(left, right, extractor, extractor, [:])
+        def op = new JoinByOp(left, right, extractor)
         def result = op.apply()
-        
+
         then:
         result instanceof DataflowQueue
     }
-    
+
     def 'should accept null opts map'() {
         given:
         def left = Channel.of([id: 'A'])
         def right = Channel.of([id: 'A'])
         def extractor = { it.id }
-        
+
         when:
         def op = new JoinByOp(left, right, extractor, extractor, null)
-        
+
         then:
         op != null
         op.@opts != null  // Should be empty map, not null
     }
-    
+
     def 'should initialize empty buffers'() {
         given:
         def left = Channel.of([id: 'A'])
         def right = Channel.of([id: 'A'])
         def extractor = { it.id }
-        
+
         when:
-        def op = new JoinByOp(left, right, extractor, extractor, [:])
-        
+        def op = new JoinByOp(left, right, extractor)
+
         then:
         op.@leftBuffer != null
         op.@leftBuffer.isEmpty()
@@ -112,50 +112,51 @@ class JoinByOpTest extends Specification {
         op.@matchedKeys != null
         op.@matchedKeys.isEmpty()
     }
-    
+
     def 'should initialize completion flags to false'() {
         given:
         def left = Channel.of([id: 'A'])
         def right = Channel.of([id: 'A'])
         def extractor = { it.id }
-        
+
         when:
-        def op = new JoinByOp(left, right, extractor, extractor, [:])
-        
+        def op = new JoinByOp(left, right, extractor)
+
         then:
         op.@leftComplete == false
         op.@rightComplete == false
     }
-    
+
     def 'should accept different extractors for left and right'() {
         given:
         def left = Channel.of([subject: 'sub-01'])
         def right = Channel.of([participant: 'sub-01'])
         def leftExtractor = { it.subject }
         def rightExtractor = { it.participant }
-        
+
         when:
-        def op = new JoinByOp(left, right, leftExtractor, rightExtractor, [:])
-        
+        def op = new JoinByOp(left, right, leftExtractor, rightExtractor)
+
         then:
         op.@leftKeyExtractor == leftExtractor
         op.@rightKeyExtractor == rightExtractor
     }
-    
+
     def 'should handle remainder option'() {
         given:
         def left = Channel.of([id: 'A'])
         def right = Channel.of([id: 'B'])
         def extractor = { it.id }
-        
+
         when:
-        def opWithRemainder = new JoinByOp(left, right, extractor, extractor, [remainder: true])
-        def opWithoutRemainder = new JoinByOp(left, right, extractor, extractor, [remainder: false])
-        def opDefault = new JoinByOp(left, right, extractor, extractor, [:])
-        
+        def opWithRemainder = new JoinByOp(left, right, extractor, [remainder: true])
+        def opWithoutRemainder = new JoinByOp(left, right, extractor, [remainder: false])
+        def opDefault = new JoinByOp(left, right, extractor)
+
         then:
         opWithRemainder.@opts.remainder == true
         opWithoutRemainder.@opts.remainder == false
         opDefault.@opts.remainder == null  // Default handled in checkCompletion
     }
+
 }

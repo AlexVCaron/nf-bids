@@ -1,6 +1,9 @@
 {
     "extends": "recommended",
     "rules": {
+        "DuplicateStringLiteral": {
+            "enabled": false
+        },
         "Instanceof": {
             "enabled": false
         },
