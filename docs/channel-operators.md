@@ -148,27 +148,37 @@ workflow {
 // [[subject:sub-02, file:t1.nii], [subject:sub-02, file:bold.nii]]
 ```
 
-### Example 3: Combine Subjects with Analysis Types
+### Example 3: Match Subjects with Their Sessions
 
 ```nextflow
 include { combineBy } from 'plugin/nf-bids'
 
 workflow {
-    subjects = Channel.of('sub-01', 'sub-02', 'sub-03')
-    analyses = Channel.of('volumetry', 'connectivity')
+    // Match subjects with their sessions by subject ID
+    subjects = Channel.of(
+        [subject: 'sub-01', age: 25],
+        [subject: 'sub-02', age: 30],
+        [subject: 'sub-03', age: 28]
+    )
+    sessions = Channel.of(
+        [subject: 'sub-01', session: 'ses-01'],
+        [subject: 'sub-01', session: 'ses-02'],
+        [subject: 'sub-02', session: 'ses-01'],
+        [subject: 'sub-03', session: 'ses-01']
+    )
     
     subjects
-        .combineBy(analyses, { it }, { it })
-        .view { key, subj, analysis -> "Process ${subj} with ${analysis}" }
+        .combineBy(sessions, { it.subject })
+        .view { key, subj, sess -> 
+            "Subject ${key} (age ${subj.age}): session ${sess.session}" 
+        }
 }
 
 // Output:
-// Process sub-01 with volumetry
-// Process sub-01 with connectivity
-// Process sub-02 with volumetry
-// Process sub-02 with connectivity
-// Process sub-03 with volumetry
-// Process sub-03 with connectivity
+// Subject sub-01 (age 25): session ses-01
+// Subject sub-01 (age 25): session ses-02
+// Subject sub-02 (age 30): session ses-01
+// Subject sub-03 (age 28): session ses-01
 ```
 
 ---
@@ -527,7 +537,7 @@ right = Channel.of(
 )
 
 left
-    .joinBy(right, { it.id }, { it.id }, [remainder: true])
+    .joinBy(right, { it.id }, [remainder: true])
     .view { l, r ->
         def leftId = l?.id ?: 'null'
         def rightId = r?.id ?: 'null'
@@ -595,18 +605,19 @@ Similar to Nextflow's `combine(by:)` operator but uses **closures for key extrac
 ### Signature
 
 ```groovy
-leftChannel.combineBy(
-    rightChannel,
-    leftKeyExtractor,    // Closure: leftItem -> key
-    rightKeyExtractor    // Closure: rightItem -> key
-)
+// Single-key extractor (applies to both channels)
+leftChannel.combineBy(rightChannel, keyExtractor)
+leftChannel.combineBy(rightChannel, keyExtractor, options)
+
+// Asymmetric extractors (left/right closures)
+leftChannel.combineBy(rightChannel, leftKeyExtractor, rightKeyExtractor)
 leftChannel.combineBy(rightChannel, leftKeyExtractor, rightKeyExtractor, options)
 ```
 
 **Parameters:**
 - `rightChannel` (DataflowReadChannel): The right channel to combine with
 - `leftKeyExtractor` (Closure): Extracts key from left channel items (`leftItem -> key`)
-- `rightKeyExtractor` (Closure): Extracts key from right channel items (`rightItem -> key`)
+- `rightKeyExtractor` (Closure): Extracts key from right channel items (`rightItem -> key`). If omitted, it defaults to `leftKeyExtractor` (i.e. the same extractor will be applied to both channels).
 - `options` (Map, optional): Configuration options (reserved for future: `remainder`)
 
 **Returns:** Channel emitting `[key, leftItem, rightItem]` tuples (includes the matching key)
@@ -616,6 +627,7 @@ leftChannel.combineBy(rightChannel, leftKeyExtractor, rightKeyExtractor, options
 - ✅ Emits **[key, leftItem, rightItem]** tuples (consistent with `joinBy`)
 - ✅ Produces **full cartesian product** within matching key groups
 - ✅ Drops unmatched keys (inner join semantics)
+ - ⚠️ If you intend to produce a full cartesian product (all pairs) regardless of keys, prefer Nextflow's built-in `cross` operator for clarity: `left.cross(right)`.
 
 ### Basic Usage
 
@@ -665,7 +677,6 @@ params = Channel.of(
 
 scans.combineBy(
     params,
-    { it.subject },
     { it.subject }
 )
 .view { key, scan, param ->
@@ -728,13 +739,14 @@ pipelines = Channel.of(
 )
 
 datasets
-    .combineBy(pipelines, { 0 })
-    .filter { ds, pipe ->
-        ds.subjects <= pipe.max_subjects && 
-        ds.sessions <= pipe.max_sessions
-    }
-    .view { ds, pipe ->
-        "Run ${pipe.name} pipeline on ${ds.id}"
+    // Group datasets by a simple size class (small/large) and match pipelines accordingly
+    .combineBy(
+        pipelines,
+        { ds -> ds.subjects < 60 ? 'small' : 'large' },
+        { p -> p.max_subjects <= 60 ? 'small' : 'large' }
+    )
+    .view { key, ds, pipe ->
+        "Run ${pipe.name} pipeline on ${ds.id} (group=${key})"
     }
 
 // Output (only feasible combinations):
@@ -748,58 +760,65 @@ datasets
 #### Example 5: Asymmetric Combinations
 
 ```nextflow
-// Pair each parameter set with all datasets
+// Asymmetric combinations: if you need to apply parameter sets to specific dataset types,
+// prefer `combineBy` with a meaningful key extractor that maps parameters to dataset classes.
 parameters = Channel.of(
-    [smoothing: 4, threshold: 0.05],
-    [smoothing: 6, threshold: 0.01]
+    [smoothing: 4, min_size: 10],
+    [smoothing: 6, min_size: 50]
 )
 
 datasets = Channel.of(
-    [name: 'validation', size: 'small'],
-    [name: 'training', size: 'large'],
-    [name: 'testing', size: 'medium']
+    [name: 'validation', size: 10],
+    [name: 'training', size: 100],
+    [name: 'testing', size: 25]
 )
 
 parameters
-    .combineBy(datasets, { 0 })
-    .view { params, dataset ->
-        "Test smoothing=${params.smoothing} on ${dataset.name}"
+    .combineBy(datasets,
+        { p -> p.min_size <= 20 ? 'small' : 'large' },
+        { d -> d.size <= 20 ? 'small' : 'large' }
+    )
+    .view { key, params, dataset ->
+        "Test smoothing=${params.smoothing} on ${dataset.name} (group=${key})"
     }
-
-// Output (2 × 3 = 6 total combinations)
 ```
 
 ### Use Cases
 
 **1. All Subjects × All Analysis Types**
 ```nextflow
- subjects.combineBy(analysis_types, { it }, { it })
+ subjects.combineBy(analysis_types, { it })
 ```
 
 **2. Parameter Grid Search**
 ```nextflow
 learning_rates
-    .combineBy(batch_sizes, { it }, { it })
-    .combineBy(optimizers, { it }, { it })
+    .combineBy(batch_sizes, { it })
+    .combineBy(optimizers, { it })
 ```
 
 **3. Quality-Based Processing**
 ```nextflow
 images
-    .combineBy(pipelines, { 0 })
-    .filter { img, pipe -> img.quality >= pipe.min_quality }
+    .combineBy(pipelines, { it.modality })
+    .filter { key, img, pipe -> img.quality >= pipe.min_quality }
 ```
 
 **4. Cross-Dataset Validation**
 ```nextflow
-train_sets.combineBy(test_sets, { 0 }).filter { key, train, test -> train.id != test.id }
+train_sets
+    .combineBy(test_sets,
+        { train -> train.size <= 50 ? 'small' : 'large' },
+        { test -> test.size <= 50 ? 'small' : 'large' }
+    )
+    .filter { key, train, test -> train.id != test.id }
 ```
 
 **5. Conditional Workflows**
 ```nextflow
 scans
-    .combineBy(protocols, { it.modality }, { it.modality })
-    .filter { scan, proto -> 
+    .combineBy(protocols, { it.modality })
+    .filter { key, scan, proto -> 
         scan.modality == proto.modality &&
         scan.resolution >= proto.min_resolution
     }
@@ -870,7 +889,7 @@ channel.groupTupleBy { it.metadata?.acquisition?.date }
 
 **Null in Join Results (Outer Join):**
 ```nextflow
-left.joinBy(right, { it.id }, { it.id }, [remainder: true])
+left.joinBy(right, { it.id }, [remainder: true])
     .view { l, r ->
         def leftVal = l?.value ?: 'NONE'
         def rightVal = r?.value ?: 'NONE'
@@ -1168,15 +1187,15 @@ Use 3-element destructuring:
 
 ```nextflow
 // ❌ WRONG (2-element destructuring)
-subjects.combineBy(sessions, { it.id }, { it.id })
+subjects.combineBy(sessions, { it.id })
     .view { subj, sess -> "${subj.age}" }  // subj is actually the KEY!
 
 // ✅ CORRECT (3-element destructuring)
-subjects.combineBy(sessions, { it.id }, { it.id })
+subjects.combineBy(sessions, { it.id })
     .view { key, subj, sess -> "${subj.age}" }
 
 // ✅ ALSO CORRECT (array access)
-subjects.combineBy(sessions, { it.id }, { it.id })
+subjects.combineBy(sessions, { it.id })
     .view { tuple ->
         "Key=${tuple[0]}, Subject=${tuple[1]}, Session=${tuple[2]}"
     }
@@ -1203,14 +1222,15 @@ nextflow run workflow.nf
 
 2. **Filter earlier:**
 ```nextflow
-// ❌ BAD: Combine then filter
+// ❌ BAD: Combine then filter (using a constant key with combineBy is less explicit)
 large_channel1
-    .combineBy(large_channel2, { 0 })
+    .combineBy(large_channel2, { it.key })
     .filter { ... }
 
-// ✅ GOOD: Filter then combine
+// ✅ GOOD: Filter then combineBy or cross (filter upstream to reduce the size of the cartesian product).
+// For combineBy, ensure meaningful key extractors exist before combining.
 large_channel1.filter { ... }
-    .combineBy(large_channel2.filter { ... }, { 0 })
+    .combineBy(large_channel2.filter { ... }, { it.key })
 ```
 
 3. **Use standard operators:**

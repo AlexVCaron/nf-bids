@@ -77,9 +77,68 @@ File: `src/main/groovy/nfneuro/config/BidsConfigLoader.groovy`
 - The `data` key was removed from final output; suffix groupings (T1w, dwi, bold, etc.) are top-level in the final map.
 - If a user passes `flatten_output:false`, we always emit the unmodified inline tuple so validation scripts and other consumers that depend on the old format continue to work.
 
-## Future work (optional)
-- Update examples and update docs (`README.md`, `docs/examples.md`, `MIGRATION_GUIDE.md`) to include new outputs and migration notes.
-- Add additional integration tests in `validation/` that assert the flattened result in real nextflow runs (opt-in), and optimize flattening for performance if needed.
+### 🔥 CRITICAL: Building and Installing Plugin Before Testing 🔥
+
+**AFTER ANY CODE CHANGES, YOU MUST INSTALL THE PLUGIN FOR NEXTFLOW TO USE IT**
+
+Simply compiling or building JARs is **NOT ENOUGH**. Nextflow loads plugins from `~/.nextflow/plugins/`.
+
+**Required workflow before running ANY Nextflow script:**
+```bash
+# 1. Navigate to project root (MANDATORY - Gradle requires this)
+cd / && cd /home/local/USHERBROOKE/vala2004/dev/nf-bids
+
+# 2. Install the plugin into Nextflow
+make install
+# OR: ./gradlew install
+
+# 3. Now you can run Nextflow scripts
+cd validation && nextflow run test_flattened_output.nf --bids_dir "$PWD/data/bids-examples/asl001" --config "$PWD/configs/config_asl.yaml"
+```
+
+**What happens if you skip `make install`:**
+- Nextflow uses the OLD cached version of the plugin
+- Your code changes are NOT active
+- Tests will fail or show old behavior
+- Very confusing debugging experience!
+
+**When to run `make install`:**
+- After modifying any `.groovy` file in `src/main/groovy/`
+- After changing BidsHandler, BidsExtension, or any operator code
+- Before running integration tests (`validation/*.nf`)
+- Before running nf-test suites
+
+## Status and Remaining Work
+
+### Completed ✅
+- ✅ Flattening transformer implementation (`flattenTupleToMap`)
+- ✅ Conditional flattening with `options.flatten_output` flag
+- ✅ `meta` key validation in config loader
+- ✅ Unit tests for flattening logic (`BidsHandlerFlattenSpec`)
+- ✅ Updated validation scripts to opt-out via `flatten_output: false`
+- ✅ Documentation in `MIGRATION_GUIDE.md` with flattening examples
+- ✅ Documentation in `docs/configuration.md` with runtime options
+- ✅ Documentation in `docs/examples.md` with migration banner
+- ✅ All unit tests passing (`./gradlew test`)
+
+### All Tasks Complete! 🎉
+
+1. ✅ **README.md Quick Start** - Updated with flattened format examples showing `item.meta.subject` and `item.T1w.nii` access patterns
+2. ✅ **Integration Tests** - Created `validation/test_flattened_output.nf` and `test_flattened_output.nf.test` validating flattened output (default behavior) works correctly. All 4 tests passing: Plain set, Named set, Sequential set, and Legacy format opt-out.
+3. ✅ **libBIDS.sh Auto-Detection** - Plugin automatically finds embedded libBIDS.sh without requiring `--libbids_sh` parameter
+
+### Optional Future Work
+- 🟡 **Performance Benchmarking** - Optional: Benchmark `flattenTupleToMap()` overhead if performance concerns arise
+
+**Integration Test Status:**
+- ✅ Plain set test: Validates flattened format with meta and top-level suffixes
+- ✅ Named set test: Validates nested structure (dwi.ap, dwi.pa)
+- ✅ Sequential set test: Validates files as lists (TB1DAM with multiple flip angles)
+- ✅ Legacy format test: Validates backward compatibility with `flatten_output: false`
+- ✅ **libBIDS.sh Auto-Detection**: Plugin now automatically finds embedded libBIDS.sh from `~/.nextflow/plugins/nf-bids-{version}/lib/libBIDS.sh` without requiring explicit path parameter
+  - Uses classpath detection to find plugin installation directory
+  - Falls back to searching `~/.nextflow/plugins/` for nf-bids installations
+  - No longer requires `--libbids_sh` parameter in workflows
 
 ## Example outputs (final)
 
@@ -120,13 +179,13 @@ File: `src/main/groovy/nfneuro/config/BidsConfigLoader.groovy`
 Add `flattenTupleToMap(tuple, loopOverEntities)` method that:
 - Recursively walks `enrichedData.data` nested structure
 - Preserves nested map structure using dotted notation access:
-  - Plain: `data.T1w`
-  - Named: `data.dwi.ap`
-  - Hierarchical: `data.bold.run1.echo1`
-  - Mixed: `data.MPM.MTw` with list values
+  - Plain: `item.T1w`
+  - Named: `item.dwi.ap`
+  - Hierarchical: `item.bold.run1.echo1`
+  - Mixed: `item.MPM.MTw` with list values
 - Builds `meta` map from loop entities
 - Converts all file paths to absolute using `file(bidsParentDir) / relativePath`
-- Returns flat map with absolute paths and nested data structure
+- Returns flat map with absolute paths and nested data structure (suffixes at top level, no 'data' wrapper)
 
 ### 2. Update validateAndEmitChannel()
 
@@ -151,11 +210,11 @@ In `load()` method:
 
 Changes:
 - From: `tuple[1].data.dwi.ap.nii`
-- To: `item.data.dwi.ap.nii`
+- To: `item.dwi.ap.nii`
 
 Verifications:
-- Sequential/mixed have lists: `assert item.data.MPM.MTw.nii instanceof List`
-- File paths are absolute: `assert item.data.T1w.nii.isAbsolute()`
+- Sequential/mixed have lists: `assert item.MPM.MTw.nii instanceof List`
+- File paths are absolute: `assert item.T1w.nii.isAbsolute()`
 - Update all 71 tests for new map structure
 
 ### 5. Update documentation and migration guide
@@ -163,7 +222,7 @@ Verifications:
 **Files:** `README.md`, `docs/examples.md`, `docs/configuration.md`, `MIGRATION_GUIDE.md`
 
 Content:
-- Show flat map access with `item.meta.subject` and `item.data.suffix.group`
+- Show flat map access with `item.meta.subject` and `item.suffix.group` (suffixes at top level)
 - Document beta.5 → beta.6 breaking change with before/after code
 - Explain absolute paths mean no `file(bidsParentDir) /` needed
 - Show hierarchical nesting preserved
@@ -175,11 +234,9 @@ Content:
 ```groovy
 [
     meta: [subject: 'sub-01', session: 'ses-01'],
-    data: [
-        T1w: [
-            nii: file('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
-            json: file('/data/bids/sub-01/anat/sub-01_T1w.json')
-        ]
+    T1w: [
+        nii: file('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
+        json: file('/data/bids/sub-01/anat/sub-01_T1w.json')
     ]
 ]
 ```
@@ -188,20 +245,18 @@ Content:
 ```groovy
 [
     meta: [subject: 'sub-01', session: 'ses-01'],
-    data: [
-        dwi: [
-            ap: [
-                nii: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
-                json: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.json'),
-                bval: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval'),
-                bvec: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bvec')
-            ],
-            pa: [
-                nii: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
-                json: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.json'),
-                bval: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval'),
-                bvec: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bvec')
-            ]
+    dwi: [
+        ap: [
+            nii: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
+            json: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.json'),
+            bval: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval'),
+            bvec: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bvec')
+        ],
+        pa: [
+            nii: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
+            json: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.json'),
+            bval: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval'),
+            bvec: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bvec')
         ]
     ]
 ]
@@ -211,18 +266,16 @@ Content:
 ```groovy
 [
     meta: [subject: 'sub-01', session: 'ses-01'],
-    data: [
-        bold: [
-            nii: [
-                file('/data/bids/sub-01/func/sub-01_run-01_bold.nii.gz'),
-                file('/data/bids/sub-01/func/sub-01_run-02_bold.nii.gz'),
-                file('/data/bids/sub-01/func/sub-01_run-03_bold.nii.gz')
-            ],
-            json: [
-                file('/data/bids/sub-01/func/sub-01_run-01_bold.json'),
-                file('/data/bids/sub-01/func/sub-01_run-02_bold.json'),
-                file('/data/bids/sub-01/func/sub-01_run-03_bold.json')
-            ]
+    bold: [
+        nii: [
+            file('/data/bids/sub-01/func/sub-01_run-01_bold.nii.gz'),
+            file('/data/bids/sub-01/func/sub-01_run-02_bold.nii.gz'),
+            file('/data/bids/sub-01/func/sub-01_run-03_bold.nii.gz')
+        ],
+        json: [
+            file('/data/bids/sub-01/func/sub-01_run-01_bold.json'),
+            file('/data/bids/sub-01/func/sub-01_run-02_bold.json'),
+            file('/data/bids/sub-01/func/sub-01_run-03_bold.json')
         ]
     ]
 ]
@@ -232,26 +285,24 @@ Content:
 ```groovy
 [
     meta: [subject: 'sub-01', session: 'ses-01'],
-    data: [
-        bold: [
-            'run-01': [
-                'echo-01': [
-                    nii: file('/data/bids/.../sub-01_run-01_echo-01_bold.nii.gz'),
-                    json: file('/data/bids/.../sub-01_run-01_echo-01_bold.json')
-                ],
-                'echo-02': [
-                    nii: file('/data/bids/.../sub-01_run-01_echo-02_bold.nii.gz'),
-                    json: file('/data/bids/.../sub-01_run-01_echo-02_bold.json')
-                ]
+    bold: [
+        'run-01': [
+            'echo-01': [
+                nii: file('/data/bids/.../sub-01_run-01_echo-01_bold.nii.gz'),
+                json: file('/data/bids/.../sub-01_run-01_echo-01_bold.json')
             ],
-            'run-02': [
-                'echo-01': [
-                    nii: file('/data/bids/.../sub-01_run-02_echo-01_bold.nii.gz'),
-                    json: file('/data/bids/.../sub-01_run-02_echo-01_bold.json')
-                ]
+            'echo-02': [
+                nii: file('/data/bids/.../sub-01_run-01_echo-02_bold.nii.gz'),
+                json: file('/data/bids/.../sub-01_run-01_echo-02_bold.json')
             ]
-            // ... etc
+        ],
+        'run-02': [
+            'echo-01': [
+                nii: file('/data/bids/.../sub-01_run-02_echo-01_bold.nii.gz'),
+                json: file('/data/bids/.../sub-01_run-02_echo-01_bold.json')
+            ]
         ]
+        // ... etc
     ]
 ]
 ```
@@ -260,43 +311,41 @@ Content:
 ```groovy
 [
     meta: [subject: 'sub-01', session: 'ses-01'],
-    data: [
-        MPM: [
-            MTw: [
-                nii: [
-                    file('/data/bids/.../sub-01_acq-MTw_echo-01_MPM.nii.gz'),
-                    file('/data/bids/.../sub-01_acq-MTw_echo-02_MPM.nii.gz'),
-                    file('/data/bids/.../sub-01_acq-MTw_echo-03_MPM.nii.gz')
-                ],
-                json: [
-                    file('/data/bids/.../sub-01_acq-MTw_echo-01_MPM.json'),
-                    file('/data/bids/.../sub-01_acq-MTw_echo-02_MPM.json'),
-                    file('/data/bids/.../sub-01_acq-MTw_echo-03_MPM.json')
-                ]
+    MPM: [
+        MTw: [
+            nii: [
+                file('/data/bids/.../sub-01_acq-MTw_echo-01_MPM.nii.gz'),
+                file('/data/bids/.../sub-01_acq-MTw_echo-02_MPM.nii.gz'),
+                file('/data/bids/.../sub-01_acq-MTw_echo-03_MPM.nii.gz')
             ],
-            PDw: [
-                nii: [
-                    file('/data/bids/.../sub-01_acq-PDw_echo-01_MPM.nii.gz'),
-                    file('/data/bids/.../sub-01_acq-PDw_echo-02_MPM.nii.gz'),
-                    file('/data/bids/.../sub-01_acq-PDw_echo-03_MPM.nii.gz')
-                ],
-                json: [
-                    file('/data/bids/.../sub-01_acq-PDw_echo-01_MPM.json'),
-                    file('/data/bids/.../sub-01_acq-PDw_echo-02_MPM.json'),
-                    file('/data/bids/.../sub-01_acq-PDw_echo-03_MPM.json')
-                ]
+            json: [
+                file('/data/bids/.../sub-01_acq-MTw_echo-01_MPM.json'),
+                file('/data/bids/.../sub-01_acq-MTw_echo-02_MPM.json'),
+                file('/data/bids/.../sub-01_acq-MTw_echo-03_MPM.json')
+            ]
+        ],
+        PDw: [
+            nii: [
+                file('/data/bids/.../sub-01_acq-PDw_echo-01_MPM.nii.gz'),
+                file('/data/bids/.../sub-01_acq-PDw_echo-02_MPM.nii.gz'),
+                file('/data/bids/.../sub-01_acq-PDw_echo-03_MPM.nii.gz')
             ],
-            T1w: [
-                nii: [
-                    file('/data/bids/.../sub-01_acq-T1w_echo-01_MPM.nii.gz'),
-                    file('/data/bids/.../sub-01_acq-T1w_echo-02_MPM.nii.gz'),
-                    file('/data/bids/.../sub-01_acq-T1w_echo-03_MPM.nii.gz')
-                ],
-                json: [
-                    file('/data/bids/.../sub-01_acq-T1w_echo-01_MPM.json'),
-                    file('/data/bids/.../sub-01_acq-T1w_echo-02_MPM.json'),
-                    file('/data/bids/.../sub-01_acq-T1w_echo-03_MPM.json')
-                ]
+            json: [
+                file('/data/bids/.../sub-01_acq-PDw_echo-01_MPM.json'),
+                file('/data/bids/.../sub-01_acq-PDw_echo-02_MPM.json'),
+                file('/data/bids/.../sub-01_acq-PDw_echo-03_MPM.json')
+            ]
+        ],
+        T1w: [
+            nii: [
+                file('/data/bids/.../sub-01_acq-T1w_echo-01_MPM.nii.gz'),
+                file('/data/bids/.../sub-01_acq-T1w_echo-02_MPM.nii.gz'),
+                file('/data/bids/.../sub-01_acq-T1w_echo-03_MPM.nii.gz')
+            ],
+            json: [
+                file('/data/bids/.../sub-01_acq-T1w_echo-01_MPM.json'),
+                file('/data/bids/.../sub-01_acq-T1w_echo-02_MPM.json'),
+                file('/data/bids/.../sub-01_acq-T1w_echo-03_MPM.json')
             ]
         ]
     ]
@@ -307,25 +356,23 @@ Content:
 ```groovy
 [
     meta: [subject: 'sub-01', session: 'ses-01'],
-    data: [
-        dwi: [
-            ap: [
-                nii: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
-                bval: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval'),
-                bvec: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bvec'),
-                json: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.json')
-            ],
-            pa: [
-                nii: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
-                bval: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval'),
-                bvec: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bvec'),
-                json: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.json')
-            ]
+    dwi: [
+        ap: [
+            nii: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
+            bval: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval'),
+            bvec: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bvec'),
+            json: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.json')
         ],
-        epi: [  // ← Cross-modal included from config
-            nii: file('/data/bids/sub-01/fmap/sub-01_epi.nii.gz'),
-            json: file('/data/bids/sub-01/fmap/sub-01_epi.json')
+        pa: [
+            nii: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
+            bval: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval'),
+            bvec: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bvec'),
+            json: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.json')
         ]
+    ],
+    epi: [  // ← Cross-modal included from config
+        nii: file('/data/bids/sub-01/fmap/sub-01_epi.nii.gz'),
+        json: file('/data/bids/sub-01/fmap/sub-01_epi.json')
     ]
 ]
 ```
@@ -352,9 +399,9 @@ Channel.fromBIDS(params.bids_dir, 'config.yaml')
     .map { item ->
         def subject = item.meta.subject
         def session = item.meta.session
-        def dwi_ap = item.data.dwi.ap.nii  // Already absolute
-        def bval = item.data.dwi.ap.bval
-        def bvec = item.data.dwi.ap.bvec
+        def dwi_ap = item.dwi.ap.nii  // Already absolute
+        def bval = item.dwi.ap.bval
+        def bvec = item.dwi.ap.bvec
         
         [subject, dwi_ap, bval, bvec]
     }
@@ -362,10 +409,10 @@ Channel.fromBIDS(params.bids_dir, 'config.yaml')
 
 ## Key Design Decisions
 
-1. **Flat format as default:** No opt-in flag, breaking change for beta.6
+1. **Flat format as default:** Enabled by default via `flatten_output: true`, can opt-out with `flatten_output: false`
 2. **Reserved `meta` key:** Validated at config load time with clear error
 3. **Absolute paths:** All file paths resolved immediately, `bidsParentDir` discarded
-4. **Nested maps preserved:** Dotted notation access `item.data.suffix.group` instead of list keys
+4. **Nested maps preserved:** Dotted notation access `item.suffix.group` (suffixes at top level) instead of list keys
 5. **Mixed sets:** Named dimension nested, sequential dimension in lists
 6. **Error handling:** Clear error messages for flattening failures, downstream Nextflow handles path validation
 7. **No helper methods:** Keep API simple, users access via dotted notation (returns null if not found)
@@ -379,8 +426,8 @@ Channel.fromBIDS(params.bids_dir, 'config.yaml')
 - Con: Less readable, unfamiliar syntax
 
 **Version B (Nested Maps - THIS VERSION):**
-- Access: `item.data.dwi.ap.nii`
-- Pro: Familiar dotted notation, more readable
+- Access: `item.dwi.ap.nii` (suffixes at top level)
+- Pro: Familiar dotted notation, more readable, clean structure
 - Con: Less explicit about nesting depth
 
 ```

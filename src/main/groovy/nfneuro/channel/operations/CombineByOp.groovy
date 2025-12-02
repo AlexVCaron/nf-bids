@@ -46,8 +46,7 @@ import nfneuro.plugin.channel.operations.keys.KeyExtractor
  * <pre>
  * subjects.combineBy(
  *     sessions,
- *     { it.subject },    // extract key from left items
- *     { it.subject }     // extract key from right items
+ *     { it.subject }     // extract key from both left and right items
  * )
  * .view { key, subj, sess -> "Subject ${key}: ${subj} × ${sess}" }
  * </pre>

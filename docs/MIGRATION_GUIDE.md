@@ -202,28 +202,112 @@ dwi_fullreverse:
 
 ## Output Format
 
-The plugin produces **identical output** to the baseline:
+### Default: Flattened Maps (v0.1.0-beta.6+)
+
+**Breaking Change:** Starting with v0.1.0-beta.6, `Channel.fromBIDS()` emits **flattened maps** by default:
 
 ```groovy
+// New default output (flatten_output: true)
 [
-    ["sub-01", "NA", "NA", "NA"],  // [subject, session, run, task]
-    bidsParentDir: "/path/to/bids",
-    subject: "sub-01",
-    session: "NA",
-    run: "NA",
-    task: "NA",
-    data: [
-        dwi: [
-            nii: "sub-01/dwi/sub-01_dwi.nii.gz",
-            json: "sub-01/dwi/sub-01_dwi.json",
-            bval: "sub-01/dwi/sub-01_dwi.bval",
-            bvec: "sub-01/dwi/sub-01_dwi.bvec"
+    meta: [
+        subject: "sub-01",
+        session: "ses-01",
+        run: "NA",
+        task: "NA"
+    ],
+    dwi: [
+        nii: File("/path/to/bids/sub-01/ses-01/dwi/sub-01_ses-01_dwi.nii.gz"),
+        json: File("/path/to/bids/sub-01/ses-01/dwi/sub-01_ses-01_dwi.json"),
+        bval: File("/path/to/bids/sub-01/ses-01/dwi/sub-01_ses-01_dwi.bval"),
+        bvec: File("/path/to/bids/sub-01/ses-01/dwi/sub-01_ses-01_dwi.bvec")
+    ],
+    T1w: [
+        nii: File("/path/to/bids/sub-01/ses-01/anat/sub-01_ses-01_T1w.nii.gz"),
+        json: File("/path/to/bids/sub-01/ses-01/anat/sub-01_ses-01_T1w.json")
+    ]
+]
+```
+
+**Key differences:**
+- ✅ **Flat structure**: Suffixes (`dwi`, `T1w`, `bold`) are top-level keys (no `data` wrapper)
+- ✅ **`meta` key**: Entity values grouped in `meta` map for cleaner access
+- ✅ **Absolute paths**: All file paths converted to absolute `File` objects
+- ✅ **Semantic access**: `item.meta.subject` and `item.dwi.nii` instead of tuple indices
+
+### Legacy Format (Opt-Out)
+
+To preserve the original tuple format, set `flatten_output: false`:
+
+```groovy
+// Legacy output (flatten_output: false)
+Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+
+// Emits original tuple structure:
+[
+    ["sub-01", "ses-01", "NA", "NA"],  // [subject, session, run, task]
+    [
+        bidsParentDir: "/path/to/bids",
+        subject: "sub-01",
+        session: "ses-01",
+        run: "NA",
+        task: "NA",
+        data: [
+            dwi: [
+                nii: "sub-01/ses-01/dwi/sub-01_ses-01_dwi.nii.gz",  // relative paths
+                json: "sub-01/ses-01/dwi/sub-01_ses-01_dwi.json",
+                bval: "sub-01/ses-01/dwi/sub-01_ses-01_dwi.bval",
+                bvec: "sub-01/ses-01/dwi/sub-01_ses-01_dwi.bvec"
+            ]
         ]
     ]
 ]
 ```
 
-Your downstream processes need **no changes**!
+### Migrating to Flattened Output
+
+**Before (tuple format with `flatten_output: false`):**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+    .map { groupingKey, enrichedData ->
+        def subject = groupingKey[0]
+        def session = groupingKey[1]
+        def dwi_nii = file(enrichedData.bidsParentDir) / enrichedData.data.dwi.nii
+        def dwi_bval = file(enrichedData.bidsParentDir) / enrichedData.data.dwi.bval
+        
+        [subject, session, dwi_nii, dwi_bval]
+    }
+```
+
+**After (flattened format, default):**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml')  // flatten_output: true (default)
+    .map { item ->
+        // Direct access via meta and suffix keys
+        def subject = item.meta.subject
+        def session = item.meta.session
+        def dwi_nii = item.dwi.nii   // Already an absolute File object
+        def dwi_bval = item.dwi.bval
+        
+        [subject, session, dwi_nii, dwi_bval]
+    }
+```
+
+**Benefits:**
+- 🎯 **Cleaner code**: Semantic field names instead of array indices
+- ✅ **Type safety**: No need to manually construct File objects
+- 🚀 **Better IDE support**: Autocomplete works with map keys
+- 📦 **Works with operators**: Use `groupTupleBy { it.meta.subject }` directly
+
+### Compatibility Note
+
+**If migrating from baseline bids2nf:**
+- Original tuple format matches baseline output
+- Use `flatten_output: false` for backward compatibility during migration
+- Gradually adopt flattened format for new workflows
+
+**If starting fresh:**
+- Use default flattened format (no options needed)
+- Access patterns are more intuitive and maintainable
 
 ---
 

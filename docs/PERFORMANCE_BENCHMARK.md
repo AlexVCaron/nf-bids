@@ -80,7 +80,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output |
 |----------|-----------|--------|--------|
 | `join(by: 0)` | ~52ms | O(n+m) | 60 pairs |
-| `joinBy({ it.id }, { it.id })` | ~65ms | O(n+m) | 60 pairs |
+| `joinBy({ it.id })` | ~65ms | O(n+m) | 60 pairs |
 | **Overhead** | **+13ms (+25%)** | Same | ✅ Identical |
 
 **High-Volume Test:** 5000 left items × 5000 right items (100 keys, 50 items/key)
@@ -88,7 +88,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output |
 |----------|-----------|--------|--------|
 | `join(by: 0)` | ~580ms | O(n+m) | 5000 pairs |
-| `joinBy({ it[0] }, { it[0] })` | ~645ms | O(n+m) | 5000 pairs |
+| `joinBy({ it[0] })` | ~645ms | O(n+m) | 5000 pairs |
 | **Overhead** | **+65ms (+11%)** | Same | ✅ Identical |
 
 **Analysis:**
@@ -103,7 +103,7 @@ channel.of([subject: id, data: data])
 
 // Closure-based: joinBy
 [subject: id, left: data]
-    .joinBy([subject: id, right: data], { it.subject }, { it.subject })
+    .joinBy([subject: id, right: data], { it.subject })
 ```
 
 **Verdict:** ✅ **Excellent performance** even at scale
@@ -117,7 +117,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output |
 |----------|-----------|--------|--------|
 | `combine(by: 0)` | ~48ms | O(n+m) | 60 pairs |
-| `combineBy({ it.subject }, { it.subject })` | ~57ms | O(n+m) | 60 pairs |
+| `combineBy({ it.subject })` | ~57ms | O(n+m) | 60 pairs |
 | **Overhead** | **+9ms (+19%)** | Same | ✅ Identical |
 
 **Cartesian Product Test:** 20 keys, 10 items/key = 2000 combinations
@@ -125,7 +125,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output |
 |----------|-----------|--------|--------|
 | `combine(by: 0)` | ~95ms | O(n+m) | 2000 |
-| `combineBy({ it.key }, { it.key })` | ~127ms | O(n+m) | 2000 |
+| `combineBy({ it.key })` | ~127ms | O(n+m) | 2000 |
 | **Overhead** | **+32ms (+34%)** | Same | ✅ Identical |
 
 **Analysis:**
@@ -242,8 +242,8 @@ Time (ms)
 | Operation | Operator | Time | Description |
 |-----------|----------|------|-------------|
 | 1. Group by subject | `groupTupleBy { it.subject }` | 89ms | 30 groups |
-| 2. Join sessions | `joinBy({ it.sub }, { it.sub })` | 65ms | 60 pairs |
-| 3. Combine modalities | `combineBy({ it.session }, { it.session })` | 57ms | 180 combos |
+| 2. Join sessions | `joinBy({ it.sub })` | 65ms | 60 pairs |
+| 3. Combine modalities | `combineBy({ it.session })` | 57ms | 180 combos |
 | **Total** | **Closure-based** | **211ms** | ✅ |
 
 ### Comparison with Built-in Operators
@@ -355,7 +355,7 @@ channel
 ### 2. Use Simple Keys
 ```nextflow
 // ✅ GOOD: Simple string key
-.combineBy(right, { it.id }, { it.id })
+.combineBy(right, { it.id })
 
 // ⚠️ OK but slower: Complex computation
 .combineBy(right, { "${it.sub}_${it.ses}_${it.run}" }, { ... })
@@ -367,10 +367,10 @@ channel
 ### 3. Consider Key Cardinality
 ```nextflow
 // ✅ GOOD: 30 subjects, 2 sessions each = 60 pairs
-subjects.combineBy(sessions, { it.subject }, { it.subject })
+subjects.combineBy(sessions, { it.subject })
 
 // ⚠️ WARNING: 30 subjects, 100 runs each = 3000 combinations!
-subjects.combineBy(runs, { it.subject }, { it.subject })
+subjects.combineBy(runs, { it.subject })
 ```
 
 ---

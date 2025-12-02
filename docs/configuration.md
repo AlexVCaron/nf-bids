@@ -1,6 +1,132 @@
-# Overview
+# BIDS Configuration Guide
 
 The configuration file defines how BIDS files are grouped and emitted through the channel. It follows the same format as the original [bids2nf](https://agah.dev/bids2nf/configuration) workflow.
+
+## Table of Contents
+
+1. [Configuration File Structure](#configuration-structure)
+2. [Runtime Options](#runtime-options)
+3. [Loop Over Entities](#loop-over-entities)
+4. [Set Types](#set-types)
+
+---
+
+# Runtime Options
+
+`Channel.fromBIDS()` accepts an optional `options` map for runtime configuration:
+
+```groovy
+Channel.fromBIDS(
+    params.bids_dir, 
+    'config.yaml',
+    [
+        flatten_output: true,        // default
+        libbids_sh: '/custom/path',  // optional
+        validate: false              // not implemented
+    ]
+)
+```
+
+## Available Options
+
+### `flatten_output` (Boolean)
+
+**Default:** `true` (starting v0.1.0-beta.6)
+
+Controls the output format of `Channel.fromBIDS()`:
+
+**When `true` (default):**
+```groovy
+// Flattened map with meta + top-level suffixes
+[
+    meta: [subject: 'sub-01', session: 'ses-01'],
+    dwi: [
+        nii: File("/abs/path/to/sub-01_ses-01_dwi.nii.gz"),
+        json: File("/abs/path/to/sub-01_ses-01_dwi.json"),
+        bval: File("/abs/path/to/sub-01_ses-01_dwi.bval")
+    ],
+    T1w: [
+        nii: File("/abs/path/to/sub-01_ses-01_T1w.nii.gz")
+    ]
+]
+```
+
+**Benefits:**
+- 🎯 Semantic access: `item.meta.subject`, `item.dwi.nii`
+- ✅ Absolute paths: Files are ready to use
+- 🔧 Type-safe: IDE autocomplete works
+- 🚀 Operator-friendly: Works with `groupTupleBy { it.meta.subject }`
+
+**When `false` (legacy):**
+```groovy
+// Original tuple format for backward compatibility
+[
+    ["sub-01", "ses-01", "NA", "NA"],  // grouping key
+    [
+        bidsParentDir: "/path/to/bids",
+        subject: "sub-01",
+        session: "ses-01",
+        data: [
+            dwi: [
+                nii: "sub-01/ses-01/dwi/sub-01_ses-01_dwi.nii.gz"  // relative
+            ]
+        ]
+    ]
+]
+```
+
+**Use legacy format when:**
+- Migrating from baseline bids2nf
+- Existing workflows expect tuple structure
+- Gradual migration preferred
+
+**Example usage:**
+```groovy
+// New workflows (recommended)
+Channel.fromBIDS(params.bids_dir, 'config.yaml')
+    .map { item -> 
+        [item.meta.subject, item.dwi.nii, item.dwi.bval]
+    }
+
+// Legacy workflows
+Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+    .map { key, data ->
+        [key[0], file(data.bidsParentDir) / data.data.dwi.nii]
+    }
+```
+
+### `libbids_sh` (String)
+
+**Optional:** Path to custom libBIDS.sh parsing script
+
+```groovy
+Channel.fromBIDS(
+    params.bids_dir,
+    'config.yaml',
+    [libbids_sh: '/path/to/custom/libBIDS.sh']
+)
+```
+
+Use when:
+- Testing libBIDS.sh modifications
+- Using custom BIDS parsing logic
+- Pinning specific libBIDS.sh version
+
+### `validate` (Boolean)
+
+**Not implemented** - Reserved for future BIDS validator integration
+
+### `validator_version` (String)
+
+**Not implemented** - Reserved for specifying validator version
+
+### `ignore_codes` (String)
+
+**Not implemented** - Reserved for ignoring specific validation error codes
+
+---
+
+# Overview
 
 ## Configuration Structure
 

@@ -18,6 +18,37 @@ Practical examples for using the nf-bids plugin in various scenarios.
 >}
 >```
 
+>[!IMPORTANT]
+>**Output Format:** Starting with v0.1.0-beta.6, `Channel.fromBIDS()` emits **flattened maps** by default:
+>
+>```groovy
+>// New default (flatten_output: true)
+>[
+>    meta: [subject: 'sub-01', session: 'ses-01'],
+>    T1w: [nii: File("/abs/path/to/T1w.nii.gz")],
+>    dwi: [nii: File("/abs/path/to/dwi.nii.gz"), bval: File("...")]
+>]
+>```
+>
+>**Examples below use legacy tuple format** with `flatten_output: false` for backward compatibility. To adapt them to the new format:
+>
+>```groovy
+>// OLD (legacy tuple format)
+>Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+>    .map { key, data ->
+>        def t1w = file(data.bidsParentDir) / data.data.T1w.nii
+>        [key[0], t1w]
+>    }
+>
+>// NEW (flattened format, recommended)
+>Channel.fromBIDS(params.bids_dir, 'config.yaml')
+>    .map { item ->
+>        [item.meta.subject, item.T1w.nii]  // Absolute File, no path construction needed
+>    }
+>```
+>
+>See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md#output-format) for complete migration details.
+
 # Basic Examples
 
 ## T1w brain extraction with FSL `bet`
@@ -31,7 +62,7 @@ T1w:
   plain_set: {}
 ```
 
-**`main.nf`:**
+**`main.nf` (Flattened format - recommended):**
 
 ```groovy
 #!/usr/bin/env nextflow
@@ -39,11 +70,14 @@ T1w:
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
+    // Flattened output (default in beta.6+)
     ch_t1w = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data -> [
-            key.findAll{ it != 'NA' }.join('_'),
-            file(data.bidsParentDir) / data.data.T1w.nii
+        .map { item -> [
+            item.meta.subject,  // Direct access to entity
+            item.T1w.nii        // Absolute File object
         ] }
     
     processT1w(ch_t1w)
@@ -62,6 +96,21 @@ process processT1w {
     """
     bet ${t1w} ${subject}_brain.nii.gz -f 0.5
     """
+}
+```
+
+**Legacy format (with `flatten_output: false`):**
+
+```groovy
+workflow {
+    // Legacy tuple format
+    ch_t1w = Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+        .map { key, data -> [
+            key.findAll{ it != 'NA' }.join('_'),
+            file(data.bidsParentDir) / data.data.T1w.nii
+        ] }
+    
+    processT1w(ch_t1w)
 }
 ```
 

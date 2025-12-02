@@ -149,7 +149,7 @@ class BidsExtensionTest extends Specification {
 
     def "combineBy accepts valid key extractors"() {
         when:
-        def result = extension.combineBy(channel1, channel2, { it.id }, { it.id })
+        def result = extension.combineBy(channel1, channel2, { it.id })
 
         then:
         noExceptionThrown()

@@ -78,10 +78,10 @@ Keys 'C' and 'D' are dropped (no output)
 ### 🔄 What We Should Adapt
 
 1. **Closure-based key extraction:**
-   ```groovy
-   // Standard: combine(right, by: 0)
-   // Our API: combineBy(right, { it[0] }, { it[0] })
-   ```
+    ```groovy
+    // Standard: combine(right, by: 0)
+    // Our API: combineBy(right, { it[0] })
+    ```
 
 2. **Flexible key extraction:**
    - Allow different extractors for left/right channels

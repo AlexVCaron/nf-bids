@@ -826,6 +826,219 @@ class BidsExtension extends PluginExtensionPoint {
 - You cannot split functionality into multiple extension classes (e.g., separate `BidsFactoryExtension` and `BidsOperatorExtension`)
 - This is why `BidsExtension` contains both `@Factory` methods (like `fromBIDS`) and `@Operator` methods (like `groupTupleBy`, `joinBy`, `combineBy`)
 
+---
+
+## Channel.fromBIDS Output Formats
+
+### Overview
+
+**Breaking Change in v0.1.0-beta.6:** The `Channel.fromBIDS()` factory now emits **flattened maps** by default instead of tuples. This provides better usability and cleaner code, but existing workflows need migration.
+
+### Default Behavior (v0.1.0-beta.6+): Flattened Maps
+
+**Signature:**
+```groovy
+Channel.fromBIDS(bidsDir, configPath)  // flatten_output defaults to true
+Channel.fromBIDS(bidsDir, configPath, [flatten_output: true])  // explicit
+```
+
+**Output Structure:**
+```groovy
+[
+    meta: [
+        subject: 'sub-01',
+        session: 'ses-01',
+        run: 'NA',
+        task: 'NA'
+    ],
+    T1w: [
+        nii: File('/absolute/path/to/sub-01_T1w.nii.gz'),  // Absolute File object
+        json: File('/absolute/path/to/sub-01_T1w.json')
+    ],
+    dwi: [
+        ap: [
+            nii: File('/absolute/path/to/sub-01_dir-AP_dwi.nii.gz'),
+            bval: File('/absolute/path/to/sub-01_dir-AP_dwi.bval'),
+            bvec: File('/absolute/path/to/sub-01_dir-AP_dwi.bvec')
+        ],
+        pa: [
+            nii: File('/absolute/path/to/sub-01_dir-PA_dwi.nii.gz')
+        ]
+    ]
+]
+```
+
+**Key Features:**
+- **`meta` key**: Contains all BIDS entities (subject, session, run, task, etc.)
+- **Top-level suffixes**: Data types (T1w, dwi, bold) are at the root level (no `data` wrapper)
+- **Absolute paths**: All file paths are converted to absolute `File` objects
+- **Nested structure preserved**: Named sets (dwi.ap, dwi.pa) remain nested
+- **Lists for sequential**: Sequential sets become lists (e.g., `bold.nii: [file1, file2, file3]`)
+
+**Access Patterns:**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml')
+    .map { item ->
+        def subject = item.meta.subject          // Entity from meta
+        def session = item.meta.session
+        def t1w_nii = item.T1w.nii               // Direct suffix access
+        def dwi_ap = item.dwi.ap.nii             // Nested named set
+        def bval = item.dwi.ap.bval              // Already absolute File
+        
+        [subject, session, t1w_nii, dwi_ap, bval]
+    }
+```
+
+**Benefits:**
+- ✅ Semantic field access: `item.meta.subject` vs `tuple[0][0]`
+- ✅ IDE autocomplete works with map keys
+- ✅ No manual path construction needed (already absolute)
+- ✅ Type-safe: `File` objects instead of strings
+- ✅ Works seamlessly with closure operators: `groupTupleBy { it.meta.subject }`
+
+### Legacy Behavior (opt-out): Tuple Format
+
+**Signature:**
+```groovy
+Channel.fromBIDS(bidsDir, configPath, [flatten_output: false])
+```
+
+**Output Structure:**
+```groovy
+[
+    ['sub-01', 'ses-01', 'NA', 'NA'],  // Grouping key [subject, session, run, task]
+    [
+        bidsParentDir: '/path/to/bids',
+        subject: 'sub-01',
+        session: 'ses-01',
+        run: 'NA',
+        task: 'NA',
+        data: [
+            T1w: [
+                nii: 'sub-01/anat/sub-01_T1w.nii.gz',  // Relative paths
+                json: 'sub-01/anat/sub-01_T1w.json'
+            ],
+            dwi: [
+                ap: [
+                    nii: 'sub-01/dwi/sub-01_dir-AP_dwi.nii.gz',
+                    bval: 'sub-01/dwi/sub-01_dir-AP_dwi.bval'
+                ]
+            ]
+        ]
+    ]
+]
+```
+
+**Access Patterns:**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+    .map { key, data ->
+        def subject = key[0]                           // Index into tuple
+        def session = key[1]
+        def t1w_nii = file(data.bidsParentDir) / data.data.T1w.nii  // Manual path construction
+        def dwi_ap = file(data.bidsParentDir) / data.data.dwi.ap.nii
+        
+        [subject, session, t1w_nii, dwi_ap]
+    }
+```
+
+**When to use:**
+- Migrating from baseline bids2nf (preserves exact output format)
+- Existing workflows that depend on tuple structure
+- Gradual migration strategy (test new format in parallel)
+- Validation/comparison testing
+
+### Migration Example
+
+**Before (v0.1.0-beta.5 and earlier):**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml')
+    .map { key, data ->
+        def subject = key[0]
+        def dwi_ap = file(data.bidsParentDir) / data.data.dwi.ap.nii
+        def bval = file(data.bidsParentDir) / data.data.dwi.ap.bval
+        
+        [subject, dwi_ap, bval]
+    }
+```
+
+**After (v0.1.0-beta.6+, recommended):**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml')  // flatten_output: true (default)
+    .map { item ->
+        def subject = item.meta.subject
+        def dwi_ap = item.dwi.ap.nii   // Already absolute File
+        def bval = item.dwi.ap.bval
+        
+        [subject, dwi_ap, bval]
+    }
+```
+
+**Temporary compatibility (during migration):**
+```groovy
+Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+    // Keep old code unchanged while testing new format
+```
+
+### Reserved Key: `meta`
+
+**Critical**: The `meta` key is reserved and cannot be used as a suffix name in your BIDS configuration YAML.
+
+**Validation:**
+```groovy
+// src/main/groovy/nfneuro/config/BidsConfigLoader.groovy
+if (config.containsKey('meta')) {
+    throw new IllegalArgumentException(
+        "Configuration error: Reserved key 'meta' cannot be used as suffix name. " +
+        "Please rename this suffix in your configuration file."
+    )
+}
+```
+
+**Invalid Configuration:**
+```yaml
+# ❌ INVALID - will throw error
+meta:
+  plain_set: {}
+```
+
+**Valid Configuration:**
+```yaml
+# ✅ VALID
+T1w:
+  plain_set: {}
+dwi:
+  named_set:
+  required: ["ap", "pa"]
+```
+
+### Testing Considerations
+
+**Unit Tests:**
+- Test flattening logic in `BidsHandlerFlattenSpec`
+- Verify absolute path conversion
+- Check meta key merging
+- Test sequential list handling
+
+**Integration Tests:**
+- Validation scripts use `flatten_output: false` for backward compatibility testing
+- New integration tests should use default flattened format
+- Example: Add `.nf.test` files that validate flattened output structure
+
+**Validation Test Pattern:**
+```groovy
+// validation/main.nf
+def options = params.libbids_sh ? 
+    [libbids_sh: params.libbids_sh, flatten_output: false] : 
+    [flatten_output: false]
+
+Channel.fromBIDS(params.bids_dir, params.config, options)
+```
+
+This preserves legacy behavior for comparison testing while new tests can validate the default flattened format.
+
+---
+
 ### Method Signature Rules
 
 #### Factory Methods
@@ -1233,6 +1446,66 @@ nfneuro.plugin.BidsExtension
 Must match `extensionPoints` in `build.gradle`.
 
 **Note**: If you have multiple extension classes listed, consolidate them into one. Nextflow plugins can only have **one extension point**.
+
+### Issue 2.5: Flattened Output Format Errors
+**Error**:
+```
+groovy.lang.MissingPropertyException: No such property: data for class: java.util.LinkedHashMap
+-- OR --
+Cannot get property 'bidsParentDir' on null object
+-- OR --
+java.lang.ClassCastException: class java.util.LinkedHashMap cannot be cast to class java.util.ArrayList
+```
+
+**Cause**: Code written for legacy tuple format (`[key, enrichedData]`) but channel emits flattened maps (beta.6+ default)
+
+**Symptoms:**
+- Trying to access `item.data.T1w` (legacy) when structure is `item.T1w` (flattened)
+- Trying to destructure as `{ key, data -> }` when item is a single map
+- Trying to access `data.bidsParentDir` when field doesn't exist in flattened output
+- Expecting tuple indices `[0]`, `[1]` when item is a map
+
+**Solution 1: Update code to use flattened format (recommended)**
+```groovy
+// ❌ OLD (legacy tuple format)
+Channel.fromBIDS(params.bids_dir, 'config.yaml')
+    .map { key, data ->
+        def subject = key[0]
+        def t1w = file(data.bidsParentDir) / data.data.T1w.nii
+        [subject, t1w]
+    }
+
+// ✅ NEW (flattened format)
+Channel.fromBIDS(params.bids_dir, 'config.yaml')
+    .map { item ->
+        def subject = item.meta.subject
+        def t1w = item.T1w.nii  // Already absolute File
+        [subject, t1w]
+    }
+```
+
+**Solution 2: Opt-out to legacy format (temporary)**
+```groovy
+// Use during migration/testing
+Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
+    .map { key, data ->
+        // Keep old code unchanged
+    }
+```
+
+**Common Access Pattern Changes:**
+
+| Legacy Format | Flattened Format |
+|--------------|------------------|
+| `key[0]` | `item.meta.subject` |
+| `key[1]` | `item.meta.session` |
+| `data.data.T1w.nii` | `item.T1w.nii` |
+| `data.data.dwi.ap.nii` | `item.dwi.ap.nii` |
+| `file(data.bidsParentDir) / path` | `item.T1w.nii` (already absolute) |
+| `data.subject` | `item.meta.subject` |
+
+**Validation Test Note:**
+If you see this error in `validation/` tests, they should already be using `[flatten_output: false]` for backward compatibility testing. Check the options map in `validation/main.nf`.
 
 ### Issue 3: Unit Tests Hang
 **Symptom**: Tests timeout or hang indefinitely

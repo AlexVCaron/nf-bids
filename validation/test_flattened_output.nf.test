@@ -1,0 +1,165 @@
+nextflow_workflow {
+
+    name "Flattened Output Format Test"
+    script "./test_flattened_output.nf"
+    workflow "test_flattened_output"
+
+    test("Plain set - Flattened output with meta and top-level suffixes") {
+        when {
+            params {
+                bids_dir = "${baseDir}/data/bids-examples/asl001"
+                config = "${baseDir}/configs/config_asl.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.test_results
+            
+            def results = workflow.out.test_results
+            collect()
+            assert results.size() > 0
+            
+            // Verify structure of first item
+            def item = results[0]
+            
+            // Check meta key exists
+            assert item.containsKey('meta')
+            assert item.meta instanceof Map
+            assert item.meta.containsKey('subject')
+            
+            // Check suffixes at top level (not under 'data')
+            assert !item.containsKey('data')
+            assert !item.containsKey('bidsParentDir')
+            
+            // Check that files are absolute paths
+            def firstSuffix = item.keySet().find { it != 'meta' }
+            if (firstSuffix) {
+                def suffixData = item[firstSuffix]
+                assert suffixData instanceof Map
+                
+                // Find a file path
+                def filePath = null
+                if (suffixData.nii) filePath = suffixData.nii
+                else if (suffixData.json) filePath = suffixData.json
+                
+                if (filePath) {
+                    // Nextflow paths are Maps with file properties
+                    assert filePath.absolute == true || (filePath instanceof File && filePath.isAbsolute())
+                }
+            }
+        }
+    }
+
+    test("Sequential set - Files as lists") {
+        when {
+            params {
+                bids_dir = "${baseDir}/data/custom/ds-mtsat"
+                config = "${baseDir}/configs/config_mtsat.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.test_results
+            
+            def results = workflow.out.test_results
+            collect()
+            assert results.size() > 0
+            
+            def item = results[0]
+            
+            // Check meta exists
+            assert item.containsKey('meta')
+            assert item.meta.subject
+            
+            // Check dwi suffix at top level with named groups
+            if (item.containsKey('dwi')) {
+                def dwi = item.dwi
+                assert dwi instanceof Map
+                
+                // Should have named groups (ap, pa, etc)
+                def groups = dwi.keySet()
+                assert groups.size() > 0
+                
+                // Each group should have file references
+                def firstGroup = dwi[groups[0]]
+                assert firstGroup instanceof Map
+                
+                // Files should be absolute
+                if (firstGroup.nii) {
+                    def niiPath = firstGroup.nii
+                    // Nextflow paths are Maps with file properties
+                    assert niiPath.absolute == true || (niiPath instanceof File && niiPath.isAbsolute())
+                }
+            }
+        }
+    }
+
+    test("Sequential set - Files as lists") {
+        when {
+            params {
+                bids_dir = "${baseDir}/data/custom/ds-mtsat"
+                config = "${baseDir}/configs/config_mtsat.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.test_results
+            
+            def results = workflow.out.test_results
+            collect()
+            assert results.size() > 0
+            
+            def item = results[0]
+            
+            // Check meta exists
+            assert item.containsKey('meta')
+            assert item.meta.subject
+            
+            // TB1DAM is a sequential set - should have lists of files
+            if (item.containsKey('TB1DAM')) {
+                def tb1dam = item.TB1DAM
+                assert tb1dam instanceof Map
+                
+                // Sequential sets have file extension keys with lists of files
+                def niiFiles = tb1dam.nii
+                if (niiFiles instanceof List) {
+                    assert niiFiles.size() > 0
+                    def firstFile = niiFiles[0]
+                    // Nextflow paths are Maps with file properties
+                    assert firstFile.absolute == true || (firstFile instanceof File && firstFile.isAbsolute())
+                }
+            }
+        }
+    }
+
+    test("Legacy format opt-out") {
+        when {
+            params {
+                bids_dir = "${baseDir}/data/bids-examples/asl001"
+                config = "${baseDir}/configs/config_asl.yaml"
+                use_legacy = true
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.test_results
+            
+            def results = workflow.out.test_results
+            collect()
+            assert results.size() > 0
+            
+            // Legacy format is a 2-element list [groupingKey, enrichedData]
+            def item = results[0]
+            assert item instanceof List
+            assert item.size() == 2
+            
+            def groupingKey = item[0]
+            def enrichedData = item[1]
+            
+            assert groupingKey instanceof List
+            assert enrichedData instanceof Map
+            assert enrichedData.containsKey('data')
+            assert enrichedData.containsKey('bidsParentDir')
+        }
+    }
+}

@@ -27,7 +27,7 @@ workflow {
     )
     
     left1
-        .combineBy(right1, { it.key }, { it.key })
+        .combineBy(right1, { it.key })
         .count()
         .view { count ->
             def end1 = System.currentTimeMillis()
@@ -46,7 +46,7 @@ workflow {
     )
     
     left2
-        .combineBy(right2, { it.key }, { it.key })
+        .combineBy(right2, { it.key })
         .count()
         .view { count ->
             def end2 = System.currentTimeMillis()
@@ -71,7 +71,7 @@ workflow {
     )
     
     subjects
-        .combineBy(sessions, { it.subject }, { it.subject })
+        .combineBy(sessions, { it.subject })
         .count()
         .view { count ->
             def end3 = System.currentTimeMillis()

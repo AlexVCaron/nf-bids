@@ -179,8 +179,7 @@ class BidsExtension extends PluginExtensionPoint {
      * // Combine by subject ID (produces cartesian product for duplicates)
      * subjects.combineBy(
      *   sessions,
-     *   { it.id },     // extract key from left
-     *   { it.id }      // extract key from right
+     *   { it.id }      // extract key from both left and right
      * )
      * .view { key, subj, sess ->
      *   "Subject ${key}: age=${subj.age}, session=${sess.session}"

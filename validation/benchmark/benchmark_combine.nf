@@ -72,8 +72,7 @@ workflow test_small_combineby {
     left
         .combineBy(
             right,
-            { it.key },  // extract key from left
-            { it.key }   // extract key from right
+            { it.key }  // extract key from both left and right (same extractor)
         )
         .subscribe(
             onNext: { },
@@ -100,7 +99,7 @@ workflow test_medium_combineby {
     def right = Channel.from(generateKeyedData(60, 'right', 10))
     
     left
-        .combineBy(right, { it.key }, { it.key })
+        .combineBy(right, { it.key })
         .subscribe(
             onNext: { },
             onComplete: {
@@ -126,7 +125,7 @@ workflow test_large_combineby {
     def right = Channel.from(generateKeyedData(200, 'right', 20))
     
     left
-        .combineBy(right, { it.key }, { it.key })
+        .combineBy(right, { it.key })
         .subscribe(
             onNext: { },
             onComplete: {
@@ -162,7 +161,7 @@ workflow test_bids_combineby {
     def right = Channel.from(sessions)
     
     left
-        .combineBy(right, { it.subject }, { it.subject })
+        .combineBy(right, { it.subject })
         .subscribe(
             onNext: { },
             onComplete: {

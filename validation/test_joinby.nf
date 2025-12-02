@@ -109,7 +109,7 @@ workflow {
     )
     
     left
-        .joinBy(right, { it.id }, { it.id }, [remainder: false])
+        .joinBy(right, { it.id }, [remainder: false])
         .map { key, l, r ->
             println "  Matched: ${key} -> val=${l.val}, data=${r.data}"
             [id: key, val: l.val, data: r.data]
@@ -131,7 +131,7 @@ workflow {
     )
     
     left2
-        .joinBy(right2, { it.id }, { it.id }, [remainder: true])
+        .joinBy(right2, { it.id }, [remainder: true])
         .map { key, l, r ->
             def leftId = l?.id ?: 'null'
             def rightId = r?.id ?: 'null'

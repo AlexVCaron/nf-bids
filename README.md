@@ -39,15 +39,82 @@ include { fromBIDS } from 'plugin/nf-bids'
 include { groupTupleBy; joinBy; combineBy } from 'plugin/nf-bids'
 
 workflow {
-    // Load BIDS dataset
+    // Load BIDS dataset with flattened output (default)
     Channel.fromBIDS(
         '/path/to/bids/dataset',
         '/path/to/config.yaml'
     )
-    .groupTupleBy { it.subject }  // Group by subject
+    .map { item ->
+        // Access metadata through item.meta
+        def subject = item.meta.subject
+        def session = item.meta.session
+        
+        // Access data through top-level suffixes (absolute File paths)
+        def t1w = item.T1w.nii    // No file() or bidsParentDir needed
+        def json = item.T1w.json
+        
+        [subject, session, t1w, json]
+    }
+    .groupTupleBy { it[0] }  // Group by subject
     .view()
 }
 ```
+
+### Output Format Examples
+
+The flattened output structure provides intuitive access to BIDS data:
+
+**Plain Set (single file per suffix):**
+```groovy
+[
+    meta: [subject: 'sub-01', session: 'ses-01'],
+    T1w: [
+        nii: file('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
+        json: file('/data/bids/sub-01/anat/sub-01_T1w.json')
+    ]
+]
+// Access: item.meta.subject, item.T1w.nii
+```
+
+**Named Set (multiple acquisition directions):**
+```groovy
+[
+    meta: [subject: 'sub-01', session: 'ses-01'],
+    dwi: [
+        ap: [
+            nii: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
+            bval: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval')
+        ],
+        pa: [
+            nii: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
+            bval: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval')
+        ]
+    ]
+]
+// Access: item.dwi.ap.nii, item.dwi.pa.bval
+```
+
+**Sequential Set (multiple runs):**
+```groovy
+[
+    meta: [subject: 'sub-01', session: 'ses-01'],
+    bold: [
+        nii: [
+            file('/data/bids/sub-01/func/sub-01_run-01_bold.nii.gz'),
+            file('/data/bids/sub-01/func/sub-01_run-02_bold.nii.gz')
+        ],
+        json: [
+            file('/data/bids/sub-01/func/sub-01_run-01_bold.json'),
+            file('/data/bids/sub-01/func/sub-01_run-02_bold.json')
+        ]
+    ]
+]
+// Access: item.bold.nii[0], item.bold.nii.size()
+```
+
+**All file paths are absolute `File` objects** — no need for `file(bidsParentDir) /` constructions.
+
+For legacy workflows, disable flattening: `Channel.fromBIDS(bids_dir, config, [flatten_output: false])`
 
 ### API Reference
 
@@ -92,15 +159,24 @@ anatomical
 ```
 
 **`combineBy(rightChannel, leftKeyExtractor, [rightKeyExtractor], [options])`**  
-Combine channels by extracting keys from left/right items and emitting `[key, leftItem, rightItem]` tuples. Optionally supply a single `leftKeyExtractor` when left/right items share the same key structure.
+Combine channels by extracting keys from left/right items and emitting `[key, leftItem, rightItem]` tuples. Items are matched by key, with cartesian product within each key group.
 
 ```groovy
+// Match subjects with their sessions by subject ID
+subjects = Channel.of([id: 'sub-01', age: 25], [id: 'sub-02', age: 30])
+sessions = Channel.of([id: 'sub-01', session: 'ses-01'], 
+                      [id: 'sub-01', session: 'ses-02'],
+                      [id: 'sub-02', session: 'ses-01'])
+
 subjects
-    .combineBy(sessions, { it }, { it })
+    .combineBy(sessions, { it.id })
     .filter { key, subj, sess ->
-        // Custom pairing logic
-        sess.number <= subj.max_sessions
+        // Custom filtering logic
+        subj.age >= 18
     }
+// Produces: [sub-01, [id:sub-01, age:25], [id:sub-01, session:ses-01]]
+//           [sub-01, [id:sub-01, age:25], [id:sub-01, session:ses-02]]
+//           [sub-02, [id:sub-02, age:30], [id:sub-02, session:ses-01]]
 ```
 
 **See:** [Channel Operators Documentation](docs/channel-operators.md) for complete reference
@@ -139,8 +215,8 @@ subjects
 
 ### Closure-Based Channel Operators
 ✅ **Semantic Grouping** - `groupTupleBy { it.subject }` vs `groupTuple(by: 0)`  
-✅ **Flexible Joins** - `joinBy(right, { it.key }, { it.key })` with any data structure  
-✅ **Key-Based Combinations** - `combineBy(right, { it.id }, { it.id })` with cartesian products  
+✅ **Flexible Joins** - `joinBy(right, { it.key })` with any data structure  
+✅ **Key-Based Combinations** - `combineBy(right, { it.id })` with cartesian products  
 ✅ **Composite Keys** - `groupTupleBy { "${it.subject}_${it.session}" }` without extra steps  
 ✅ **Competitive Performance** - ~10-30ms overhead, sub-200ms for typical BIDS workflows ([benchmark](docs/PERFORMANCE_BENCHMARK.md))  
 

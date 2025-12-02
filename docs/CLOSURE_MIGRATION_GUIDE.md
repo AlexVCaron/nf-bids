@@ -273,7 +273,7 @@ left = channel.of([id: 'A', val: 1], [id: 'B', val: 2])
 right = channel.of([id: 'A', val: 10])
 
 left
-    .joinBy(right, { it.id }, { it.id }, [remainder: true])
+    .joinBy(right, { it.id }, [remainder: true])
     .view { l, r ->
         "${l?.id}: ${l?.val}, ${r?.val}"
     }
@@ -328,7 +328,7 @@ analyses = channel.of([name: 'basic', min_quality: 0.70],
                       [name: 'advanced', min_quality: 0.90])
 
 images
-    .combineBy(analyses, { 0 })
+    .combineBy(analyses, { img -> img.id }, { a -> a.name })
     .filter { img, analysis ->
         img.quality >= analysis.min_quality
     }
@@ -361,7 +361,7 @@ protocols = channel.of([name: 'proto1', modality: 'T1w'],
                        [name: 'proto2', modality: 'T2w'])
 
 scans
-    .combineBy(protocols, { it.modality }, { it.modality })
+    .combineBy(protocols, { it.modality })
     .filter { scan, proto ->
         scan.modality == proto.modality
     }
@@ -420,8 +420,8 @@ scans_ch
 **Before/After:** (Functionally equivalent)
 ```nextflow
 subjects
-    .combineBy(smoothing_values, { it }, { it })
-    .combineBy(threshold_values, { it }, { it })
+    .combineBy(smoothing_values, { it })
+    .combineBy(threshold_values, { it })
 
 // Same as:
 subjects
