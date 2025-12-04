@@ -6,7 +6,7 @@ A Nextflow plugin that provides:
 - **BIDS dataset parsing** through channel factories
 - **Closure-based channel operators** for flexible data grouping and joining
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.5-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.5)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.5-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -28,7 +28,7 @@ To install it, add the lines below in your `nextflow.config` file:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.5'
+    id 'nf-bids@0.1.0-beta.'
 }
 ```
 
