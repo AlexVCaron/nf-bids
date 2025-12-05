@@ -37,10 +37,10 @@ class MixedSetHandler extends BaseSetHandler {
     }
 
     @Override
-    protected Map getSetIndex(BidsFile file, Map setConfig) {
-        // For mixed sets, use the suffix and the named_group
+    protected Map getSetIndex(BidsFile file, Map setConfig, String configKey) {
+        // For mixed sets, use the suffix and the named_group, plus config key
         def groupName = findMatchingMixedGroupName(file, setConfig)
-        return [suffix: file.suffix, group: groupName]
+        return [fileSuffix: file.suffix, configKey: configKey, group: groupName]
     }
 
     @Override
@@ -50,26 +50,30 @@ class MixedSetHandler extends BaseSetHandler {
             return
         }
 
-        if (!sets[index.suffix]) {
-            sets[index.suffix] = [
+        String configKey = index.configKey
+        String fileSuffix = index.fileSuffix
+        
+        if (!sets[configKey]) {
+            sets[configKey] = [
                 files: [:],
                 entities: ordering.entities,
-                order: 'hierarchical'
+                order: 'hierarchical',
+                fileSuffix: fileSuffix
             ]
         }
 
-        if (!sets[index.suffix].files[index.group]) {
-            sets[index.suffix].files[index.group] = []
+        if (!sets[configKey].files[index.group]) {
+            sets[configKey].files[index.group] = []
         }
-        sets[index.suffix].files[index.group] << [
+        sets[configKey].files[index.group] << [
             file: file,
             sequenceValues: ordering.values
         ]
 
-        if (!allFiles.containsKey(index.suffix)) {
-            allFiles[index.suffix] = []
+        if (!allFiles.containsKey(fileSuffix)) {
+            allFiles[fileSuffix] = []
         }
-        allFiles[index.suffix] << file
+        allFiles[fileSuffix] << file
     }
 
     /**
@@ -98,28 +102,28 @@ class MixedSetHandler extends BaseSetHandler {
         def channelData = new BidsChannelData()
 
         // Add suffix data as maps of {groupName -> {extension: [paths]}}
-        sets.each { suffix, setData ->
-            // Get parts configuration for this suffix
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
-                setName(), suffix, suffixMapping)
+        sets.each { configKey, setData ->
+            String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
+            
+            // Get parts configuration using config key
             def suffixConfig = config.get(configKey) as Map
             def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
 
             def groupMap = setData.files.collectEntries { groupName, items ->
                 List<BidsFile> files = items.collect { it.file }
-                def nestedMap = nestedMapForFiles(datasetRoot, files, allFiles.get(suffix, []))
+                def nestedMap = nestedMapForFiles(datasetRoot, files, allFiles.get(fileSuffix, []))
 
                 // Apply parts grouping if configured
                 if (partsConfig) {
-                    nestedMap = applyPartsGrouping(nestedMap, partsConfig, allFiles.get(suffix, []))
+                    nestedMap = applyPartsGrouping(nestedMap, partsConfig, allFiles.get(fileSuffix, []))
                 }
 
                 [groupName, nestedMap]
             }
-            channelData.addSuffixData(suffix, groupMap)
+            channelData.addSuffixData(configKey, groupMap)
 
-            // Get all related files for this suffix
-            List<BidsFile> relatedFiles = allFiles.get(suffix, [])
+            // Get all related files for this file suffix
+            List<BidsFile> relatedFiles = allFiles.get(fileSuffix, [])
 
             // Add all file paths (with relative paths)
             relatedFiles.each { file ->

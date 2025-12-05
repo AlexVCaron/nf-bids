@@ -23,13 +23,13 @@ import groovyx.gpars.dataflow.DataflowQueue
 abstract class BaseSetHandler {
 
     final static String getSetType(Map suffixConfig) {
-        if (suffixConfig.plain_set) {
+        if (suffixConfig.containsKey('plain_set')) {
             return "plain_set"
-        } else if (suffixConfig.named_set) {
+        } else if (suffixConfig.containsKey('named_set')) {
             return "named_set"
-        } else if (suffixConfig.sequential_set) {
+        } else if (suffixConfig.containsKey('sequential_set')) {
             return "sequential_set"
-        } else if (suffixConfig.mixed_set) {
+        } else if (suffixConfig.containsKey('mixed_set')) {
             return "mixed_set"
         }
 
@@ -70,12 +70,13 @@ abstract class BaseSetHandler {
                         return
                     }
 
-                    // If it does, we get its suffix for downstream packing
+                    // Get both file suffix and config key for downstream packing
                     String suffix = file.suffix
-                    BidsLogger.logProgress(logGroup(), "Matched file suffix: ${suffix}")
+                    String configKey = SuffixMapper.resolveConfigKey(setName(), suffix, suffixMapping)
+                    BidsLogger.logProgress(logGroup(), "Matched file suffix: ${suffix}, config key: ${configKey}")
 
-                    // We find its index in the current packing scheme
-                    Map index = getSetIndex(file, setConfig)
+                    // We find its index in the current packing scheme (with both suffix and config key)
+                    Map index = getSetIndex(file, setConfig, configKey)
                     if (!index) {
                         BidsLogger.logProgress(logGroup(), "Could not determine set index for file: ${file.path}")
                         return
@@ -95,27 +96,28 @@ abstract class BaseSetHandler {
                 }
                 .with { packedData ->
                     // Filter and sort sets using functional chain
-                    Map filteredSortedSets = packedData.sets.findAll { suffix, subset ->
-                        String configKey = SuffixMapper.resolveConfigKey(setName(), suffix, suffixMapping)
+                    // Note: sets are now keyed by configKey, not file suffix
+                    Map filteredSortedSets = packedData.sets.findAll { configKey, subset ->
+                        String fileSuffix = subset.fileSuffix ?: configKey
                         Map suffixConfig = config.get(configKey) as Map
 
                         // Validate required fields/groups are present
                         if (suffixConfig?.required && !(suffixConfig.required as List).isEmpty()) {
                             List<String> required = suffixConfig.required as List<String>
-                            Set<String> available = getAvailableKeys(subset, packedData.allFiles.get(suffix, []))
+                            Set<String> available = getAvailableKeys(subset, packedData.allFiles.get(fileSuffix, []))
                             /* groovylint-disable-next-line LineLength */
-                            BidsLogger.logProgress(logGroup(), "Checking required for ${suffix}: required=${required}, available=${available}")
+                            BidsLogger.logProgress(logGroup(), "Checking required for ${configKey}: required=${required}, available=${available}")
 
                             List<String> missing = required.findAll { field -> !available.contains(field) }
                             if (missing) {
                                 /* groovylint-disable-next-line LineLength */
-                                BidsLogger.logProgress(logGroup(), "Suffix ${suffix} missing required fields: ${missing}, filtering out")
+                                BidsLogger.logProgress(logGroup(), "Config key ${configKey} missing required fields: ${missing}, filtering out")
                                 return false
                             }
                         }
                         return true
                     }
-                    .collectEntries { suffix, subset ->
+                    .collectEntries { configKey, subset ->
                         if (subset.entities) {
                             /* groovylint-disable-next-line IfStatementCouldBeTernary, Indentation */
                             if (subset.entities.size() == 1) {
@@ -123,8 +125,8 @@ abstract class BaseSetHandler {
                                 /* groovylint-disable-next-line Indentation */
                                 return [
                                     /* groovylint-disable-next-line NestedBlockDepth */
-                                    (suffix): subset + subset.findAll { name, val ->
-                                        return !['entities', 'order'].contains(name)
+                                    (configKey): subset + subset.findAll { name, val ->
+                                        return !['entities', 'order', 'fileSuffix'].contains(name)
                                     }
                                     /* groovylint-disable-next-line NestedBlockDepth */
                                     .collectEntries { subName, items ->
@@ -143,13 +145,13 @@ abstract class BaseSetHandler {
                             }
                             /* groovylint-disable-next-line Indentation */
                             return [
-                                (suffix): subset + (subset.order == 'flat'
+                                (configKey): subset + (subset.order == 'flat'
                                     ? [files: applyFlatOrdering(subset.files)]
                                     : [files: applyHierarchicalOrdering(subset.files)])
                             ]
                         }
 
-                        return [(suffix): subset]
+                        return [(configKey): subset]
                     }
 
                     processGroup(
@@ -197,9 +199,10 @@ abstract class BaseSetHandler {
      *
      * @param file BIDS file
      * @param setConfig Set configuration
-     * @return Set index
+     * @param configKey Configuration key (for suffix_maps_to support)
+     * @return Set index containing both fileSuffix and configKey
      */
-    protected abstract Map getSetIndex(BidsFile file, Map setConfig)
+    protected abstract Map getSetIndex(BidsFile file, Map setConfig, String configKey)
 
     /**
      * Pack file into set structure

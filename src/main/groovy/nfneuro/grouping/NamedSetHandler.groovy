@@ -42,10 +42,10 @@ class NamedSetHandler extends BaseSetHandler {
     }
 
     @Override
-    protected Map getSetIndex(BidsFile file, Map setConfig) {
-        // For named sets, use the suffix, plus grouping entities as index
+    protected Map getSetIndex(BidsFile file, Map setConfig, String configKey) {
+        // For named sets, use the suffix, plus grouping entities as index, plus config key
         def groupName = findMatchingGroupName(file, setConfig)
-        return [suffix: file.suffix, group: groupName]
+        return [fileSuffix: file.suffix, configKey: configKey, group: groupName]
     }
 
     @Override
@@ -55,15 +55,18 @@ class NamedSetHandler extends BaseSetHandler {
             return
         }
 
-        if (!sets[index.suffix]) {
-            sets[index.suffix] = [files: [:]]
+        String configKey = index.configKey
+        String fileSuffix = index.fileSuffix
+        
+        if (!sets[configKey]) {
+            sets[configKey] = [files: [:], fileSuffix: fileSuffix]
         }
-        sets[index.suffix].files[index.group] = [file: file]
+        sets[configKey].files[index.group] = [file: file]
 
-        if (!allFiles.containsKey(index.suffix)) {
-            allFiles[index.suffix] = []
+        if (!allFiles.containsKey(fileSuffix)) {
+            allFiles[fileSuffix] = []
         }
-        allFiles[index.suffix] << file
+        allFiles[fileSuffix] << file
     }
 
     /**
@@ -94,15 +97,12 @@ class NamedSetHandler extends BaseSetHandler {
 
         // Add suffix data as maps of {groupName -> {extension: filePath}}
         // Use the resolved config key (virtual suffix) for output, not the file suffix
-        namedSets.each { suffix, setData ->
-            BidsLogger.logProgress(logGroup(), "Emitting named set for suffix: ${suffix}")
+        namedSets.each { configKey, setData ->
+            String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
+            BidsLogger.logProgress(logGroup(), "Emitting named set for config key: ${configKey}, file suffix: ${fileSuffix}")
 
-            // Resolve to the config key (e.g., "epi" -> "epi_fullreverse")
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
-                setName(), suffix, suffixMapping ?: [:])
-
-            // Get all related files for this suffix
-            List<BidsFile> relatedFiles = allFiles.get(suffix, [])
+            // Get all related files for this file suffix
+            List<BidsFile> relatedFiles = allFiles.get(fileSuffix, [])
 
             // Get parts configuration for this suffix
             def suffixConfig = config.get(configKey) as Map
