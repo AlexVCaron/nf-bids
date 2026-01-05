@@ -39,9 +39,9 @@ class BidsHandlerFlattenSpec extends Specification {
         flat.meta.subject == 'sub-01'
         flat.meta.session == 'ses-01'
         flat.T1w instanceof Map
-        flat.T1w.nii instanceof java.io.File
+        flat.T1w.nii instanceof java.nio.file.Path
         flat.T1w.nii.isAbsolute()
-        flat.T1w.json instanceof java.io.File
+        flat.T1w.json instanceof java.nio.file.Path
         flat.T1w.json.isAbsolute()
     }
 
@@ -74,9 +74,9 @@ class BidsHandlerFlattenSpec extends Specification {
 
         then:
         flat.dwi instanceof Map
-        flat.dwi.ap.nii instanceof java.io.File
-        flat.dwi.ap.bval instanceof java.io.File
-        flat.dwi.ap.bvec instanceof java.io.File
+        flat.dwi.ap.nii instanceof java.nio.file.Path
+        flat.dwi.ap.bval instanceof java.nio.file.Path
+        flat.dwi.ap.bvec instanceof java.nio.file.Path
         flat.dwi.ap.nii.isAbsolute()
     }
 
@@ -106,7 +106,7 @@ class BidsHandlerFlattenSpec extends Specification {
 
         then:
         flat.bold.nii instanceof List
-        flat.bold.nii.every { it instanceof java.io.File }
+        flat.bold.nii.every { it instanceof java.nio.file.Path }
         flat.bold.nii.every { it.isAbsolute() }
     }
 
@@ -138,7 +138,7 @@ class BidsHandlerFlattenSpec extends Specification {
         def emitted = handler.@target.val
         emitted instanceof Map
         emitted.meta.subject == 'sub-01'
-        emitted.T1w.nii instanceof java.io.File
+        emitted.T1w.nii instanceof java.nio.file.Path
     }
 
     def 'should include enrichedData top level entity keys in meta'() {

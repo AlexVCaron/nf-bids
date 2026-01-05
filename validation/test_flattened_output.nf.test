@@ -43,8 +43,9 @@ nextflow_workflow {
                 else if (suffixData.json) filePath = suffixData.json
                 
                 if (filePath) {
-                    // Nextflow paths are Maps with file properties
-                    assert filePath.absolute == true || (filePath instanceof File && filePath.isAbsolute())
+                    // Files should be absolute paths (may be String or Path after serialization)
+                    def pathStr = filePath.toString()
+                    assert pathStr.startsWith('/')
                 }
             }
         }
@@ -87,8 +88,9 @@ nextflow_workflow {
                 // Files should be absolute
                 if (firstGroup.nii) {
                     def niiPath = firstGroup.nii
-                    // Nextflow paths are Maps with file properties
-                    assert niiPath.absolute == true || (niiPath instanceof File && niiPath.isAbsolute())
+                    // Files should be absolute paths (may be String or Path after serialization)
+                    def pathStr = niiPath.toString()
+                    assert pathStr.startsWith('/')
                 }
             }
         }
@@ -125,8 +127,9 @@ nextflow_workflow {
                 if (niiFiles instanceof List) {
                     assert niiFiles.size() > 0
                     def firstFile = niiFiles[0]
-                    // Nextflow paths are Maps with file properties
-                    assert firstFile.absolute == true || (firstFile instanceof File && firstFile.isAbsolute())
+                    // Files should be absolute paths (may be String or Path after serialization)
+                    def pathStr = firstFile.toString()
+                    assert pathStr.startsWith('/')
                 }
             }
         }

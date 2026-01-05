@@ -25,10 +25,10 @@ class SuffixMapper {
      * Build suffix mapping from configuration
      *
      * Scans all configuration entries for suffix_maps_to field and creates
-     * a mapping of file suffix -> config key
+     * a mapping of config key -> file suffix (inverted for collision-free lookups)
      *
      * @param config Full configuration map
-     * @return Map of suffix -> config key (e.g., "dwi" -> "dwi_fullreverse")
+     * @return Map of config key -> suffix (e.g., "dwi_fullreverse" -> "dwi")
      */
     static Map<String, Map<String, String>> suffixMapping(Map config) {
         Map<String, Map<String, String>> mapping = [:].withDefault { [:] }
@@ -46,10 +46,10 @@ class SuffixMapper {
                     String targetSuffix = suffixConfig.suffix_maps_to as String
                     String setType = BaseSetHandler.getSetType(suffixConfig)
 
-                    // Map: actual file suffix -> configuration key
-                    mapping[setType][targetSuffix] = configKey as String
+                    // Map: configuration key -> actual file suffix (INVERTED to prevent collision)
+                    mapping[setType][configKey as String] = targetSuffix
 
-                    BidsLogger.logProgress("suffix-mapping", "Suffix mapping for ${setType}: ${targetSuffix} -> ${configKey}")
+                    BidsLogger.logProgress("suffix-mapping", "Suffix mapping for ${setType}: ${configKey} -> ${targetSuffix}")
                 }
             }
         }
@@ -60,29 +60,32 @@ class SuffixMapper {
     /**
      * Resolve configuration key for a given file suffix
      *
-     * If suffix has a mapping (via suffix_maps_to), returns the mapped config key.
-     * Otherwise, returns the suffix itself as the config key.
+     * Searches through the inverted suffix mapping (configKey -> targetSuffix)
+     * to find which config key(s) map to the given suffix.
      *
      * @param setType Type of set (e.g., "plain_set", "named_set")
      * @param suffix File suffix from BIDS file
-     * @param mapping Suffix mapping from suffixMapping()
-     * @return Configuration key to look up
+     * @param mapping Suffix mapping from suffixMapping() (configKey -> targetSuffix)
+     * @return List of configuration keys that map to this suffix
      */
-    static String resolveConfigKey(String setType, String suffix, Map<String, Map<String, String>> mapping) {
+    static List<String> resolveConfigKeys(String setType, String suffix, Map<String, Map<String, String>> mapping) {
         // Handle null or empty mapping
-        if (!mapping) {
-            return suffix
+        if (!mapping || !mapping[setType]) {
+            return [suffix]
         }
 
-        // If there's a mapping for this suffix, use it
-        if (mapping[setType].containsKey(suffix)) {
-            String mappedKey = mapping[setType][suffix]
-            BidsLogger.logProgress("suffix-mapping", "Resolving suffix '${suffix}' to config key '${mappedKey}'")
-            return mappedKey
+        // Find all config keys that map to this suffix (inverted search)
+        List<String> matchingKeys = mapping[setType]
+            .findAll { configKey, targetSuffix -> targetSuffix == suffix }
+            .collect { configKey, targetSuffix -> configKey }
+
+        if (matchingKeys) {
+            BidsLogger.logProgress("suffix-mapping", "Resolved suffix '${suffix}' to config keys: ${matchingKeys}")
+            return matchingKeys
         }
 
-        // Otherwise, config key is same as suffix
-        return suffix
+        // If no mapping found, config key is same as suffix
+        return [suffix]
     }
 
     /**
@@ -100,6 +103,22 @@ class SuffixMapper {
             return configValue.suffix_maps_to as String
         }
         return configKey
+    }
+
+    /**
+     * Get target suffix from inverted mapping for a config key
+     *
+     * @param setType Type of set (e.g., "plain_set", "named_set")
+     * @param configKey Configuration key
+     * @param mapping Suffix mapping from suffixMapping() (configKey -> targetSuffix)
+     * @return Target suffix, or configKey if no mapping exists
+     */
+    static String getTargetSuffix(String setType, String configKey, Map<String, Map<String, String>> mapping) {
+        if (!mapping || !mapping[setType]) {
+            return configKey
+        }
+
+        return mapping[setType].get(configKey, configKey)
     }
 
 }

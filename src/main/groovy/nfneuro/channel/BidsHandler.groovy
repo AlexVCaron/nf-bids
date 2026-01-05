@@ -12,6 +12,10 @@ import nextflow.Global
 import nextflow.Session
 import nextflow.Channel
 import nextflow.extension.CH
+import nextflow.file.FileHelper
+
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import nfneuro.plugin.grouping.*
 import nfneuro.plugin.model.*
@@ -207,14 +211,43 @@ class BidsHandler {
         // Clone data map so original structure is not mutated; we will move suffixes to top level
         Map dataCopy = [:]
 
+        /**
+         * Convert values to Nextflow-compatible types for channel emission.
+         * 
+         * File paths are converted to java.nio.file.Path objects (not java.io.File)
+         * to ensure compatibility with Nextflow process path inputs and to support
+         * remote file systems (S3, GCS, Azure).
+         * 
+         * Uses FileHelper.asPath() which:
+         * - Handles local files and remote URIs (s3://, gs://, az://)
+         * - Auto-loads required plugins (nf-amazon, nf-google, nf-azure)
+         * - Resolves relative paths against bidsParentDir
+         * 
+         * @param val Value to convert (String path, Path, List, Map, or other)
+         * @return Converted value with Path objects for file paths
+         */
         Closure convertValue
         convertValue = { Object val ->
             if (val == null) return null
-            if (val instanceof File) return val
+            if (val instanceof Path) return val  // Already a Path, return as-is
             if (val instanceof String) {
-                File f = new File(val)
-                if (f.isAbsolute()) return f
-                return new File(bidsParentDir ?: '', val)
+                String pathStr = val
+                
+                // Use FileHelper.asPath for robust path handling
+                // Handles local files, URIs (s3://, gs://, az://), absolute and relative paths
+                Path result
+                if (pathStr.contains('://') || pathStr.startsWith('/')) {
+                    // Absolute path or URI - parse directly
+                    result = FileHelper.asPath(pathStr)
+                } else {
+                    // Relative path - resolve against bidsParentDir
+                    String fullPath = bidsParentDir 
+                        ? Paths.get(bidsParentDir, pathStr).toString() 
+                        : pathStr
+                    result = FileHelper.asPath(fullPath)
+                }
+                
+                return result  // Returns java.nio.file.Path
             }
             if (val instanceof List) {
                 return (val as List).collect { convertValue.call(it) }

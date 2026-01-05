@@ -8,6 +8,33 @@ All notable changes and development history for the nf-bids plugin.
 
 ### ⚠️ BREAKING CHANGES
 
+#### Java File to Path Conversion
+
+Channel outputs now use `java.nio.file.Path` instead of `java.io.File` for all file paths to ensure compatibility with Nextflow process `path` inputs and support for remote file systems.
+
+**Impact:**
+- ✅ **Fixed:** Processes can now consume plugin output with `path` inputs (previously failed with "Unexpected path value: [java.io.File]")
+- ✅ **Improved:** Full support for cloud storage (S3, GCS, Azure Blob Storage)
+- ✅ **Enhanced:** Richer Path API for file operations
+
+**What Changed:**
+- All file paths in channel output are now `java.nio.file.Path` objects
+- Uses `FileHelper.asPath()` for robust path handling
+- Supports local files, URIs (s3://, gs://, az://), and relative paths
+
+**Migration:** 
+Most users won't need to change anything - Nextflow processes automatically handle Path objects. If you were using File-specific methods:
+```groovy
+// Old: def file = item.T1w; file.listFiles()
+// New: def path = item.T1w; path.toFile().listFiles()  // or Files.list(path)
+```
+
+### Fixed
+- **Critical:** File path compatibility with Nextflow process path inputs
+- Channel outputs now emit Path objects compatible with process staging
+
+### ⚠️ BREAKING CHANGES
+
 #### combineBy Operator Redesign
 
 The `combineBy` operator has been completely redesigned to use **key extraction** instead of **filter predicates**, aligning with `groupTupleBy` and `joinBy` patterns.

@@ -65,14 +65,15 @@ abstract class BaseSetHandler {
                     // We first check if a file matches any set configuration
                     BidsLogger.logProgress(logGroup(), "Processing file: ${file.path}")
 
-                    Map setConfig = findMatchingGrouping(file, config, suffixMapping)
-                    if (setConfig == null) {
+                    Map matchResult = findMatchingGrouping(file, config, suffixMapping)
+                    if (matchResult == null) {
                         return
                     }
 
                     // Get both file suffix and config key for downstream packing
                     String suffix = file.suffix
-                    String configKey = SuffixMapper.resolveConfigKey(setName(), suffix, suffixMapping)
+                    String configKey = matchResult.configKey
+                    Map setConfig = matchResult.setConfig
                     BidsLogger.logProgress(logGroup(), "Matched file suffix: ${suffix}, config key: ${configKey}")
 
                     // We find its index in the current packing scheme (with both suffix and config key)
@@ -323,10 +324,13 @@ abstract class BaseSetHandler {
     /**
      * Find matching grouping pattern for given file
      *
+     * Tries all candidate config keys for the file's suffix and returns
+     * the first one that passes all validation checks.
+     *
      * @param file BIDS file
      * @param config Configuration
-     * @param suffixMapping Suffix to config key mapping
-     * @return Matching grouping configuration or null
+     * @param suffixMapping Suffix to config key mapping (inverted: configKey -> targetSuffix)
+     * @return Map with configKey and setConfig if match found, null otherwise
      *
      * @reference findMatchingGrouping function:
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L1-L35
@@ -338,52 +342,64 @@ abstract class BaseSetHandler {
             return
         }
 
-        // Resolve config key using suffix mapping
-        String configKey = SuffixMapper.resolveConfigKey(setName(), suffix, suffixMapping)
-        BidsLogger.logProgress(logGroup(), "Resolved config key for suffix '${suffix}': ${configKey}")
+        // Resolve all potential config keys for this suffix
+        List<String> candidateKeys = SuffixMapper.resolveConfigKeys(setName(), suffix, suffixMapping)
+        BidsLogger.logProgress(logGroup(), "Candidate config keys for suffix '${suffix}': ${candidateKeys}")
 
-        Map suffixConfig = config.get(configKey) as Map
-        if (!suffixConfig || !(suffixConfig instanceof Map)) {
-            BidsLogger.logProgress(logGroup(), "No configuration for suffix: ${suffix} - FILTERED")
-            return
-        }
-
-        // Check for set type configuration
-        Map setConfig = getSetConfig(suffixConfig as Map)
-        if (setConfig == null) {
-            BidsLogger.logProgress(logGroup(), "No configuration for suffix: ${suffix} - FILTERED")
-            return
-        }
-
-        BidsLogger.logProgress(logGroup(), "Found configuration for ${suffix}")
-
-        // Validate entity matching if filter specified
-        if (setConfig.filter) {
-            if (!BidsEntityUtils.entitiesMatch(file.entities, setConfig.filter as List)) {
-                BidsLogger.logProgress(logGroup(), "File filtered by entity pattern: ${file.path}")
-                return
+        // Try each candidate key until we find a match
+        for (String configKey : candidateKeys) {
+            Map suffixConfig = config.get(configKey) as Map
+            if (!suffixConfig || !(suffixConfig instanceof Map)) {
+                BidsLogger.logProgress(logGroup(), "No configuration for config key: ${configKey} - SKIPPING")
+                continue
             }
-        }
 
-        // Exclude files with specific entities if specified
-        if (setConfig.exclude_entities) {
-            for (String entityName : setConfig.exclude_entities as List<String>) {
-                String normalizedEntity = BidsEntity.normalizeName(entityName)
-                if (file.hasEntity(normalizedEntity)) {
-                    BidsLogger.logProgress(logGroup(), "File excluded by entity ${entityName}: ${file.path}")
-                    return
+            // Check for set type configuration
+            Map setConfig = getSetConfig(suffixConfig as Map)
+            if (setConfig == null) {
+                BidsLogger.logProgress(logGroup(), "No ${setName()} configuration for key: ${configKey} - SKIPPING")
+                continue
+            }
+
+            // Validate entity matching if filter specified
+            if (setConfig.filter) {
+                if (!BidsEntityUtils.entitiesMatch(file.entities, setConfig.filter as List)) {
+                    BidsLogger.logProgress(logGroup(), "File filtered by entity pattern for ${configKey}: ${file.path}")
+                    continue
                 }
             }
+
+            // Exclude files with specific entities if specified
+            if (setConfig.exclude_entities) {
+                boolean excluded = false
+                for (String entityName : setConfig.exclude_entities as List<String>) {
+                    String normalizedEntity = BidsEntity.normalizeName(entityName)
+                    if (file.hasEntity(normalizedEntity)) {
+                        BidsLogger.logProgress(logGroup(), "File excluded by entity ${entityName} for ${configKey}: ${file.path}")
+                        excluded = true
+                        break
+                    }
+                }
+                if (excluded) {
+                    continue
+                }
+            }
+
+            // Validate required entities are present
+            List<String> requiredEntities = setConfig.required_entities as List<String>
+            if (requiredEntities && !BidsEntityUtils.hasRequiredEntities(file, requiredEntities)) {
+                BidsLogger.logProgress(logGroup(), "File missing required entities for ${configKey}: ${file.path}")
+                continue
+            }
+
+            // Found a match!
+            BidsLogger.logProgress(logGroup(), "Matched file to config key: ${configKey}")
+            return [configKey: configKey, setConfig: setConfig]
         }
 
-        // Validate required entities are present
-        List<String> requiredEntities = setConfig.required_entities as List<String>
-        if (requiredEntities && !BidsEntityUtils.hasRequiredEntities(file, requiredEntities)) {
-            BidsLogger.logProgress(logGroup(), "File missing required entities: ${file.path}")
-            return
-        }
-
-        return setConfig as Map
+        // No match found
+        BidsLogger.logProgress(logGroup(), "No configuration matched for suffix: ${suffix} - FILTERED")
+        return null
     }
 
     /**
