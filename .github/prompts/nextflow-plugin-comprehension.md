@@ -832,9 +832,9 @@ class BidsExtension extends PluginExtensionPoint {
 
 ### Overview
 
-**Breaking Change in v0.1.0-beta.6:** The `Channel.fromBIDS()` factory now emits **flattened maps** by default instead of tuples. This provides better usability and cleaner code, but existing workflows need migration.
+**Breaking Change in 0.1.0-beta.9:** The `Channel.fromBIDS()` factory now emits **flattened maps** by default instead of tuples. This provides better usability and cleaner code, but existing workflows need migration.
 
-### Default Behavior (v0.1.0-beta.6+): Flattened Maps
+### Default Behavior (0.1.0-beta.9+): Flattened Maps
 
 **Signature:**
 ```groovy
@@ -962,7 +962,7 @@ Channel.fromBIDS(params.bids_dir, 'config.yaml')
     }
 ```
 
-**After (v0.1.0-beta.6+, recommended):**
+**After (0.1.0-beta.9+, recommended):**
 ```groovy
 Channel.fromBIDS(params.bids_dir, 'config.yaml')  // flatten_output: true (default)
     .map { item ->

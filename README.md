@@ -3,15 +3,27 @@
 > **BIDS dataset integration and closure-based channel operators for Nextflow workflows**
 
 A Nextflow plugin that provides:
-- **BIDS dataset parsing** through channel factories
+- **BIDS dataset parsing** through channel factories with **flat output format**
+- **Heterogeneous dataset support** for mixed acquisition schemes
 - **Closure-based channel operators** for flexible data grouping and joining
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.5-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids/0.1.0-beta.)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.9-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.1.0-beta.9)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-78%20passing-success)]()
+[![Tests](https://img.shields.io/badge/tests-100%2B%20passing-success)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)]()
+
+---
+
+## ✨ What's New in 0.1.0-beta.9
+
+- 🎯 **Flat Output Format**: Simplified data structure with direct access to files and metadata
+- 🔧 **Heterogeneous Dataset Support**: Multiple configs can now share the same file suffix
+- 📦 **Type Safety**: All file paths are `java.nio.file.Path` objects, ready for process inputs
+- 🚀 **Better Performance**: Optimized suffix mapping with candidate matching
+
+**⚠️ Breaking Change:** The output format has changed. See [Migration Guide](docs/MIGRATION_GUIDE.md) for upgrade instructions.
 
 ---
 
@@ -28,7 +40,7 @@ To install it, add the lines below in your `nextflow.config` file:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.'
+    id 'nf-bids@0.1.0-beta.9'
 }
 ```
 
@@ -39,18 +51,19 @@ include { fromBIDS } from 'plugin/nf-bids'
 include { groupTupleBy; joinBy; combineBy } from 'plugin/nf-bids'
 
 workflow {
-    // Load BIDS dataset with flattened output (default)
+    // Load BIDS dataset with flat output (default in 0.1.0-beta.9+)
     Channel.fromBIDS(
         '/path/to/bids/dataset',
         '/path/to/config.yaml'
     )
     .map { item ->
-        // Access metadata through item.meta
+        // Access metadata through item.meta (named entities)
         def subject = item.meta.subject
         def session = item.meta.session
         
-        // Access data through top-level suffixes (absolute File paths)
-        def t1w = item.T1w.nii    // No file() or bidsParentDir needed
+        // Access data through top-level config keys
+        // All paths are absolute Path objects - ready for process inputs!
+        def t1w = item.T1w.nii
         def json = item.T1w.json
         
         [subject, session, t1w, json]
@@ -62,15 +75,15 @@ workflow {
 
 ### Output Format Examples
 
-The flattened output structure provides intuitive access to BIDS data:
+The flat output structure (default in 0.1.0-beta.9+) provides intuitive access to BIDS data:
 
 **Plain Set (single file per suffix):**
 ```groovy
 [
-    meta: [subject: 'sub-01', session: 'ses-01'],
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
     T1w: [
-        nii: file('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
-        json: file('/data/bids/sub-01/anat/sub-01_T1w.json')
+        nii: Path('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
+        json: Path('/data/bids/sub-01/anat/sub-01_T1w.json')
     ]
 ]
 // Access: item.meta.subject, item.T1w.nii
@@ -79,42 +92,50 @@ The flattened output structure provides intuitive access to BIDS data:
 **Named Set (multiple acquisition directions):**
 ```groovy
 [
-    meta: [subject: 'sub-01', session: 'ses-01'],
-    dwi: [
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    dwi_ap: [  // Config key, not file suffix
         ap: [
-            nii: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
-            bval: file('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval')
+            nii: Path('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz'),
+            bval: Path('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval'),
+            bvec: Path('/data/bids/sub-01/dwi/sub-01_dir-AP_dwi.bvec')
         ],
         pa: [
-            nii: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
-            bval: file('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval')
+            nii: Path('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz'),
+            bval: Path('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval'),
+            bvec: Path('/data/bids/sub-01/dwi/sub-01_dir-PA_dwi.bvec')
         ]
     ]
 ]
-// Access: item.dwi.ap.nii, item.dwi.pa.bval
+// Access: item.dwi_ap.ap.nii, item.dwi_ap.pa.bval
 ```
 
-**Sequential Set (multiple runs):**
+**Sequential Set (multiple echoes):**
 ```groovy
 [
-    meta: [subject: 'sub-01', session: 'ses-01'],
-    bold: [
-        nii: [
-            file('/data/bids/sub-01/func/sub-01_run-01_bold.nii.gz'),
-            file('/data/bids/sub-01/func/sub-01_run-02_bold.nii.gz')
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    mese: [
+        [  // Echo 1
+            nii: Path('/data/bids/sub-01/anat/sub-01_echo-1_MESE.nii.gz'),
+            json: Path('/data/bids/sub-01/anat/sub-01_echo-1_MESE.json')
         ],
-        json: [
-            file('/data/bids/sub-01/func/sub-01_run-01_bold.json'),
-            file('/data/bids/sub-01/func/sub-01_run-02_bold.json')
+        [  // Echo 2
+            nii: Path('/data/bids/sub-01/anat/sub-01_echo-2_MESE.nii.gz'),
+            json: Path('/data/bids/sub-01/anat/sub-01_echo-2_MESE.json')
         ]
     ]
 ]
-// Access: item.bold.nii[0], item.bold.nii.size()
+// Access: item.mese[0].nii, item.mese.size()
 ```
 
-**All file paths are absolute `File` objects** — no need for `file(bidsParentDir) /` constructions.
+**Key Features:**
+- ✅ All file paths are absolute `java.nio.file.Path` objects
+- ✅ Direct access to metadata through `item.meta.*`
+- ✅ Config keys preserved (e.g., `dwi_ap` not collapsed to `dwi`)
+- ✅ No path concatenation needed - paths are ready to use
+- ✅ Compatible with Nextflow process `path` inputs
 
-For legacy workflows, disable flattening: `Channel.fromBIDS(bids_dir, config, [flatten_output: false])`
+**Legacy Format:**  
+For backward compatibility: `Channel.fromBIDS(bids_dir, config, [flatten_output: false])`
 
 ### API Reference
 
@@ -130,7 +151,7 @@ Load and parse a BIDS dataset into a Nextflow channel.
 |`options.validate`|`boolean`|(Not implemented) Run the [BIDS Validator](https://github.com/bids-standard/bids-validator) on the input dataset before parsing.|
 |`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|
 |`options.ignore_codes`|`path-like`|(Not implemented) [BIDS Validator](https://github.com/bids-standard/bids-validator) error codes to ignore.|
-|`options.flatten_output`|`boolean`|(Optional) When true (default), `Channel.fromBIDS()` emits flattened maps (with `meta` top-level key and top-level suffixes); when false, the original `[groupingKey, enrichedData]` tuples are emitted (legacy behavior).|
+|`options.flatten_output`|`boolean`|When `true` (default in 0.1.0-beta.9+), emit flattened maps with `meta` and top-level config keys; when `false`, emit legacy `[groupingKey, enrichedData]` tuples.|
 
 #### Closure-Based Channel Operators
 

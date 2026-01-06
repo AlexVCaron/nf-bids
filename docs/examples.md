@@ -18,36 +18,10 @@ Practical examples for using the nf-bids plugin in various scenarios.
 >}
 >```
 
->[!IMPORTANT]
->**Output Format:** Starting with v0.1.0-beta.6, `Channel.fromBIDS()` emits **flattened maps** by default:
+>[!NOTE]
+>**Examples use the new flat output format (default since 0.1.0-beta.9).**
 >
->```groovy
->// New default (flatten_output: true)
->[
->    meta: [subject: 'sub-01', session: 'ses-01'],
->    T1w: [nii: File("/abs/path/to/T1w.nii.gz")],
->    dwi: [nii: File("/abs/path/to/dwi.nii.gz"), bval: File("...")]
->]
->```
->
->**Examples below use legacy tuple format** with `flatten_output: false` for backward compatibility. To adapt them to the new format:
->
->```groovy
->// OLD (legacy tuple format)
->Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
->    .map { key, data ->
->        def t1w = file(data.bidsParentDir) / data.data.T1w.nii
->        [key[0], t1w]
->    }
->
->// NEW (flattened format, recommended)
->Channel.fromBIDS(params.bids_dir, 'config.yaml')
->    .map { item ->
->        [item.meta.subject, item.T1w.nii]  // Absolute File, no path construction needed
->    }
->```
->
->See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md#output-format) for complete migration details.
+>If you're using an older version or need the legacy tuple format, see [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for conversion instructions.
 
 # Basic Examples
 
@@ -62,7 +36,7 @@ T1w:
   plain_set: {}
 ```
 
-**`main.nf` (Flattened format - recommended):**
+**`main.nf`:**
 
 ```groovy
 #!/usr/bin/env nextflow
@@ -73,11 +47,11 @@ params.output_dir = 'results'
 include { fromBIDS } from 'plugin/nf-bids'
 
 workflow {
-    // Flattened output (default in beta.6+)
+    // Flat output format (default)
     ch_t1w = Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .map { item -> [
             item.meta.subject,  // Direct access to entity
-            item.T1w.nii        // Absolute File object
+            item.T1w.nii        // Absolute Path object, ready to use
         ] }
     
     processT1w(ch_t1w)
@@ -96,21 +70,6 @@ process processT1w {
     """
     bet ${t1w} ${subject}_brain.nii.gz -f 0.5
     """
-}
-```
-
-**Legacy format (with `flatten_output: false`):**
-
-```groovy
-workflow {
-    // Legacy tuple format
-    ch_t1w = Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
-        .map { key, data -> [
-            key.findAll{ it != 'NA' }.join('_'),
-            file(data.bidsParentDir) / data.data.T1w.nii
-        ] }
-    
-    processT1w(ch_t1w)
 }
 ```
 
@@ -137,14 +96,16 @@ bold:
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
     ch_bold = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .filter { key, data -> data.data.task == 'rest' }
-        .map { key, data -> [
-            key.findAll{ it != 'NA' }.join('_'),
-            data.subject,
-            data.session,
-            data.data.bold.nii.collect{ file(data.bidsParentDir) / it }
+        .filter { item -> item.meta.task == 'rest' }
+        .map { item -> [
+            [item.meta.subject, item.meta.session].findAll{ it != 'NA' }.join('_'),
+            item.meta.subject,
+            item.meta.session,
+            item.bold.nii  // Already a list of Path objects
         ] }
     
     multiEchoCombine(ch_bold)
@@ -193,15 +154,18 @@ dwi:
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
     ch_dwi = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data ->
-            def id = [data.subject, data.session].join('_')
-            def meta = [id: id, subject: data.subject, session: data.session]
+        .map { item ->
+            def id = [item.meta.subject, item.meta.session].findAll{ it != 'NA' }.join('_')
+            def meta = [id: id, subject: item.meta.subject, session: item.meta.session]
 
-            def acquisitions = data.data.dwi.nii.collect{ file(data.bidsParentDir) / it }
-            def bvals = data.data.dwi.bval.collect{ file(data.bidsParentDir) / it }
-            def bvecs = data.data.dwi.bvec.collect{ file(data.bidsParentDir) / it }
+            // Files are already absolute Path objects in arrays
+            def acquisitions = item.dwi.nii
+            def bvals = item.dwi.bval
+            def bvecs = item.dwi.bvec
             
             return [meta, acquisitions, bvals, bvecs]
         }
@@ -285,18 +249,21 @@ bold:
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
     ch_t1w_bold = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data ->
+        .map { item ->
             def meta = [
-                id: key.findAll{ it != 'NA' }.join('_'),
-                subject: data.subject,
-                session: data.session,
-                task: data.task
+                id: [item.meta.subject, item.meta.session, item.meta.task].findAll{ it != 'NA' }.join('_'),
+                subject: item.meta.subject,
+                session: item.meta.session,
+                task: item.meta.task
             ]
   
-            def bold = file(data.bidsParentDir) / data.data.bold.nii
-            def t1w = file(data.bidsParentDir) / data.data.t1w.nii
+            // Files are already absolute Path objects
+            def bold = item.bold.nii
+            def t1w = item.T1w.nii
   
             return [meta, t1w, bold]
         }
@@ -357,18 +324,20 @@ bold:
 params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
     ch_tasks = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data ->
+        .map { item ->
             def meta = [
-                id: [data.subject, data.session].join('_'),
-                subject: data.subject,
-                session: data.session
+                id: [item.meta.subject, item.meta.session].findAll{ it != 'NA' }.join('_'),
+                subject: item.meta.subject,
+                session: item.meta.session
             ]
   
-            def bold = file(data.bidsParentDir) / data.data.bold.nii
+            def bold = item.bold.nii  // Already absolute Path object
   
-            return [meta, data.task, bold]
+            return [meta, item.meta.task, bold]
         }
         .branch { meta, task, bold ->
             rest: task == 'rest' 
@@ -478,19 +447,23 @@ params.bids_dir = '/data/bids'
 params.output_dir = 'results'
 params.phase_direction = "AP" //AP,PA,RL,LR,IS,SI
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
     ch_dwi_epi = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .map { key, data ->
-            def id = key.findAll{ it != 'NA' }.join('_')
-            def subpath = key.findAll{ it != 'NA' }.join('/')
+        .map { item ->
+            def entities = [item.meta.subject, item.meta.session, item.meta.run].findAll{ it != 'NA' }
+            def id = entities.join('_')
+            def subpath = entities.join('/')
             def meta = [id: id, subpath: subpath]
 
-            def dwi = file(data.bidsParentDir) / data.data.dwi.nii
-            def bval = file(data.bidsParentDir) / data.data.dwi.bval
-            def bvec = file(data.bidsParentDir) / data.data.dwi.bvec
-            def dwi_json = file(data.bidsParentDir) / data.data.dwi.json
-            def epi = file(data.bidsParentDir) / data.data.epi.nii
-            def epi_json = file(data.bidsParentDir) / data.data.epi.json
+            // Files are already absolute Path objects
+            def dwi = item.dwi.nii
+            def bval = item.dwi.bval
+            def bvec = item.dwi.bvec
+            def dwi_json = item.dwi.json
+            def epi = item.epi.nii
+            def epi_json = item.epi.json
             
             return [meta, dwi, bval, bvec, epi, dwi_json, epi_json]
         }
@@ -620,37 +593,42 @@ t1w:
 ```groovy
 #!/usr/bin/env nextflow
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 workflow {
     ch_bids_data = Channel.fromBIDS(params.bids_dir, 'config.yaml')
-        .branch { key, data ->
-            dwi: data.data.dwi
-            t1w: data.data.t1w
+        .branch { item ->
+            dwi: item.dwi
+            t1w: item.T1w
         }
 
     ch_dwi = ch_bids_data.dwi
-        .map { key, data ->
-            def id = key.findAll{ it != 'NA' }.join('_')
-            def subpath = key.findAll{ it != 'NA' }.join('/')
+        .map { item ->
+            def entities = [item.meta.subject, item.meta.session, item.meta.run].findAll{ it != 'NA' }
+            def id = entities.join('_')
+            def subpath = entities.join('/')
             def meta = [id: id, subpath: subpath]
 
-            def dwi = file(data.bidsParentDir) / data.data.dwi.nii
-            def bval = file(data.bidsParentDir) / data.data.dwi.bval
-            def bvec = file(data.bidsParentDir) / data.data.dwi.bvec
-            def dwi_json = file(data.bidsParentDir) / data.data.dwi.json
-            def epi = file(data.bidsParentDir) / data.data.epi.nii
-            def epi_json = file(data.bidsParentDir) / data.data.epi.json
+            // Files are already absolute Path objects
+            def dwi = item.dwi.nii
+            def bval = item.dwi.bval
+            def bvec = item.dwi.bvec
+            def dwi_json = item.dwi.json
+            def epi = item.epi.nii
+            def epi_json = item.epi.json
             
             return [meta, dwi, bval, bvec, epi, dwi_json, epi_json]
         }
 
     ch_t1w = ch_bids_data.t1w
-        .map { key, data ->
-            def id = key.findAll{ it != 'NA' }.join('_')
-            def subpath = key.findAll{ it != 'NA' }.join('/')
+        .map { item ->
+            def entities = [item.meta.subject, item.meta.session].findAll{ it != 'NA' }
+            def id = entities.join('_')
+            def subpath = entities.join('/')
             def meta = [id: id, subpath: subpath]
 
-            def t1w = file(data.bidsParentDir) / data.data.t1w.nii
-            def json = file(data.bidsParentDir) / data.data.t1w.json
+            def t1w = item.T1w.nii
+            def json = item.T1w.json
 
             return [meta, t1w, json]
         }
@@ -737,12 +715,12 @@ process generateMultiQC {
 ```groovy
 // Good: Filter before mapping
 Channel.fromBIDS(params.bids_dir, params.config)
-    .filter { key, data -> data.subject.startsWith('sub-control') }
-    .map { key, data -> [data.subject, data.data.T1w] }
+    .filter { item -> item.meta.subject.startsWith('sub-control') }
+    .map { item -> [item.meta.subject, item.T1w.nii] }
 
 // Less efficient: Map then filter
 Channel.fromBIDS(params.bids_dir, params.config)
-    .map { key, data -> [data.subject, data.data.T1w] }
+    .map { item -> [item.meta.subject, item.T1w.nii] }
     .filter { subject, t1w -> subject.startsWith('sub-control') }
 ```
 
@@ -751,9 +729,9 @@ Channel.fromBIDS(params.bids_dir, params.config)
 ```groovy
 // Efficient parallel branching
 Channel.fromBIDS(params.bids_dir, params.config)
-    .multiMap { key, data ->
-        anat: [data.subject, data.data.T1w]
-        func: [data.subject, data.data.bold]
+    .multiMap { item ->
+        anat: [item.meta.subject, item.T1w.nii]
+        func: [item.meta.subject, item.bold.nii]
     }
 ```
 

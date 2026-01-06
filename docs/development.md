@@ -60,14 +60,33 @@ nf-bids/
 │               ├── BidsCsvParser.groovy            # libBIDS.sh CSV output conversion
 │               ├── BidsEntityUtils.groovy          # BIDS entity management utility
 │               └── SuffixMapper.groovy             # BIDS suffix management utility 
-├── validation/                                 # Integration tests
+├── validation/                                 # Integration and performance tests
 │   ├── main.nf                                     # Base integration test with Nextflow
 │   ├── nextflow.config                             # Plugin integration configuration
 │   ├── test_datasets.sh                            # Utility script to run integration suite
 │   ├── comparison_*.nf.test                        # Integration testing suite with nf-test
 │   ├── comparison_*.nf.test.snap                   # nf-test snapshot of the integration suite
+│   ├── test_heterogeneous_suffix_mapping.nf.test   # Heterogeneous dataset tests
 │   ├── data/                                       # BIDS example and custom datasets
-│   └── config/                                     # Plugin configurations to test
+│   ├── configs/                                    # Plugin configurations to test
+│   ├── edge_cases/                                 # Edge case testing suite
+│   │   ├── edge_cases.nf.test                          # nf-test edge case suite
+│   │   ├── run_all_tests.sh                            # Run all edge case tests
+│   │   ├── test1_large_items.nf                        # Large item test
+│   │   ├── test2_many_items.nf                         # Many items test
+│   │   ├── test3_nested_structures.nf                  # Nested structure test
+│   │   ├── test4_missing_fields.nf                     # Missing fields test
+│   │   ├── test5_concurrent.nf                         # Concurrency test
+│   │   ├── test6_join_many.nf                          # Join many test
+│   │   ├── test7_complex_filter.nf                     # Complex filter test
+│   │   ├── test8_combineby_edge_cases.nf               # combineBy edge cases
+│   │   └── EDGE_CASE_RESULTS.md                        # Edge case results
+│   └── benchmark/                                  # Performance benchmarks
+│       ├── benchmark_combine.nf                        # Combine operator benchmark
+│       ├── benchmark_combineby_new.nf                  # combineBy operator benchmark
+│       ├── benchmark_grouptuple.nf                     # groupTuple benchmark
+│       ├── benchmark_join.nf                           # Join operator benchmark
+│       └── BENCHMARK_RESULTS.md                        # Benchmark results
 ├── .dev-notes/                            # Development notes
 ├── docs/                                  # Official documentation
 ├── build.gradle                           # Build configuration
@@ -109,8 +128,11 @@ If the setup script fails:
 ### Quick Build and Install
 
 ```bash
-# Build with tests
-./gradlew build
+# Build plugin
+make assemble
+
+# Run tests
+make test
 
 # Install to Nextflow
 make install
@@ -126,32 +148,27 @@ This will run:
 
 **Clean build:**
 ```bash
-./gradlew clean
+make clean
 ```
 
-**Compile:**
+**Compile and build:**
 ```bash
-./gradlew compileGroovy
-```
-
-**Build without tests:**
-```bash
-./gradlew build -x test
+make assemble
 ```
 
 **Run tests:**
 ```bash
-./gradlew test
-```
-
-**Build JAR:**
-```bash
-./gradlew jar
+make test
 ```
 
 **Install to Nextflow:**
 ```bash
-./gradlew install
+make install
+```
+
+**Publish release:**
+```bash
+make release
 ```
 
 ### Build Output
@@ -163,18 +180,76 @@ Built artifacts are located in:
 
 ## Testing
 
+### Unit Tests
+
+Located in `src/test/groovy/`
+
+**Run unit tests:**
+```bash
+make test
+```
+
 ### Integration Tests
 
 Located in `validation/`
 
-**Run integration test:**
+**Run all integration tests:**
 ```bash
-nextflow run validation/
+cd validation
+nf-test test
+```
+
+**Run specific test suite:**
+```bash
+cd validation
+nf-test test comparison_plain_sets.nf.test
+nf-test test comparison_named_sets.nf.test
+nf-test test comparison_sequential_sets.nf.test
+nf-test test comparison_mixed_sets.nf.test
+nf-test test comparison_custom_datasets.nf.test
+nf-test test test_heterogeneous_suffix_mapping.nf.test
+```
+
+**Run legacy integration test:**
+```bash
+cd validation
+nextflow run main.nf
+```
+
+### Edge Case Tests
+
+Located in `validation/edge_cases/`
+
+**Run all edge case tests:**
+```bash
+cd validation/edge_cases
+./run_all_tests.sh
+```
+
+**Run specific edge case:**
+```bash
+cd validation/edge_cases
+nextflow run test1_large_items.nf
+```
+
+### Performance Benchmarks
+
+Located in `validation/benchmark/`
+
+**Run benchmarks:**
+```bash
+cd validation/benchmark
+nextflow run benchmark_combine.nf
+nextflow run benchmark_combineby_new.nf
+nextflow run benchmark_grouptuple.nf
+nextflow run benchmark_join.nf
 ```
 
 ### Test Data
 
-All test datasets are located under `validation/data`.
+All test datasets are located under `validation/data/`:
+- `validation/data/bids-examples/` - Official BIDS examples
+- `validation/data/custom/` - Custom test datasets
 
 ## Implementation Guidelines
 
