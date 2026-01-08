@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 /*
- * Edge case test for combineBy operator (v0.1.0-beta.5+)
+ * Edge case test for combineBy operator (0.1.0-beta.5+)
  * 
  * Tests boundary conditions and edge cases:
  * - Null keys

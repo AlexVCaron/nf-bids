@@ -178,7 +178,7 @@ workflow test_bids_combineby {
 
 workflow {
     println "=========================================="
-    println "Performance Benchmark: combineBy (v0.1.0-beta.5)"
+    println "Performance Benchmark: combineBy (0.1.0-beta.5)"
     println "=========================================="
     println "Nextflow version: ${nextflow.version}"
     println "Plugin: nf-bids"

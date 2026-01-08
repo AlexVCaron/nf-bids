@@ -407,7 +407,7 @@ bids {
 }
 ```
 
-**Recommendation:** Don't provide backward compat - this is beta software (v0.1.0-beta.7) and the fix is necessary for core functionality.
+**Recommendation:** Don't provide backward compat - this is beta software (0.1.0-beta.7) and the fix is necessary for core functionality.
 
 ## Related Nextflow Documentation
 

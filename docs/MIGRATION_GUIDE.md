@@ -1,6 +1,6 @@
 # Migration Guide: From bids2nf to nf-bids Plugin
 
-This comprehensive guide helps you migrate workflows from the original bids2nf implementation to the nf-bids plugin, covering all versions from the baseline through v0.1.0-beta.9.
+This comprehensive guide helps you migrate workflows from the original bids2nf implementation to the nf-bids plugin, covering all versions from the baseline through 0.1.0-beta.9.
 
 ---
 
@@ -21,10 +21,10 @@ This comprehensive guide helps you migrate workflows from the original bids2nf i
 |---------|--------------|-------------|-----------|
 | **Baseline bids2nf** | Pre-2024 | Original Nextflow subworkflow | - |
 | **v0.1.0** | ~Dec 2024 | Initial plugin implementation | ❌ No |
-| **v0.1.0-beta.1 to 4** | Early 2025 | Core functionality stabilization | ⚠️ Minor |
-| **v0.1.0-beta.5** | ~Oct 2025 | `combineBy` redesign, Java Path objects | ⚠️ Yes (operators) |
-| **v0.1.0-beta.6** | ~Nov 2025 | Flat output (opt-in), suffix mapping fix | ⚠️ Optional |
-| **v0.1.0-beta.9** | Dec 6, 2025 | **Flat output DEFAULT** | ⚠️ **YES** |
+| **0.1.0-beta.1 to 4** | Early 2025 | Core functionality stabilization | ⚠️ Minor |
+| **0.1.0-beta.5** | ~Oct 2025 | `combineBy` redesign, Java Path objects | ⚠️ Yes (operators) |
+| **0.1.0-beta.6** | ~Nov 2025 | Flat output (opt-in), suffix mapping fix | ⚠️ Optional |
+| **0.1.0-beta.9** | Dec 6, 2025 | **Flat output DEFAULT** | ⚠️ **YES** |
 | **v0.2.0** | Future | Legacy format removal | ⚠️ **YES** |
 
 ---
@@ -86,7 +86,7 @@ Are you using baseline bids2nf?
 
 # Migration Paths
 
-## Path 1: Baseline bids2nf → v0.1.0-beta.9
+## Path 1: Baseline bids2nf → 0.1.0-beta.9
 
 **For:** Users currently using the original bids2nf subworkflow.
 
@@ -356,7 +356,7 @@ dwi_ap:
 
 ---
 
-## Path 2: v0.1.0-beta.1-5 → v0.1.0-beta.9
+## Path 2: 0.1.0-beta.1-5 → 0.1.0-beta.9
 
 **For:** Users already on the plugin but using the legacy tuple format.
 
@@ -438,7 +438,7 @@ nf-test test
 
 ---
 
-## Path 3: v0.1.0-beta.6-8 (Legacy Format) → v0.1.0-beta.9
+## Path 3: 0.1.0-beta.6-8 (Legacy Format) → 0.1.0-beta.9
 
 **For:** Users on beta.6-8 but still using `flatten_output: false`.
 
@@ -482,7 +482,7 @@ Channel.fromBIDS(
 
 ---
 
-## Path 4: v0.1.0-beta.6-8 (Flat Format) → v0.1.0-beta.9
+## Path 4: 0.1.0-beta.6-8 (Flat Format) → 0.1.0-beta.9
 
 **For:** Users already using `flatten_output: true` in beta.6-8.
 
@@ -570,7 +570,7 @@ This section covers only the **migration-critical** configuration options you ne
 | **`include_cross_modal`** | v0.1.0 | Include files from other suffixes | No breaking changes |
 | **`required`** | v0.1.0 | Enforce presence of named groups | No breaking changes |
 | **`suffix_maps_to`** | v0.1.0 | Use files with different suffix than config key | ⚠️ **Output key changed in beta.6** |
-| **`exclude_entities`** | v0.1.0-beta.6 🆕 | Exclude files with specific entities | 🆕 New option - required for heterogeneous datasets |
+| **`exclude_entities`** | 0.1.0-beta.6 🆕 | Exclude files with specific entities | 🆕 New option - required for heterogeneous datasets |
 
 ---
 
@@ -708,7 +708,7 @@ dwi_rl:
 
 # Breaking Changes by Version
 
-## v0.1.0-beta.9 (Dec 6, 2025)
+## 0.1.0-beta.9 (Dec 6, 2025)
 
 ### ⚠️ Flat Output DEFAULT
 
@@ -737,7 +737,7 @@ Channel.fromBIDS(bidsDir, config, [flatten_output: false])
 
 ---
 
-## v0.1.0-beta.6 (Nov 2025)
+## 0.1.0-beta.6 (Nov 2025)
 
 ### ⚠️ Flat Output Introduced (Opt-in)
 
@@ -802,7 +802,7 @@ dwi:
 
 ---
 
-## v0.1.0-beta.5 (Oct 2025)
+## 0.1.0-beta.5 (Oct 2025)
 
 ### ⚠️ combineBy Operator Redesign
 
@@ -872,7 +872,7 @@ path.toFile().listFiles()  // Convert if needed
 
 ---
 
-## v0.1.0-beta.1 to 4 (Early 2025)
+## 0.1.0-beta.1 to 4 (Early 2025)
 
 ### Core Functionality
 
@@ -1142,7 +1142,7 @@ Include:
 
 # Benefits After Migration
 
-Once fully migrated to v0.1.0-beta.9 with flat output:
+Once fully migrated to 0.1.0-beta.9 with flat output:
 
 ## Code Quality
 

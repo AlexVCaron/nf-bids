@@ -12,7 +12,7 @@ include { combineBy } from 'plugin/nf-bids'
 
 workflow {
     println "\n=========================================="
-    println "CombineBy Performance Benchmark (v0.1.0-beta.5+)"
+    println "CombineBy Performance Benchmark (0.1.0-beta.5+)"
     println "=========================================="
     
     // Test 1: Small dataset with multiple keys

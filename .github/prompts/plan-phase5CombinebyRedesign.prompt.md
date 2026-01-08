@@ -264,7 +264,7 @@ channel.combineBy(
 
 **Returns:** Channel emitting `[key, leftItem, rightItem]` tuples
 
-**Breaking Change (v0.1.0-beta.5):**
+**Breaking Change (0.1.0-beta.5):**
 - ⚠️ API changed from filter predicate to key extraction
 - Old: `combineBy(ch) { l, r -> boolean }`
 - New: `combineBy(ch, { l -> key }, { r -> key })`
@@ -295,7 +295,7 @@ channel.combineBy(
 
 ## Breaking Changes
 
-**Version:** v0.1.0-beta.5  
+**Version:** 0.1.0-beta.5  
 **Impact:** HIGH - All existing combineBy usage will break
 
 **Migration Path:**
@@ -344,7 +344,7 @@ subjects.combineBy(
 ## Phase 5 Completion Summary
 
 **Status:** ✅ **COMPLETE** (2025-11-21)  
-**Version:** v0.1.0-beta.5
+**Version:** 0.1.0-beta.5
 
 ### Deliverables Created
 

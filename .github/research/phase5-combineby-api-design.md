@@ -1,6 +1,6 @@
 # CombineBy API Design Specification
 
-**Version:** v0.1.0-beta.5  
+**Version:** 0.1.0-beta.5  
 **Date:** 2025-11-21  
 **Status:** APPROVED for implementation
 
@@ -289,7 +289,7 @@ try {
 
 ### Breaking Changes
 
-**Old API (v0.1.0-beta.4):**
+**Old API (0.1.0-beta.4):**
 ```groovy
 subjects.combineBy(sessions) { subj, sess ->
     // Filter predicate: return true to include combination
@@ -298,7 +298,7 @@ subjects.combineBy(sessions) { subj, sess ->
 .view { subj, sess -> "Matched: ${subj} with ${sess}" }
 ```
 
-**New API (v0.1.0-beta.5+):**
+**New API (0.1.0-beta.5+):**
 ```groovy
 subjects.combineBy(
     sessions,
@@ -334,7 +334,7 @@ subjects.combineBy(
 ## Approval
 
 **Approved for implementation:** 2025-11-21  
-**Target version:** v0.1.0-beta.5  
+**Target version:** 0.1.0-beta.5  
 **Breaking change:** YES - requires major migration
 
 This design aligns with:

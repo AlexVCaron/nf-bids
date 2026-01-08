@@ -247,4 +247,4 @@ New capability unlocked:
 ---
 
 **Status:** ✅ Complete and tested  
-**Version:** nf-bids v0.1.0-beta.9 (pending)
+**Version:** nf-bids 0.1.0-beta.9 (pending)

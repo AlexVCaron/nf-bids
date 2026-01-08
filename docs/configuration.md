@@ -45,7 +45,7 @@ Channel.fromBIDS(
 
 ### `flatten_output` (Boolean)
 
-**Since:** v0.1.0-beta.6 (opt-in), **Default** since v0.1.0-beta.9
+**Since:** 0.1.0-beta.6 (opt-in), **Default** since 0.1.0-beta.9
 
 **Default:** `true`
 
@@ -781,7 +781,7 @@ bold:
 
 ## `exclude_entities`
 
-**Since:** v0.1.0-beta.6 (Nov 2025) 🆕  
+**Since:** 0.1.0-beta.6 (Nov 2025) 🆕  
 **Applies to:** All set types
 
 Exclude files that have specific entities in their filenames:
@@ -846,7 +846,7 @@ dwi_ap:
 ## `suffix_maps_to`
 
 **Since:** Baseline / v0.1.0  
-**Fixed in:** v0.1.0-beta.6 (output now uses config key)  
+**Fixed in:** 0.1.0-beta.6 (output now uses config key)  
 **Applies to:** All set types
 
 Use files with a different suffix than the config key:

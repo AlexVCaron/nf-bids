@@ -312,7 +312,7 @@ Channel.of([subject: 'sub-01', file: 'file1'], [subject: 'sub-01', file: 'file2'
 
 **Confidence Level**: 100% - Feature is production-ready and documented
 
-**Status**: Ready for v0.1.0-beta.5 release (or already released as part of beta.6)
+**Status**: Ready for 0.1.0-beta.5 release (or already released as part of beta.6)
 
 ---
 
@@ -574,7 +574,7 @@ This enables the plugin to handle real-world heterogeneous datasets where differ
 - `main` - Stable release
 
 **Version Status:**
-- Current: v0.1.0-beta.5 (with operators)
+- Current: 0.1.0-beta.5 (with operators)
 - Next: 0.1.0-beta.9 (with flat output) - commit says "beta.6 release"
 - Future: v0.2.0 (with all fixes complete)
 

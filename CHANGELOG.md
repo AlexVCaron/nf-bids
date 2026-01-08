@@ -132,7 +132,7 @@ dwi_rl:  # Files WITH dir-RL/dir-LR
 
 ---
 
-## [Unreleased] v0.1.0-beta.5
+## [Unreleased] 0.1.0-beta.5
 
 ### ⚠️ BREAKING CHANGES
 
@@ -167,7 +167,7 @@ Most users won't need to change anything - Nextflow processes automatically hand
 
 The `combineBy` operator has been completely redesigned to use **key extraction** instead of **filter predicates**, aligning with `groupTupleBy` and `joinBy` patterns.
 
-**Old API (v0.1.0-beta.4):**
+**Old API (0.1.0-beta.4):**
 ```nextflow
 subjects.combineBy(sessions) { subj, sess ->
     subj.id == sess.subject  // Filter predicate
@@ -175,7 +175,7 @@ subjects.combineBy(sessions) { subj, sess ->
 .view { subj, sess -> "${subj} with ${sess}" }  // 2 elements
 ```
 
-**New API (v0.1.0-beta.5+):**
+**New API (0.1.0-beta.5+):**
 ```nextflow
 subjects.combineBy(
     sessions,

@@ -596,7 +596,7 @@ raw_data.joinBy(derivatives) {
 
 ## combineBy
 
-> **⚠️ BREAKING CHANGE in v0.1.0-beta.5:** API changed from filter predicates to key extraction.
+> **⚠️ BREAKING CHANGE in 0.1.0-beta.5:** API changed from filter predicates to key extraction.
 
 Combine two channels by extracting and matching keys, emitting the cartesian product of items within each key group.
 

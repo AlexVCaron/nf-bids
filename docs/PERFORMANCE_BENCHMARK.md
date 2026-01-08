@@ -1,7 +1,7 @@
 # Operator Performance Benchmark Report
 
 **Date:** 2025-11-21  
-**Plugin Version:** v0.1.0-beta.5  
+**Plugin Version:** 0.1.0-beta.5  
 **Nextflow Version:** 25.10.0  
 **Test Environment:** Linux, Gradle 8.14, Groovy 4.0.23
 
@@ -429,7 +429,7 @@ nextflow run test8_combineby_edge_cases.nf
 - **Platform:** Linux x86_64
 - **Nextflow:** 25.10.0
 - **Java:** OpenJDK 11+
-- **Plugin:** nf-bids v0.1.0-beta.5
+- **Plugin:** nf-bids 0.1.0-beta.5
 - **Hardware:** Standard compute node (details may vary)
 
 ---

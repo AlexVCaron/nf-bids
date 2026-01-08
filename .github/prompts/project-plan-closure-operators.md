@@ -590,7 +590,7 @@ DataflowWriteChannel combineBy(
 
 **Updates:**
 - Plugin description expanded (BIDS + operators)
-- Version badge: v0.1.0-beta.4 (later updated to beta.5)
+- Version badge: 0.1.0-beta.4 (later updated to beta.5)
 - Test count badge: 78 tests (later 31 tests after Phase 5 consolidation)
 - API Reference section with 3 operators
 - Code examples for each operator
@@ -609,7 +609,7 @@ DataflowWriteChannel combineBy(
 **Status:** ✅ Complete  
 **Duration:** 7.5 hours actual (14 hours estimated)  
 **Efficiency:** 187%  
-**Version:** v0.1.0-beta.5
+**Version:** 0.1.0-beta.5
 
 ### Context
 
@@ -853,7 +853,7 @@ DataflowWriteChannel combineBy(
 ```markdown
 ### combineBy
 
-⚠️ **Breaking Change in v0.1.0-beta.5:** API redesigned to use key extraction.
+⚠️ **Breaking Change in 0.1.0-beta.5:** API redesigned to use key extraction.
 
 **Signature:**
 ```groovy
@@ -886,7 +886,7 @@ leftChannel.combineBy(rightChannel, leftKeyExtractor, rightKeyExtractor)
 
 **CHANGELOG.md Entry:**
 ```markdown
-## [Unreleased] v0.1.0-beta.5
+## [Unreleased] 0.1.0-beta.5
 
 ### BREAKING CHANGES
 
@@ -920,7 +920,7 @@ All existing `combineBy` usage must be updated:
 
 ### Phase 5 Breaking Changes Summary
 
-**Version:** v0.1.0-beta.5  
+**Version:** 0.1.0-beta.5  
 **Impact:** HIGH - All existing combineBy usage breaks
 
 **API Changes:**
@@ -1257,9 +1257,9 @@ subjects.combineBy(
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| v0.1.0-beta.3 | 2025-01-20 | Initial implementation (Phases 1-3) | ✅ Released |
-| v0.1.0-beta.4 | 2025-01-25 | Testing, docs, benchmarks (Phase 4) | ✅ Released |
-| v0.1.0-beta.5 | 2025-11-21 | combineBy redesign (Phase 5) | ✅ Ready for release |
+| 0.1.0-beta.3 | 2025-01-20 | Initial implementation (Phases 1-3) | ✅ Released |
+| 0.1.0-beta.4 | 2025-01-25 | Testing, docs, benchmarks (Phase 4) | ✅ Released |
+| 0.1.0-beta.5 | 2025-11-21 | combineBy redesign (Phase 5) | ✅ Ready for release |
 
 ---
 
@@ -1275,7 +1275,7 @@ This project successfully delivered three closure-based channel operators that s
 
 **The nf-bids plugin now offers the most consistent and powerful set of closure-based channel operators in the Nextflow ecosystem!** 🏆
 
-**Status:** ✅ **All Phases Complete - Ready for v0.1.0-beta.5 Release** 🚀
+**Status:** ✅ **All Phases Complete - Ready for 0.1.0-beta.5 Release** 🚀
 
 ---
 

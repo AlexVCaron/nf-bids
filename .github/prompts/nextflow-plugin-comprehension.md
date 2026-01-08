@@ -950,7 +950,7 @@ Channel.fromBIDS(params.bids_dir, 'config.yaml', [flatten_output: false])
 
 ### Migration Example
 
-**Before (v0.1.0-beta.5 and earlier):**
+**Before (0.1.0-beta.5 and earlier):**
 ```groovy
 Channel.fromBIDS(params.bids_dir, 'config.yaml')
     .map { key, data ->

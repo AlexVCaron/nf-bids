@@ -914,7 +914,7 @@ workflow {
 ### Integration ✅ COMPLETE
 ✅ Works with existing nf-bids features  
 ✅ No breaking changes  
-✅ Plugin loads correctly (v0.1.0-beta.4)  
+✅ Plugin loads correctly (0.1.0-beta.4)  
 ✅ Operators usable in workflows  
 
 ---
@@ -1080,7 +1080,7 @@ workflow {
 - [x] Clear migration path
 - [x] Thread-safe implementation
 
-**Ready for v0.1.0-beta.5 release** 🚀
+**Ready for 0.1.0-beta.5 release** 🚀
 
 ---
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 /*
- * Integration test for combineBy operator (v0.1.0-beta.5+)
+ * Integration test for combineBy operator (0.1.0-beta.5+)
  * 
  * Tests key-based combination with cartesian product within groups.
  * This validates that the operator works correctly in a pipeline context.
