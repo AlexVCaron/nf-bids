@@ -30,6 +30,52 @@ class LibBidsShWrapper {
     ]
 
     /**
+     * Get the plugin's installation directory
+     * This finds where the nf-bids plugin is installed (e.g., ~/.nextflow/plugins/nf-bids-{version}/)
+     */
+    private String getPluginLibPath() {
+        // Try to find the plugin installation via the classpath
+        def clazz = this.getClass()
+        def classUrl = clazz.getResource("/${clazz.getName().replace('.', '/')}.class")
+
+        if (classUrl != null) {
+            def path = classUrl.toString()
+            // Path will be like: jar:file:/home/user/.nextflow/plugins/nf-bids-0.1.0-beta.5/classes/nfneuro/parser/LibBidsShWrapper.class
+            // or file:/home/user/.nextflow/plugins/nf-bids-0.1.0-beta.5/classes/nfneuro/parser/LibBidsShWrapper.class
+
+            // Extract the plugin directory
+            def pluginDirMatch = path =~ /(.+\/nf-bids-[^\/]+)\/(classes|lib)/
+            if (pluginDirMatch.find()) {
+                def pluginDir = pluginDirMatch.group(1)
+                // Remove jar:file: or file: prefix
+                pluginDir = pluginDir.replaceFirst(/^(jar:)?file:/, '')
+                return "${pluginDir}/lib/libBIDS.sh"
+            }
+        }
+
+        // Fallback: Try standard Nextflow plugin location
+        def homeDir = System.getProperty('user.home')
+        def pluginsDir = new File("${homeDir}/.nextflow/plugins")
+
+        if (pluginsDir.exists()) {
+            // Find nf-bids plugin directories
+            def bidsPlugins = pluginsDir.listFiles()?.findAll { it.name.startsWith('nf-bids-') }
+
+            if (bidsPlugins && bidsPlugins.size() > 0) {
+                // Use the most recent version (sorted alphabetically, which works for semantic versioning)
+                def latestPlugin = bidsPlugins.sort { it.name }.reverse()[0]
+                def libBidsPath = new File(latestPlugin, 'lib/libBIDS.sh')
+
+                if (libBidsPath.exists()) {
+                    return libBidsPath.absolutePath
+                }
+            }
+        }
+
+        return null
+    }
+
+    /**
      * Parse BIDS directory to CSV using libBIDS.sh
      *
      * Executes the bash script and captures CSV output
@@ -118,7 +164,6 @@ class LibBidsShWrapper {
                 "BIDS parsing completed: ${outputFile.length()} bytes written")
 
             return outputFile
-
         } catch (IOException e) {
             throw new RuntimeException(
                 BidsErrorHandler.createDetailedError(
@@ -143,6 +188,17 @@ class LibBidsShWrapper {
      * @return Path to libBIDS.sh or null if not found
      */
     private String findLibBidsScript() {
+        // FIRST: Try plugin installation directory (embedded libBIDS.sh)
+        def pluginLibPath = getPluginLibPath()
+        if (pluginLibPath) {
+            def pluginScript = new File(pluginLibPath)
+            if (pluginScript.exists() && pluginScript.canRead()) {
+                BidsLogger.logProgress("libBIDS-wrapper",
+                    "Found libBIDS.sh in plugin installation: ${pluginScript.absolutePath}")
+                return pluginScript.absolutePath
+            }
+        }
+
         // Try search paths
         for (searchPath in SEARCH_PATHS) {
             def expandedPath = searchPath.replaceFirst('^~', System.getProperty('user.home'))
@@ -165,7 +221,7 @@ class LibBidsShWrapper {
         }
 
         BidsLogger.logProgress("libBIDS-wrapper",
-            "libBIDS.sh not found in standard locations")
+            "libBIDS.sh not found in standard locations or plugin installation")
         return null
     }
 

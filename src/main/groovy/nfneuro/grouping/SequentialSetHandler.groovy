@@ -32,40 +32,44 @@ class SequentialSetHandler extends BaseSetHandler {
     }
 
     @Override
-    protected Map getSetIndex(BidsFile file, Map setConfig) {
-        // For sequential sets, use the suffix as the index
-        return [suffix: file.suffix]
+    protected Map getSetIndex(BidsFile file, Map setConfig, String configKey) {
+        // For sequential sets, use the suffix as the index, plus config key
+        return [fileSuffix: file.suffix, configKey: configKey]
     }
 
     @Override
     protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
-        if (!sets.containsKey(index.suffix)) {
-            sets[index.suffix] = [
+        String configKey = index.configKey
+        String fileSuffix = index.fileSuffix
+        
+        if (!sets.containsKey(configKey)) {
+            sets[configKey] = [
                 files: [],
                 entities: ordering.entities,
-                order: ordering.order
+                order: ordering.order,
+                fileSuffix: fileSuffix
             ]
         }
 
-        if (sets[index.suffix].entities != ordering.entities) {
-            BidsLogger.logProgress(logGroup(), "Warning: Inconsistent sequencing entities for suffix ${index.suffix}")
+        if (sets[configKey].entities != ordering.entities) {
+            BidsLogger.logProgress(logGroup(), "Warning: Inconsistent sequencing entities for config key ${configKey}")
             return
         }
 
-        if (sets[index.suffix].order != ordering.order) {
-            BidsLogger.logProgress(logGroup(), "Warning: Inconsistent sequencing order for suffix ${index.suffix}")
+        if (sets[configKey].order != ordering.order) {
+            BidsLogger.logProgress(logGroup(), "Warning: Inconsistent sequencing order for config key ${configKey}")
             return
         }
 
-        sets[index.suffix].files << [
+        sets[configKey].files << [
             file: file,
             sequenceValues: ordering.values
         ]
 
-        if (!allFiles.containsKey(index.suffix)) {
-            allFiles[index.suffix] = []
+        if (!allFiles.containsKey(fileSuffix)) {
+            allFiles[fileSuffix] = []
         }
-        allFiles[index.suffix] << file
+        allFiles[fileSuffix] << file
     }
 
     @Override
@@ -80,21 +84,21 @@ class SequentialSetHandler extends BaseSetHandler {
         def channelData = new BidsChannelData()
 
         // Add suffix data (arrays or nested structures)
-        sets.each { suffix, setData ->
-            // Get parts configuration for this suffix
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
-                setName(), suffix, suffixMapping)
-            BidsLogger.logProgress(logGroup(), "Config key for suffix ${suffix}: ${configKey}")
+        sets.each { configKey, setData ->
+            String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
+            BidsLogger.logProgress(logGroup(), "Config key: ${configKey}, file suffix: ${fileSuffix}")
+            
+            // Get parts configuration using config key
             def suffixConfig = config.get(configKey) as Map
             BidsLogger.logProgress(logGroup(), "Suffix config: ${suffixConfig}")
             def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
-            BidsLogger.logProgress(logGroup(), "Parts config for suffix ${suffix}: ${partsConfig}")
+            BidsLogger.logProgress(logGroup(), "Parts config for config key ${configKey}: ${partsConfig}")
 
             // Use hierarchical mapper which handles both flat and nested structures
             Map dataMap = nestedSequenceMapHierarchical(
                 datasetRoot,
                 setData.files,
-                allFiles.get(suffix, [])
+                allFiles.get(fileSuffix, [])
             )
 
             BidsLogger.logProgress(logGroup(), "Data map before parts grouping: ${dataMap}")
@@ -102,16 +106,16 @@ class SequentialSetHandler extends BaseSetHandler {
             // Apply parts grouping if configured
             if (partsConfig) {
                 BidsLogger.logProgress(logGroup(), "Applying parts grouping with config: ${partsConfig}")
-                dataMap = applyPartsGrouping(dataMap, partsConfig, allFiles.get(suffix, []), datasetRoot)
+                dataMap = applyPartsGrouping(dataMap, partsConfig, allFiles.get(fileSuffix, []), datasetRoot)
                 BidsLogger.logProgress(logGroup(), "Data map after parts grouping: ${dataMap}")
             } else {
                 BidsLogger.logProgress(logGroup(), "No parts config, skipping parts grouping")
             }
 
-            channelData.addSuffixData(suffix, dataMap)
+            channelData.addSuffixData(configKey, dataMap)
 
-            // Get all related files for this suffix
-            List<BidsFile> relatedFiles = allFiles.get(suffix, [])
+            // Get all related files for this file suffix
+            List<BidsFile> relatedFiles = allFiles.get(fileSuffix, [])
 
             // Add all file paths
             relatedFiles.each { file ->

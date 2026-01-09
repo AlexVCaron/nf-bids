@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package nfneuro.plugin
 
 import groovy.transform.CompileStatic
@@ -38,4 +37,5 @@ class BidsObserver implements TraceObserver {
     void onFlowComplete() {
         println "Pipeline complete! 👋"
     }
+
 }

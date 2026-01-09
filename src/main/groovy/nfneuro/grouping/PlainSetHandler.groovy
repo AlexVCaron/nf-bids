@@ -31,20 +31,23 @@ class PlainSetHandler extends BaseSetHandler {
     }
 
     @Override
-    protected Map getSetIndex(BidsFile file, Map setConfig) {
-        // For plain sets, use the suffix as the index
-        return [suffix: file.suffix]
+    protected Map getSetIndex(BidsFile file, Map setConfig, String configKey) {
+        // For plain sets, use the suffix as the index, plus config key for output
+        return [fileSuffix: file.suffix, configKey: configKey]
     }
 
     @Override
     protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
+        String configKey = index.configKey  // Use config key for sets
+        String fileSuffix = index.fileSuffix  // Use file suffix for allFiles lookup
+        
         if (file.isPrimaryFile()) {
-            sets[index.suffix] = [files: [file: file]]
+            sets[configKey] = [files: [file: file], fileSuffix: fileSuffix]
         } else {
-            if (!allFiles.containsKey(index.suffix)) {
-                allFiles[index.suffix] = []
+            if (!allFiles.containsKey(fileSuffix)) {
+                allFiles[fileSuffix] = []
             }
-            allFiles[index.suffix] << file
+            allFiles[fileSuffix] << file
         }
     }
 
@@ -63,23 +66,23 @@ class PlainSetHandler extends BaseSetHandler {
         // Create channel data structure
         BidsChannelData channelData = new BidsChannelData()
 
-        plainSets.each { suffix, setData ->
-            BidsLogger.logProgress(logGroup(), "Processing suffix: ${suffix}, setData: ${setData}")
+        plainSets.each { configKey, setData ->
+            String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
+            BidsLogger.logProgress(logGroup(), "Processing config key: ${configKey}, file suffix: ${fileSuffix}, setData: ${setData}")
+            
             // Extract the file from the setData structure
             BidsFile file = setData.files?.file as BidsFile
             if (!file) {
-                BidsLogger.logProgress(logGroup(), "No primary file found for suffix: ${suffix}, setData.files: ${setData.files}")
+                BidsLogger.logProgress(logGroup(), "No primary file found for config key: ${configKey}, setData.files: ${setData.files}")
                 return
             }
 
-            BidsLogger.logProgress(logGroup(), "Emitting plain set for suffix: ${suffix}, file: ${file.path}")
+            BidsLogger.logProgress(logGroup(), "Emitting plain set for config key: ${configKey}, file suffix: ${fileSuffix}, file: ${file.path}")
 
-            // Get all related files for this suffix
-            List<BidsFile> relatedFiles = allFiles.get(suffix, [])
+            // Get all related files for this file suffix
+            List<BidsFile> relatedFiles = allFiles.get(fileSuffix, [])
 
-            // Get parts configuration for this suffix
-            def configKey = nfneuro.plugin.util.SuffixMapper.resolveConfigKey(
-                setName(), suffix, suffixMapping)
+            // Get parts configuration using config key
             def suffixConfig = config.get(configKey) as Map
             def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
 
@@ -91,7 +94,7 @@ class PlainSetHandler extends BaseSetHandler {
                 nestedDataMap = applyPartsGrouping(nestedDataMap, partsConfig, relatedFiles)
             }
 
-            channelData.addSuffixData(suffix, nestedDataMap)
+            channelData.addSuffixData(configKey, nestedDataMap)
 
             // Add all related files to filePaths list
             relatedFiles.each { relatedFile ->

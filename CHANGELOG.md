@@ -4,6 +4,217 @@ All notable changes and development history for the nf-bids plugin.
 
 ---
 
+## [Unreleased] 0.1.0-beta.9
+
+### ⚠️ BREAKING CHANGES
+
+#### Flat BIDS Output Format
+
+The `Channel.fromBIDS` output structure has been **completely redesigned** for improved usability and type safety.
+
+**Old Format (Nested):**
+```groovy
+[
+  [subject, session, run],  // Grouping key tuple
+  [
+    data: [T1w: [nii: 'path/to/file.nii.gz', json: 'path/to/file.json']],
+    filePaths: ['path/to/file.nii.gz', 'path/to/file.json'],
+    bidsParentDir: '/dataset'
+  ]
+]
+
+// Usage (cumbersome):
+def subject = item[0][0]
+def t1w = file("${item[1].bidsParentDir}/${item[1].data.T1w.nii}")
+```
+
+**New Format (Flat):**
+```groovy
+[
+  meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+  T1w: [nii: Path('/dataset/sub-01/ses-01/anat/sub-01_ses-01_T1w.nii.gz'),
+        json: Path('/dataset/sub-01/ses-01/anat/sub-01_ses-01_T1w.json')],
+  dwi: [ap: [nii: Path('...'), bval: Path('...'), bvec: Path('...')],
+        pa: [nii: Path('...'), bval: Path('...'), bvec: Path('...')]]
+]
+
+// Usage (clean and direct):
+def subject = item.meta.subject
+def t1w = item.T1w.nii  // Already an absolute Path - ready for process inputs!
+```
+
+**Key Changes:**
+- ✅ **Flattened structure:** All data at top level alongside `meta`
+- ✅ **Absolute Paths:** All file paths are `java.nio.file.Path` objects (not strings)
+- ✅ **Direct access:** No more nested `data` object or path concatenation
+- ✅ **Named entities:** `meta.subject`, `meta.session`, etc. instead of tuple indices
+- ✅ **Config keys preserved:** Output uses config keys (e.g., `dwi_ap`) not file suffixes (e.g., `dwi`)
+
+**Opt-out Available:**
+```groovy
+// Use legacy format
+Channel.fromBIDS(bidsDir, config, [flatten_output: false])
+```
+
+**Migration Required:** All workflows must be updated. See [Migration Guide](#flat-output-migration) below.
+
+#### Suffix Mapping & Config Key Fixes
+
+Fixed fundamental bugs in how suffix mapping and config keys are handled. This enables **heterogeneous datasets** where multiple configs use the same file suffix.
+
+**What Was Fixed:**
+1. **Mapping direction corrected:** Now maps `configKey → fileSuffix` (was backwards)
+2. **Output keys fixed:** Channel output uses config keys, not file suffixes
+3. **Multiple configs per suffix:** Multiple configs can now map to same `suffix_maps_to`
+4. **Empty set detection:** Fixed falsy check that ignored empty config maps
+
+**Example - Heterogeneous DWI:**
+```yaml
+# Different subjects can have different phase-encoding schemes
+dwi:
+  plain_set:
+    exclude_entities: [direction]  # Only files WITHOUT direction
+  additional_extensions: [bvec, bval]
+
+dwi_ap:  # Files WITH dir-AP/dir-PA
+  named_set:
+    ap: {direction: dir-AP}
+    pa: {direction: dir-PA}
+  suffix_maps_to: "dwi"  # Maps to same suffix
+
+dwi_rl:  # Files WITH dir-RL/dir-LR  
+  named_set:
+    rl: {direction: dir-RL}
+    lr: {direction: dir-LR}
+  suffix_maps_to: "dwi"  # No collision!
+```
+
+**Output:**
+```groovy
+// Subject with AP/PA phase encoding
+[meta: [...], dwi_ap: [ap: [...], pa: [...]]]  // Config key, not "dwi"
+
+// Subject with RL/LR phase encoding  
+[meta: [...], dwi_rl: [rl: [...], lr: [...]]]  // Different config key
+```
+
+**Critical Pattern:** When using `suffix_maps_to`, plain configs MUST exclude distinguishing entities to prevent files matching multiple configs.
+
+### Added
+- Flat output structure in `BidsHandler.flattenTupleToMap()`
+- `flatten_output` option (default: `true`) for backward compatibility
+- `exclude_entities` validation to prevent double-matching
+- Comprehensive heterogeneous dataset test suite
+- New test workflow: `validation/main_flat.nf`
+- Test dataset: `validation/data/custom/ds-dwi4` with heterogeneous data
+- Test suite: `validation/test_heterogeneous_suffix_mapping_flat.nf.test`
+
+### Changed
+- **SuffixMapper:** Inverted mapping to `configKey → targetSuffix`
+- **SuffixMapper.resolveConfigKeys():** Now returns `List<String>` of all matching configs
+- **BaseSetHandler.findMatchingGrouping():** Tries all candidate config keys
+- **All handlers:** Updated to use `configKey` in output structure
+- **BaseSetHandler.getSetType():** Uses `containsKey()` instead of truthiness
+- **BidsConfigLoader:** Validates against reserved `meta` key name
+
+### Fixed
+- **Critical:** Suffix mapping direction (was backwards)
+- **Critical:** Output keys now use config keys, not file suffixes  
+- **Critical:** Empty plain sets now detected correctly
+- **Critical:** Multiple configs can now share same `suffix_maps_to`
+- File path compatibility with Nextflow process `path` inputs
+- Type safety: All paths are `java.nio.file.Path` objects
+
+### Performance
+- No regressions: All 78 unit tests passing
+- All 25+ integration tests passing
+- Comprehensive heterogeneous dataset tests (4/4 passing)
+
+---
+
+## [Unreleased] 0.1.0-beta.5
+
+### ⚠️ BREAKING CHANGES
+
+#### Java File to Path Conversion
+
+Channel outputs now use `java.nio.file.Path` instead of `java.io.File` for all file paths to ensure compatibility with Nextflow process `path` inputs and support for remote file systems.
+
+**Impact:**
+- ✅ **Fixed:** Processes can now consume plugin output with `path` inputs (previously failed with "Unexpected path value: [java.io.File]")
+- ✅ **Improved:** Full support for cloud storage (S3, GCS, Azure Blob Storage)
+- ✅ **Enhanced:** Richer Path API for file operations
+
+**What Changed:**
+- All file paths in channel output are now `java.nio.file.Path` objects
+- Uses `FileHelper.asPath()` for robust path handling
+- Supports local files, URIs (s3://, gs://, az://), and relative paths
+
+**Migration:** 
+Most users won't need to change anything - Nextflow processes automatically handle Path objects. If you were using File-specific methods:
+```groovy
+// Old: def file = item.T1w; file.listFiles()
+// New: def path = item.T1w; path.toFile().listFiles()  // or Files.list(path)
+```
+
+### Fixed
+- **Critical:** File path compatibility with Nextflow process path inputs
+- Channel outputs now emit Path objects compatible with process staging
+
+### ⚠️ BREAKING CHANGES
+
+#### combineBy Operator Redesign
+
+The `combineBy` operator has been completely redesigned to use **key extraction** instead of **filter predicates**, aligning with `groupTupleBy` and `joinBy` patterns.
+
+**Old API (0.1.0-beta.4):**
+```nextflow
+subjects.combineBy(sessions) { subj, sess ->
+    subj.id == sess.subject  // Filter predicate
+}
+.view { subj, sess -> "${subj} with ${sess}" }  // 2 elements
+```
+
+**New API (0.1.0-beta.5+):**
+```nextflow
+subjects.combineBy(
+    sessions,
+    { it.id },      // Left key extractor
+    { it.subject }  // Right key extractor
+)
+.view { key, subj, sess -> "${key}: ${subj} with ${sess}" }  // 3 elements
+```
+
+**Changes:**
+- ❌ Removed: Filter predicate parameter
+- ✅ Added: Dual key extractors (left and right)
+- ✅ Changed: Output from `[left, right]` to `[key, left, right]`
+- ✅ Feature: Cartesian product within matching key groups
+- ✅ Consistency: Aligns with Nextflow's `combine(by:)` operator
+
+**Migration Required:** All existing `combineBy` usage must be updated. See [docs/channel-operators.md](docs/channel-operators.md#combineby-migration-beta4-to-beta5) for migration guide.
+
+### Added
+- Key-based combination logic in `CombineByOp.groovy`
+- Support for different key extractors for left/right channels
+- Cartesian product generation within matching key groups
+- Comprehensive test suite for new combineBy behavior
+- Research documentation for Nextflow's `combine(by:)` operator
+- API design specification for combineBy redesign
+
+### Changed
+- `CombineByOp`: Replaced `List` buffers with `Map<Object, List>` for key-based storage
+- `BidsExtension.combineBy()`: Updated signature to accept dual key extractors
+- Documentation: Complete rewrite of combineBy section in channel-operators.md
+- Tests: Updated `test_combineby.nf` with 8 new test cases
+- Benchmark: Added `benchmark_combineby_new.nf` for performance validation
+
+### Fixed
+- Operator consistency: All three operators (`groupTupleBy`, `joinBy`, `combineBy`) now use key extraction
+- Output structure: `combineBy` now includes key in output (matches `joinBy` pattern)
+
+---
+
 ## [0.2.0] - 2025-10-29 🎉 100% BASELINE ALIGNMENT
 
 ### 🏆 Achievement: Production Ready

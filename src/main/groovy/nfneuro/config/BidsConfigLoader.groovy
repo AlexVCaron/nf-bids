@@ -42,6 +42,11 @@ class BidsConfigLoader {
 
             def config = yaml.load(new FileReader(configFile)) as Map
 
+            // Prevent usage of reserved key 'meta' as a suffix name
+            if (config.containsKey('meta')) {
+                throw new IllegalArgumentException("Configuration error: Reserved key 'meta' cannot be used as suffix name. Please rename this suffix in your configuration file.")
+            }
+
             // Validate configuration structure and values
             def validationResult = BidsConfigValidator.validate(config)
             if (!validationResult.isValid()) {

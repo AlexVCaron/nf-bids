@@ -23,11 +23,12 @@
 │      │  Configuration  │ │    Parsers      │ │   Grouping     │        │
 │      ├─────────────────┤ ├─────────────────┤ ├────────────────┤        │
 │      │ ConfigLoader    │ │ BidsParser      │ │ BaseSetHandler │        │
-│      │ ConfigAnalyzer  │ │ LibBidsWrapper  │ │  ├─Plain       │        │
-│      │                 │ │ BidsValidator   │ │  ├─Named       │        │
-│      │ • load()        │ │                 │ │  ├─Sequential  │        │
-│      │ • analyze()     │ │ • parse()       │ │  └─Mixed       │        │
-│      │ • getSummary()  │ │ • validate()    │ │                │        │
+│      │ ConfigValidator │ │ LibBidsShWrapper│ │ ├─PlainSet     │        │
+│      │ ConfigAnalyzer  │ │ BidsValidator   │ │ ├─NamedSet     │        │
+│      │                 │ │                 │ │ ├─SequentialSet│        │
+│      │ • load()        │ │ • parse()       │ │ └─MixedSet     │        │
+│      │ • validate()    │ │ • validate()    │ │                │        │
+│      │ • analyze()     │ │ • wrapper()     │ │ • process()    │        │
 │      └─────────────────┘ └─────────────────┘ └────────────────┘        │
 │               │                   │                   │                │
 │               │                   │                   │                │
@@ -109,126 +110,173 @@
 
 # Set Type Processing Examples:
 
-## Plain set
+## Plain Set
+
+**Since:** Baseline / v0.1.0  
+**Output Format:** Flat map (default since beta.9)
 
 ```
 Input:  sub-01_T1w.nii.gz
-Output: [
-  [
-    ["sub-01"],
-    {
-      data: {
-        T1w: {
-          nii: "sub-01_T1w.nii.gz",
-          json: "sub-01_T1w.json"
-        }
-      },
-      subject: "sub-01",
-      bidsParentDir: "..."
-    }
+
+Output (flat format):
+[
+  meta: [
+    subject: 'sub-01',
+    session: 'NA',
+    run: 'NA'
   ],
-  ...
+  T1w: [
+    nii: Path("/absolute/path/to/bids/sub-01/anat/sub-01_T1w.nii.gz"),
+    json: Path("/absolute/path/to/bids/sub-01/anat/sub-01_T1w.json")
+  ]
 ]
 ```
 
-## Named set
+**Configuration:**
+```yaml
+loop_over: [subject, session, run]
+
+T1w:
+  plain_set: {}
+```
+
+## Named Set
+
+**Since:** Baseline / v0.1.0  
+**Output Format:** Flat map with named groups (default since beta.9)
 
 ```
-Input:  sub-01_acq-AP_dwi.nii.gz, sub-01_acq-PA_dwi.nii.gz
-Output: [
-  [
-    ["sub-01"],
-    {
-      data: {
-        dwi: {
-          ap: {
-            nii: "sub-01_acq-AP_dwi.nii.gz",
-            json: "sub-01_acq-AP_dwi.json"
-          },
-          pa: {
-            nii: "sub-01_acq-PA_dwi.nii.gz",
-            json: "sub-01_acq-PA_dwi.json"
-          }
-        }
-      },
-      subject: "sub-01",
-      bidsParentDir: "..."
-    }
+Input:  sub-01_dir-AP_dwi.nii.gz, sub-01_dir-PA_dwi.nii.gz
+
+Output (flat format):
+[
+  meta: [
+    subject: 'sub-01',
+    session: 'NA'
   ],
-  ...
+  dwi: [
+    ap: [
+      nii: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz"),
+      json: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-AP_dwi.json"),
+      bval: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-AP_dwi.bval"),
+      bvec: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-AP_dwi.bvec")
+    ],
+    pa: [
+      nii: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-PA_dwi.nii.gz"),
+      json: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-PA_dwi.json"),
+      bval: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-PA_dwi.bval"),
+      bvec: Path("/absolute/path/to/bids/sub-01/dwi/sub-01_dir-PA_dwi.bvec")
+    ]
+  ]
 ]
 ```
 
-## Sequential set
+**Configuration:**
+```yaml
+loop_over: [subject, session]
+
+dwi:
+  named_set:
+    ap: {direction: dir-AP}
+    pa: {direction: dir-PA}
+  required: [ap, pa]
+  additional_extensions: [.bval, .bvec]
+```
+
+## Sequential Set
+
+**Since:** Baseline / v0.1.0  
+**Output Format:** Flat map with arrays (default since beta.9)
 
 ```
-Input:  sub-01_echo-1_T2star.nii.gz, sub-01_echo-2_T2star.nii.gz, ...
-Output: [
-  [
-    ["sub-01"],
-    {
-      data: {
-        T2star: {
-          nii: [
-            "sub-01_echo-1_T2star.nii.gz",
-            "sub-01_echo-2_T2star.nii.gz",
-            ...
-          ],
-          json: [
-            "sub-01_echo-1_T2star.json",
-            "sub-01_echo-2_T2star.json",
-            ...
-          ]
-        }
-      },
-      subject: "sub-01",
-      bidsParentDir: "..."
-    }
+Input:  sub-01_echo-1_megre.nii.gz, sub-01_echo-2_megre.nii.gz, sub-01_echo-3_megre.nii.gz
+
+Output (flat format):
+[
+  meta: [
+    subject: 'sub-01',
+    session: 'NA'
   ],
-  ...
+  megre: [
+    nii: [
+      Path("/absolute/path/to/bids/sub-01/anat/sub-01_echo-1_megre.nii.gz"),
+      Path("/absolute/path/to/bids/sub-01/anat/sub-01_echo-2_megre.nii.gz"),
+      Path("/absolute/path/to/bids/sub-01/anat/sub-01_echo-3_megre.nii.gz")
+    ],
+    json: [
+      Path("/absolute/path/to/bids/sub-01/anat/sub-01_echo-1_megre.json"),
+      Path("/absolute/path/to/bids/sub-01/anat/sub-01_echo-2_megre.json"),
+      Path("/absolute/path/to/bids/sub-01/anat/sub-01_echo-3_megre.json")
+    ]
+  ]
 ]
 ```
 
-## Mixed set
+**Configuration:**
+```yaml
+loop_over: [subject, session]
+
+megre:
+  sequential_set:
+    by_entity: echo
+```
+
+## Mixed Set
+
+**Since:** Baseline / v0.1.0  
+**Output Format:** Flat map with nested structure (default since beta.9)
 
 ```
-Input:  sub-01_acq-AP_echo-1_dwi.nii.gz, sub-01_acq-AP_echo-2_dwi.nii.gz, ...
-Output: [
-  [
-    ["sub-01"],
-    {
-      data: {
-        dwi: {
-          ap: {
-            nii: [
-              "sub-01_acq-AP_echo-1_dwi.nii.gz",
-              "sub-01_acq-AP_echo-2_dwi.nii.gz",
-              ...
-            ],
-            json: [
-              "sub-01_acq-AP_echo-1_dwi.json",
-              "sub-01_acq-AP_echo-2_dwi.json",
-              ...
-            ]
-          },
-          pa: {
-            nii: [
-              "sub-01_acq-PA_echo-1_dwi.nii.gz",
-              "sub-01_acq-PA_echo-2_dwi.nii.gz",
-              ...
-            ],
-            json: [
-              "sub-01_acq-PA_echo-1_dwi.json",
-              "sub-01_acq-PA_echo-2_dwi.json",
-              ...
-            ]
-          }
-        }
-      },
-      subject: "sub-01",
-      bidsParentDir: "..."
-    }
+Input:  sub-01_acq-MTw_echo-1_MPM.nii.gz, sub-01_acq-MTw_echo-2_MPM.nii.gz,
+        sub-01_acq-PDw_echo-1_MPM.nii.gz, sub-01_acq-PDw_echo-2_MPM.nii.gz,
+        sub-01_acq-T1w_echo-1_MPM.nii.gz, sub-01_acq-T1w_echo-2_MPM.nii.gz
+
+Output (flat format):
+[
+  meta: [
+    subject: 'sub-01',
+    session: 'NA'
   ],
-  ...
+  mpm: [
+    MTw: [
+      nii: [
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-MTw_echo-1_MPM.nii.gz"),
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-MTw_echo-2_MPM.nii.gz")
+      ],
+      json: [
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-MTw_echo-1_MPM.json"),
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-MTw_echo-2_MPM.json")
+      ]
+    ],
+    PDw: [
+      nii: [
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-PDw_echo-1_MPM.nii.gz"),
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-PDw_echo-2_MPM.nii.gz")
+      ],
+      json: [...]
+    ],
+    T1w: [
+      nii: [
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-T1w_echo-1_MPM.nii.gz"),
+        Path("/absolute/path/to/bids/sub-01/anat/sub-01_acq-T1w_echo-2_MPM.nii.gz")
+      ],
+      json: [...]
+    ]
+  ]
 ]
+```
+
+**Configuration:**
+```yaml
+loop_over: [subject, session]
+
+mpm:
+  mixed_set:
+    named_dimension: acquisition
+    sequential_dimension: echo
+    named_groups:
+      MTw: {acquisition: acq-MTw}
+      PDw: {acquisition: acq-PDw}
+      T1w: {acquisition: acq-T1w}
+  required: [MTw, PDw, T1w]
 ```
