@@ -7,7 +7,7 @@ A Nextflow plugin that provides:
 - **Heterogeneous dataset support** for mixed acquisition schemes
 - **Closure-based channel operators** for flexible data grouping and joining
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.9-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.1.0-beta.10)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.10-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.1.0-beta.10)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
