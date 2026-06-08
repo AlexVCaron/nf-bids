@@ -7,9 +7,8 @@ nextflow_workflow {
     test("asl001 - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/asl001"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_asl.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/asl001"
+                config = "${baseDir}/configs/config_asl.yaml"
             }
         }
         then {
@@ -25,9 +24,8 @@ nextflow_workflow {
     test("asl002 - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/asl002"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_asl.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/asl002"
+                config = "${baseDir}/configs/config_asl.yaml"
             }
         }
         then {
@@ -43,9 +41,8 @@ nextflow_workflow {
     test("eeg_cbm - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/eeg_cbm"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_eeg.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/eeg_cbm"
+                config = "${baseDir}/configs/config_eeg.yaml"
             }
         }
         then {

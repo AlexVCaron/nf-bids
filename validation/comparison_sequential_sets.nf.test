@@ -7,9 +7,8 @@ nextflow_workflow {
     test("qmri_vfa - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_vfa"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_vfa.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/qmri_vfa"
+                config = "${baseDir}/configs/config_vfa.yaml"
             }
         }
         then {
@@ -25,9 +24,8 @@ nextflow_workflow {
     test("qmri_irt1 - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_irt1"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_irt1.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/qmri_irt1"
+                config = "${baseDir}/configs/config_irt1.yaml"
             }
         }
         then {
@@ -43,9 +41,8 @@ nextflow_workflow {
     test("qmri_megre - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_megre"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_megre.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/qmri_megre"
+                config = "${baseDir}/configs/config_megre.yaml"
             }
         }
         then {
@@ -61,9 +58,8 @@ nextflow_workflow {
     test("qmri_mese - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_mese"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mese.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/qmri_mese"
+                config = "${baseDir}/configs/config_mese.yaml"
             }
         }
         then {
@@ -79,9 +75,8 @@ nextflow_workflow {
     test("qmri_mp2rage - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_mp2rage"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mp2rage.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/qmri_mp2rage"
+                config = "${baseDir}/configs/config_mp2rage.yaml"
             }
         }
         then {
@@ -97,9 +92,8 @@ nextflow_workflow {
     test("qmri_sa2rage - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_sa2rage"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_sa2rage.yaml"
+                bids_dir = "${baseDir}/data/bids-examples/qmri_sa2rage"
+                config = "${baseDir}/configs/config_sa2rage.yaml"
             }
         }
         then {
