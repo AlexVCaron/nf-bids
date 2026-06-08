@@ -20,15 +20,18 @@ TESTS=()
 run_test() {
     local test_file=$1
     local test_name=$2
+    local log_file=".${test_file}.log"
     
     echo "Running: $test_name"
-    if nextflow run "$test_file" > /dev/null 2>&1; then
+    if nextflow run "$test_file" > "${log_file}" 2>&1; then
         PASSED=$((PASSED + 1))
         TESTS+=("✅ $test_name")
+        rm -f "${log_file}"
     else
         FAILED=$((FAILED + 1))
         TESTS+=("❌ $test_name")
         echo "FAILED: $test_name"
+        tail -n 20 "${log_file}" || true
     fi
     echo ""
 }

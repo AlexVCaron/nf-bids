@@ -11,11 +11,16 @@ fi
 
 export TERM="${TERM:-xterm}"
 export NXF_ANSI_LOG=false
+export NXF_OFFLINE=true
 
 PASS=0
 FAIL=0
 SKIP=0
 RESULTS=()
+has_libbids=false
+if [[ -f "${ROOT_DIR}/libBIDS.sh/libBIDS.sh" ]] || [[ -f "${ROOT_DIR}/validation/libBIDS.sh/libBIDS.sh" ]]; then
+  has_libbids=true
+fi
 
 run_step() {
   local name="$1"
@@ -69,22 +74,45 @@ run_step "Install plugin locally" "./gradlew install"
 
 if check_cmd "nextflow" "Nextflow suites"; then
   for nf_script in \
-    validation/main.nf \
-    validation/main_flat.nf \
-    validation/test_combineby.nf \
-    validation/test_grouptupleby.nf \
-    validation/test_joinby.nf \
-    validation/test_path_types.nf \
-    validation/test_process_path_input.nf \
-    validation/test_flattened_output.nf; do
-    run_step "Nextflow script: ${nf_script}" "nextflow run '${nf_script}'"
+    test_combineby.nf \
+    test_grouptupleby.nf \
+    test_joinby.nf; do
+    run_step "Nextflow script: validation/${nf_script}" "cd validation && nextflow run '${nf_script}'"
   done
+
+  if [[ "${has_libbids}" == true ]]; then
+    for nf_script in \
+      main.nf \
+      main_flat.nf \
+      test_path_types.nf \
+      test_flattened_output.nf \
+      test_process_path_input.nf; do
+      run_step "Nextflow script: validation/${nf_script}" "cd validation && nextflow run '${nf_script}'"
+    done
+  else
+    for nf_script in \
+      main.nf \
+      main_flat.nf \
+      test_path_types.nf \
+      test_flattened_output.nf \
+      test_process_path_input.nf; do
+      echo "⚠️  SKIP: Nextflow script: validation/${nf_script} (libBIDS.sh not found)"
+      RESULTS+=("SKIP|Nextflow script: validation/${nf_script}|0|missing:libBIDS.sh")
+      SKIP=$((SKIP + 1))
+    done
+  fi
 
   run_step "Edge case suite" "bash validation/edge_cases/run_all_tests.sh"
 fi
 
 if check_cmd "nf-test" "nf-test suites"; then
-  run_step "nf-test snapshots" "nf-test test validation/comparison_custom_datasets.nf.test validation/comparison_mixed_sets.nf.test validation/comparison_named_sets.nf.test validation/comparison_plain_sets.nf.test validation/comparison_sequential_sets.nf.test validation/test_flattened_output.nf.test validation/test_heterogeneous_suffix_mapping.nf.test"
+  if [[ "${has_libbids}" == true ]]; then
+    run_step "nf-test snapshots" "nf-test test validation/comparison_custom_datasets.nf.test validation/comparison_mixed_sets.nf.test validation/comparison_named_sets.nf.test validation/comparison_plain_sets.nf.test validation/comparison_sequential_sets.nf.test validation/test_flattened_output.nf.test validation/test_heterogeneous_suffix_mapping.nf.test"
+  else
+    echo "⚠️  SKIP: nf-test snapshots (libBIDS.sh not found)"
+    RESULTS+=("SKIP|nf-test snapshots|0|missing:libBIDS.sh")
+    SKIP=$((SKIP + 1))
+  fi
 fi
 
 echo

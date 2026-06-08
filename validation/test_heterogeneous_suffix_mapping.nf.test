@@ -10,8 +10,8 @@ nextflow_workflow {
     test("Heterogeneous DWI - Multiple configs preserved with flat output") {
         when {
             params {
-                bids_dir = "${baseDir}/data/custom/ds-dwi4"
-                config = "${baseDir}/configs/config_heterogeneous_dwi.yaml"
+                bids_dir = "${baseDir}/validation/data/custom/ds-dwi4"
+                config = "${baseDir}/validation/configs/config_heterogeneous_dwi.yaml"
             }
         }
         then {
@@ -87,8 +87,8 @@ nextflow_workflow {
     test("Validate named set structure with heterogeneous mappings") {
         when {
             params {
-                bids_dir = "${baseDir}/data/custom/ds-dwi4"
-                config = "${baseDir}/configs/config_heterogeneous_dwi.yaml"
+                bids_dir = "${baseDir}/validation/data/custom/ds-dwi4"
+                config = "${baseDir}/validation/configs/config_heterogeneous_dwi.yaml"
             }
         }
         then {
@@ -149,8 +149,8 @@ nextflow_workflow {
     test("Verify config keys match entities correctly") {
         when {
             params {
-                bids_dir = "${baseDir}/data/custom/ds-dwi4"
-                config = "${baseDir}/configs/config_heterogeneous_dwi.yaml"
+                bids_dir = "${baseDir}/validation/data/custom/ds-dwi4"
+                config = "${baseDir}/validation/configs/config_heterogeneous_dwi.yaml"
             }
         }
         then {
@@ -215,8 +215,8 @@ nextflow_workflow {
     test("No suffix collision - All files processed") {
         when {
             params {
-                bids_dir = "${baseDir}/data/custom/ds-dwi4"
-                config = "${baseDir}/configs/config_heterogeneous_dwi.yaml"
+                bids_dir = "${baseDir}/validation/data/custom/ds-dwi4"
+                config = "${baseDir}/validation/configs/config_heterogeneous_dwi.yaml"
             }
         }
         then {
@@ -258,7 +258,7 @@ nextflow_workflow {
             assert totalFilesReferenced > 0 : "Expected files to be processed"
             
             // Count DWI files in the dataset
-            def dwiDir = new File("${baseDir}/data/custom/ds-dwi4")
+            def dwiDir = new File("${baseDir}/validation/data/custom/ds-dwi4")
             def dwiFilesInDataset = []
             if (dwiDir.exists()) {
                 dwiDir.eachFileRecurse { file ->

@@ -7,8 +7,8 @@ nextflow_workflow {
     test("qmri_mpm - Plugin output") {
         when {
             params {
-                bids_dir = "${baseDir}/data/bids-examples/qmri_mpm"
-                config = "${baseDir}/configs/config_mpm.yaml"
+                bids_dir = "${baseDir}/validation/data/bids-examples/qmri_mpm"
+                config = "${baseDir}/validation/configs/config_mpm.yaml"
             }
         }
         then {

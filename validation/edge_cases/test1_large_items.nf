@@ -29,8 +29,8 @@ workflow {
         def items = grouped[1]
         assert items.size() >= 2 || key == "subject03"
         // Each item is wrapped as a list: [largeString, "session"]
-        assert items[0][0].length() == 1024 * 1024
-        println "  Grouped ${key}: ${items.size()} large items (${items[0][0].length()} bytes each)"
+        assert items[0][1].length() == 1024 * 1024
+        println "  Grouped ${key}: ${items.size()} large items (${items[0][1].length()} bytes each)"
     }
     
     // Wait for completion

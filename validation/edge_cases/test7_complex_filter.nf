@@ -29,14 +29,14 @@ workflow {
     )
     
     scans
-        .combineBy(analyses) { leftItem, rightItem ->
+        .combineBy(analyses, { it.modality }, { it.requires })
+        .filter { key, leftItem, rightItem ->
             // Complex predicate: subject match AND modality match AND quality threshold
-            leftItem.subject == "sub-01" && 
-            leftItem.modality == rightItem.requires && 
+            leftItem.subject == "sub-01" &&
             leftItem.quality >= rightItem.minQuality
         }
         .subscribe(
-            onNext: { leftItem, rightItem ->
+            onNext: { key, leftItem, rightItem ->
                 matchCount++
                 println "  Match: ${leftItem.subject} ${leftItem.modality} (q=${leftItem.quality}) -> ${rightItem.analysis}"
                 assert leftItem.modality == rightItem.requires
