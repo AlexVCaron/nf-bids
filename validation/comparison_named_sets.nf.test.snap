@@ -48,7 +48,6 @@
                             "qmri_mtsat/sub-01/fmap/sub-01_flip-2_TB1DAM.json",
                             "qmri_mtsat/sub-01/fmap/sub-01_flip-2_TB1DAM.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -57,11 +56,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:37.706547558",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:15.343850734"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "qmri_tb1tfl - Plugin output": {
         "content": [
@@ -92,7 +91,6 @@
                             "qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.json",
                             "qmri_tb1tfl/sub-01/fmap/sub-01_acq-famp_TB1TFL.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -101,10 +99,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:41.379756673",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:21.156079012"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     }
 }

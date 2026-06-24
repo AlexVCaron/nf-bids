@@ -52,7 +52,6 @@
                             "qmri_megre/sub-01/anat/sub-01_echo-08_MEGRE.json",
                             "qmri_megre/sub-01/anat/sub-01_echo-08_MEGRE.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -61,11 +60,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:19:04.753735378",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:15:08.925476164"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "qmri_vfa - Plugin output": {
         "content": [
@@ -110,7 +109,6 @@
                             "qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.json",
                             "qmri_vfa/sub-01/anat/sub-01_flip-2_VFA.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -119,11 +117,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:57.232705099",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:51.176856101"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "qmri_mese - Plugin output": {
         "content": [
@@ -274,7 +272,6 @@
                             "qmri_mese/sub-01/anat/sub-01_echo-32_MESE.json",
                             "qmri_mese/sub-01/anat/sub-01_echo-32_MESE.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -283,11 +280,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:19:09.042599795",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:15:19.835368808"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "qmri_sa2rage - Plugin output": {
         "content": [
@@ -326,7 +323,6 @@
                             "qmri_sa2rage/sub-01/fmap/sub-01_flip-2_inv-2_TB1SRGE.json",
                             "qmri_sa2rage/sub-01/fmap/sub-01_flip-2_inv-2_TB1SRGE.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -335,11 +331,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:19:16.264453674",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:15:36.411449927"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "qmri_irt1 - Plugin output": {
         "content": [
@@ -378,7 +374,6 @@
                             "qmri_irt1/sub-01/anat/sub-01_inv-04_IRT1.json",
                             "qmri_irt1/sub-01/anat/sub-01_inv-04_IRT1.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -387,11 +382,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:19:00.963288817",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:59.022546142"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "qmri_mp2rage - Plugin output": {
         "content": [
@@ -436,7 +431,6 @@
                             "qmri_mp2rage/derivatives/pymp2rage/sub-1/anat/sub-1_UNIT1.json",
                             "qmri_mp2rage/sub-1/anat/sub-1_UNIT1.nii"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-1",
                         "session": "NA",
                         "run": "NA",
@@ -445,10 +439,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:19:12.544088886",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-13T01:05:05.885777371"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     }
 }

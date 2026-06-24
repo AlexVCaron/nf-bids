@@ -7,54 +7,73 @@ nextflow_workflow {
     test("asl001 - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/asl001"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_asl.yaml"
+                bids_dir = "${baseDir}/validation/data/bids-examples/asl001"
+                config = "${baseDir}/validation/configs/config_asl.yaml"
             }
         }
         then {
             assert workflow.success
             assert workflow.out.bids_channel
-            def results = workflow.out.bids_channel
-            collect()
-            def json = groovy.json.JsonOutput.toJson(results)
-            assert snapshot(new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(json))).match()
+            def results = workflow.out.bids_channel.collect()
+            // Serialize to normalise types, then strip the machine-specific bidsParentDir field.
+            // NIfTI files (.nii.gz / .nii) and all other file types are kept as their relative
+            // path strings so that snapshot comparison is machine-independent and never triggers
+            // gzip decompression on the dummy stub files used in the test datasets.
+            def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
+            def snapshot_data = parsed.collect { item ->
+                item.collect { e ->
+                    (e instanceof Map && e.containsKey('bidsParentDir'))
+                        ? e.findAll { k, v -> k != 'bidsParentDir' }
+                        : e
+                }
+            }
+            assert snapshot(snapshot_data).match()
         }
     }
 
     test("asl002 - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/asl002"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_asl.yaml"
+                bids_dir = "${baseDir}/validation/data/bids-examples/asl002"
+                config = "${baseDir}/validation/configs/config_asl.yaml"
             }
         }
         then {
             assert workflow.success
             assert workflow.out.bids_channel
-            def results = workflow.out.bids_channel
-            collect()
-            def json = groovy.json.JsonOutput.toJson(results)
-            assert snapshot(new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(json))).match()
+            def results = workflow.out.bids_channel.collect()
+            def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
+            def snapshot_data = parsed.collect { item ->
+                item.collect { e ->
+                    (e instanceof Map && e.containsKey('bidsParentDir'))
+                        ? e.findAll { k, v -> k != 'bidsParentDir' }
+                        : e
+                }
+            }
+            assert snapshot(snapshot_data).match()
         }
     }
 
     test("eeg_cbm - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/eeg_cbm"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_eeg.yaml"
+                bids_dir = "${baseDir}/validation/data/bids-examples/eeg_cbm"
+                config = "${baseDir}/validation/configs/config_eeg.yaml"
             }
         }
         then {
             assert workflow.success
             assert workflow.out.bids_channel
-            def results = workflow.out.bids_channel
-            collect()
-            def json = groovy.json.JsonOutput.toJson(results)
-            assert snapshot(new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(json))).match()
+            def results = workflow.out.bids_channel.collect()
+            def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
+            def snapshot_data = parsed.collect { item ->
+                item.collect { e ->
+                    (e instanceof Map && e.containsKey('bidsParentDir'))
+                        ? e.findAll { k, v -> k != 'bidsParentDir' }
+                        : e
+                }
+            }
+            assert snapshot(snapshot_data).match()
         }
     }
 }

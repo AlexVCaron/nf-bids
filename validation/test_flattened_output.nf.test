@@ -7,8 +7,8 @@ nextflow_workflow {
     test("Plain set - Flattened output with meta and top-level suffixes") {
         when {
             params {
-                bids_dir = "${baseDir}/data/bids-examples/asl001"
-                config = "${baseDir}/configs/config_asl.yaml"
+                bids_dir = "${baseDir}/validation/data/bids-examples/asl001"
+                config = "${baseDir}/validation/configs/config_asl.yaml"
             }
         }
         then {
@@ -54,8 +54,8 @@ nextflow_workflow {
     test("Sequential set - Files as lists") {
         when {
             params {
-                bids_dir = "${baseDir}/data/custom/ds-mtsat"
-                config = "${baseDir}/configs/config_mtsat.yaml"
+                bids_dir = "${baseDir}/validation/data/custom/ds-mtsat"
+                config = "${baseDir}/validation/configs/config_mtsat.yaml"
             }
         }
         then {
@@ -99,8 +99,8 @@ nextflow_workflow {
     test("Sequential set - Files as lists") {
         when {
             params {
-                bids_dir = "${baseDir}/data/custom/ds-mtsat"
-                config = "${baseDir}/configs/config_mtsat.yaml"
+                bids_dir = "${baseDir}/validation/data/custom/ds-mtsat"
+                config = "${baseDir}/validation/configs/config_mtsat.yaml"
             }
         }
         then {
@@ -138,8 +138,8 @@ nextflow_workflow {
     test("Legacy format opt-out") {
         when {
             params {
-                bids_dir = "${baseDir}/data/bids-examples/asl001"
-                config = "${baseDir}/configs/config_asl.yaml"
+                bids_dir = "${baseDir}/validation/data/bids-examples/asl001"
+                config = "${baseDir}/validation/configs/config_asl.yaml"
                 use_legacy = true
             }
         }

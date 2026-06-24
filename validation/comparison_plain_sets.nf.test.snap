@@ -15,22 +15,21 @@
                                 "json": "asl001/sub-Sub103/anat/sub-Sub103_T1w.json",
                                 "nii": "asl001/sub-Sub103/anat/sub-Sub103_T1w.nii.gz"
                             },
-                            "aslcontext": {
-                                "tsv": "asl001/sub-Sub103/perf/sub-Sub103_aslcontext.tsv"
-                            },
                             "asl": {
                                 "json": "asl001/sub-Sub103/perf/sub-Sub103_asl.json",
                                 "nii": "asl001/sub-Sub103/perf/sub-Sub103_asl.nii.gz"
+                            },
+                            "aslcontext": {
+                                "tsv": "asl001/sub-Sub103/perf/sub-Sub103_aslcontext.tsv"
                             }
                         },
                         "filePaths": [
                             "asl001/sub-Sub103/anat/sub-Sub103_T1w.json",
                             "asl001/sub-Sub103/anat/sub-Sub103_T1w.nii.gz",
-                            "asl001/sub-Sub103/perf/sub-Sub103_aslcontext.tsv",
                             "asl001/sub-Sub103/perf/sub-Sub103_asl.json",
-                            "asl001/sub-Sub103/perf/sub-Sub103_asl.nii.gz"
+                            "asl001/sub-Sub103/perf/sub-Sub103_asl.nii.gz",
+                            "asl001/sub-Sub103/perf/sub-Sub103_aslcontext.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-Sub103",
                         "session": "NA",
                         "run": "NA",
@@ -39,11 +38,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:45.137864232",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:27.876219902"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "eeg_cbm - Plugin output": {
         "content": [
@@ -74,7 +73,6 @@
                             "eeg_cbm/sub-cbm001/eeg/sub-cbm001_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm001/eeg/sub-cbm001_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm001",
                         "session": "NA",
                         "run": "NA",
@@ -107,7 +105,6 @@
                             "eeg_cbm/sub-cbm002/eeg/sub-cbm002_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm002/eeg/sub-cbm002_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm002",
                         "session": "NA",
                         "run": "NA",
@@ -140,7 +137,6 @@
                             "eeg_cbm/sub-cbm003/eeg/sub-cbm003_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm003/eeg/sub-cbm003_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm003",
                         "session": "NA",
                         "run": "NA",
@@ -173,7 +169,6 @@
                             "eeg_cbm/sub-cbm004/eeg/sub-cbm004_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm004/eeg/sub-cbm004_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm004",
                         "session": "NA",
                         "run": "NA",
@@ -206,7 +201,6 @@
                             "eeg_cbm/sub-cbm005/eeg/sub-cbm005_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm005/eeg/sub-cbm005_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm005",
                         "session": "NA",
                         "run": "NA",
@@ -239,7 +233,6 @@
                             "eeg_cbm/sub-cbm006/eeg/sub-cbm006_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm006/eeg/sub-cbm006_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm006",
                         "session": "NA",
                         "run": "NA",
@@ -272,7 +265,6 @@
                             "eeg_cbm/sub-cbm007/eeg/sub-cbm007_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm007/eeg/sub-cbm007_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm007",
                         "session": "NA",
                         "run": "NA",
@@ -305,7 +297,6 @@
                             "eeg_cbm/sub-cbm008/eeg/sub-cbm008_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm008/eeg/sub-cbm008_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm008",
                         "session": "NA",
                         "run": "NA",
@@ -338,7 +329,6 @@
                             "eeg_cbm/sub-cbm009/eeg/sub-cbm009_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm009/eeg/sub-cbm009_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm009",
                         "session": "NA",
                         "run": "NA",
@@ -371,7 +361,6 @@
                             "eeg_cbm/sub-cbm010/eeg/sub-cbm010_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm010/eeg/sub-cbm010_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm010",
                         "session": "NA",
                         "run": "NA",
@@ -404,7 +393,6 @@
                             "eeg_cbm/sub-cbm011/eeg/sub-cbm011_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm011/eeg/sub-cbm011_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm011",
                         "session": "NA",
                         "run": "NA",
@@ -437,7 +425,6 @@
                             "eeg_cbm/sub-cbm012/eeg/sub-cbm012_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm012/eeg/sub-cbm012_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm012",
                         "session": "NA",
                         "run": "NA",
@@ -470,7 +457,6 @@
                             "eeg_cbm/sub-cbm013/eeg/sub-cbm013_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm013/eeg/sub-cbm013_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm013",
                         "session": "NA",
                         "run": "NA",
@@ -503,7 +489,6 @@
                             "eeg_cbm/sub-cbm014/eeg/sub-cbm014_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm014/eeg/sub-cbm014_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm014",
                         "session": "NA",
                         "run": "NA",
@@ -536,7 +521,6 @@
                             "eeg_cbm/sub-cbm015/eeg/sub-cbm015_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm015/eeg/sub-cbm015_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm015",
                         "session": "NA",
                         "run": "NA",
@@ -569,7 +553,6 @@
                             "eeg_cbm/sub-cbm016/eeg/sub-cbm016_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm016/eeg/sub-cbm016_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm016",
                         "session": "NA",
                         "run": "NA",
@@ -602,7 +585,6 @@
                             "eeg_cbm/sub-cbm017/eeg/sub-cbm017_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm017/eeg/sub-cbm017_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm017",
                         "session": "NA",
                         "run": "NA",
@@ -635,7 +617,6 @@
                             "eeg_cbm/sub-cbm018/eeg/sub-cbm018_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm018/eeg/sub-cbm018_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm018",
                         "session": "NA",
                         "run": "NA",
@@ -668,7 +649,6 @@
                             "eeg_cbm/sub-cbm019/eeg/sub-cbm019_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm019/eeg/sub-cbm019_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm019",
                         "session": "NA",
                         "run": "NA",
@@ -701,7 +681,6 @@
                             "eeg_cbm/sub-cbm020/eeg/sub-cbm020_task-protmap_eeg.edf",
                             "eeg_cbm/sub-cbm020/eeg/sub-cbm020_task-protmap_events.tsv"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-cbm020",
                         "session": "NA",
                         "run": "NA",
@@ -710,11 +689,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:53.501585087",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:43.556538561"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "asl002 - Plugin output": {
         "content": [
@@ -732,12 +711,12 @@
                                 "json": "asl002/sub-Sub103/anat/sub-Sub103_T1w.json",
                                 "nii": "asl002/sub-Sub103/anat/sub-Sub103_T1w.nii.gz"
                             },
-                            "aslcontext": {
-                                "tsv": "asl002/sub-Sub103/perf/sub-Sub103_aslcontext.tsv"
-                            },
                             "asl": {
                                 "json": "asl002/sub-Sub103/perf/sub-Sub103_asl.json",
                                 "nii": "asl002/sub-Sub103/perf/sub-Sub103_asl.nii.gz"
+                            },
+                            "aslcontext": {
+                                "tsv": "asl002/sub-Sub103/perf/sub-Sub103_aslcontext.tsv"
                             },
                             "m0scan": {
                                 "json": "asl002/sub-Sub103/perf/sub-Sub103_m0scan.json",
@@ -747,13 +726,12 @@
                         "filePaths": [
                             "asl002/sub-Sub103/anat/sub-Sub103_T1w.json",
                             "asl002/sub-Sub103/anat/sub-Sub103_T1w.nii.gz",
-                            "asl002/sub-Sub103/perf/sub-Sub103_aslcontext.tsv",
                             "asl002/sub-Sub103/perf/sub-Sub103_asl.json",
                             "asl002/sub-Sub103/perf/sub-Sub103_asl.nii.gz",
+                            "asl002/sub-Sub103/perf/sub-Sub103_aslcontext.tsv",
                             "asl002/sub-Sub103/perf/sub-Sub103_m0scan.json",
                             "asl002/sub-Sub103/perf/sub-Sub103_m0scan.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples",
                         "subject": "sub-Sub103",
                         "session": "NA",
                         "run": "NA",
@@ -762,10 +740,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:48.691897308",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:34.70539932"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     }
 }

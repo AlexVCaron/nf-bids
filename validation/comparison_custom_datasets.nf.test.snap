@@ -30,7 +30,6 @@
                             "ds-mrs_fmrs/sub-01/mrs/sub-01_task-baseline_svs.json",
                             "ds-mrs_fmrs/sub-01/mrs/sub-01_task-baseline_svs.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -69,7 +68,6 @@
                             "ds-mrs_fmrs/sub-01/mrs/sub-01_task-pain_svs.json",
                             "ds-mrs_fmrs/sub-01/mrs/sub-01_task-pain_svs.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -78,11 +76,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:17.183059576",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:13:55.298451118"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "ds-mtsat - Plugin output": {
         "content": [
@@ -119,7 +117,6 @@
                             "ds-mtsat/sub-invivo1/anat/sub-invivo1_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-invivo1/anat/sub-invivo1_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-invivo1",
                         "session": "NA",
                         "run": "NA",
@@ -158,7 +155,6 @@
                             "ds-mtsat/sub-invivo2/anat/sub-invivo2_run-01_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-invivo2/anat/sub-invivo2_run-01_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-invivo2",
                         "session": "NA",
                         "run": "run-01",
@@ -197,7 +193,6 @@
                             "ds-mtsat/sub-invivo2/anat/sub-invivo2_run-02_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-invivo2/anat/sub-invivo2_run-02_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-invivo2",
                         "session": "NA",
                         "run": "run-02",
@@ -236,7 +231,6 @@
                             "ds-mtsat/sub-phantom/ses-rth750rev/anat/sub-phantom_ses-rth750rev_run-01_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-rth750rev/anat/sub-phantom_ses-rth750rev_run-01_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-rth750rev",
                         "run": "run-01",
@@ -275,7 +269,6 @@
                             "ds-mtsat/sub-phantom/ses-rth750rev/anat/sub-phantom_ses-rth750rev_run-02_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-rth750rev/anat/sub-phantom_ses-rth750rev_run-02_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-rth750rev",
                         "run": "run-02",
@@ -314,7 +307,6 @@
                             "ds-mtsat/sub-phantom/ses-rthPRIrev/anat/sub-phantom_ses-rthPRIrev_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-rthPRIrev/anat/sub-phantom_ses-rthPRIrev_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-rthPRIrev",
                         "run": "NA",
@@ -353,7 +345,6 @@
                             "ds-mtsat/sub-phantom/ses-rthSKYrev/anat/sub-phantom_ses-rthSKYrev_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-rthSKYrev/anat/sub-phantom_ses-rthSKYrev_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-rthSKYrev",
                         "run": "NA",
@@ -392,7 +383,6 @@
                             "ds-mtsat/sub-phantom/ses-vendor750rev/anat/sub-phantom_ses-vendor750rev_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-vendor750rev/anat/sub-phantom_ses-vendor750rev_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-vendor750rev",
                         "run": "NA",
@@ -431,7 +421,6 @@
                             "ds-mtsat/sub-phantom/ses-vendorPRIrev/anat/sub-phantom_ses-vendorPRIrev_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-vendorPRIrev/anat/sub-phantom_ses-vendorPRIrev_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-vendorPRIrev",
                         "run": "NA",
@@ -470,7 +459,6 @@
                             "ds-mtsat/sub-phantom/ses-vendorSKYrev/anat/sub-phantom_ses-vendorSKYrev_flip-02_mt-off_MTS.json",
                             "ds-mtsat/sub-phantom/ses-vendorSKYrev/anat/sub-phantom_ses-vendorSKYrev_flip-02_mt-off_MTS.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-phantom",
                         "session": "ses-vendorSKYrev",
                         "run": "NA",
@@ -479,11 +467,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:21.316475492",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:14:02.163797"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "ds-dwi3 - Plugin output": {
         "content": [
@@ -534,7 +522,6 @@
                             "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.json",
                             "ds-dwi3/sub-01/ses-005/dwi/sub-01_ses-005_dir-AP_dwi.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
                         "session": "ses-005",
                         "run": "NA",
@@ -543,11 +530,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:08.371383562",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-12T13:33:26.580725888"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "ds-dwi4 - Plugin output": {
         "content": [
@@ -619,21 +606,21 @@
                                     "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_inv-2_MP2RAGE.nii.gz"
                                 ]
                             },
-                            "T2starw": {
-                                "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.json",
-                                "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.nii.gz"
+                            "T1w": {
+                                "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T1w.json",
+                                "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T1w.nii.gz"
                             },
                             "T2w": {
-                                "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T2w.json",
-                                "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T2w.nii.gz"
-                            },
-                            "T1w": {
-                                "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T1w.json",
-                                "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T1w.nii.gz"
+                                "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T2w.json",
+                                "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T2w.nii.gz"
                             },
                             "UNIT1": {
                                 "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_UNIT1.json",
                                 "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_UNIT1.nii.gz"
+                            },
+                            "T2starw": {
+                                "json": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.json",
+                                "nii": "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.nii.gz"
                             },
                             "dwi": {
                                 "bval": "ds-dwi4/sub-01/ses-005/dwi/sub-01_ses-005_dir-PA_dwi.bval",
@@ -677,16 +664,15 @@
                             "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_inv-1_MP2RAGE.nii.gz",
                             "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_inv-2_MP2RAGE.json",
                             "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_inv-2_MP2RAGE.nii.gz",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.json",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.nii.gz",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T2w.json",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T2w.nii.gz",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T1w.json",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_T1w.nii.gz",
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T1w.json",
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T1w.nii.gz",
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T2w.json",
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_rec-norm_T2w.nii.gz",
                             "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_UNIT1.json",
-                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_UNIT1.nii.gz"
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_UNIT1.nii.gz",
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.json",
+                            "ds-dwi4/sub-01/ses-005/anat/sub-01_ses-005_bp-cspine_T2starw.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
                         "session": "ses-005",
                         "run": "NA",
@@ -760,21 +746,21 @@
                                     "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_inv-2_MP2RAGE.nii.gz"
                                 ]
                             },
-                            "T2starw": {
-                                "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.json",
-                                "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.nii.gz"
+                            "T1w": {
+                                "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T1w.json",
+                                "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T1w.nii.gz"
                             },
                             "T2w": {
-                                "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T2w.json",
-                                "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T2w.nii.gz"
-                            },
-                            "T1w": {
-                                "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T1w.json",
-                                "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T1w.nii.gz"
+                                "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T2w.json",
+                                "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T2w.nii.gz"
                             },
                             "UNIT1": {
                                 "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_UNIT1.json",
                                 "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_UNIT1.nii.gz"
+                            },
+                            "T2starw": {
+                                "json": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.json",
+                                "nii": "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.nii.gz"
                             },
                             "dwi": {
                                 "bval": "ds-dwi4/sub-06/ses-009/dwi/sub-06_ses-009_dir-PA_dwi.bval",
@@ -818,16 +804,15 @@
                             "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_inv-1_MP2RAGE.nii.gz",
                             "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_inv-2_MP2RAGE.json",
                             "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_inv-2_MP2RAGE.nii.gz",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.json",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.nii.gz",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T2w.json",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T2w.nii.gz",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T1w.json",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_T1w.nii.gz",
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T1w.json",
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T1w.nii.gz",
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T2w.json",
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_rec-norm_T2w.nii.gz",
                             "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_UNIT1.json",
-                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_UNIT1.nii.gz"
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_UNIT1.nii.gz",
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.json",
+                            "ds-dwi4/sub-06/ses-009/anat/sub-06_ses-009_bp-cspine_T2starw.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-06",
                         "session": "ses-009",
                         "run": "NA",
@@ -836,11 +821,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:13.707749936",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-12T13:33:35.536579778"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "ds-dwi2 - Plugin output": {
         "content": [
@@ -879,7 +864,6 @@
                             "ds-dwi2/sub-01/ses-005/fmap/sub-01_ses-005_dir-AP_epi.json",
                             "ds-dwi2/sub-01/ses-005/fmap/sub-01_ses-005_dir-AP_epi.nii.gz"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
                         "session": "ses-005",
                         "run": "NA",
@@ -888,11 +872,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:04.835901917",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:13:35.567448749"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     },
     "ds-dwi - Plugin output": {
         "content": [
@@ -925,7 +909,6 @@
                             "ds-dwi/sub-01/dwi/sub-01_dwi.json",
                             "ds-dwi/sub-01/dwi/sub-01_dwi.nii"
                         ],
-                        "bidsParentDir": "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/custom",
                         "subject": "sub-01",
                         "session": "NA",
                         "run": "NA",
@@ -934,10 +917,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-06-24T16:18:01.006972287",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
-        },
-        "timestamp": "2025-11-06T12:13:30.002090404"
+            "nf-test": "0.9.5",
+            "nextflow": "24.10.0"
+        }
     }
 }
