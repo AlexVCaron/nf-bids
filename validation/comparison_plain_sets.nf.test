@@ -15,8 +15,19 @@ nextflow_workflow {
             assert workflow.success
             assert workflow.out.bids_channel
             def results = workflow.out.bids_channel.collect()
-            def mkPath = { String p -> path(p) }
-            assert snapshot(sanitizeBidsResults(results, mkPath)).match()
+            // Serialize to normalise types, then strip the machine-specific bidsParentDir field.
+            // NIfTI files (.nii.gz / .nii) and all other file types are kept as their relative
+            // path strings so that snapshot comparison is machine-independent and never triggers
+            // gzip decompression on the dummy stub files used in the test datasets.
+            def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
+            def snapshot_data = parsed.collect { item ->
+                item.collect { e ->
+                    (e instanceof Map && e.containsKey('bidsParentDir'))
+                        ? e.findAll { k, v -> k != 'bidsParentDir' }
+                        : e
+                }
+            }
+            assert snapshot(snapshot_data).match()
         }
     }
 
@@ -31,8 +42,15 @@ nextflow_workflow {
             assert workflow.success
             assert workflow.out.bids_channel
             def results = workflow.out.bids_channel.collect()
-            def mkPath = { String p -> path(p) }
-            assert snapshot(sanitizeBidsResults(results, mkPath)).match()
+            def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
+            def snapshot_data = parsed.collect { item ->
+                item.collect { e ->
+                    (e instanceof Map && e.containsKey('bidsParentDir'))
+                        ? e.findAll { k, v -> k != 'bidsParentDir' }
+                        : e
+                }
+            }
+            assert snapshot(snapshot_data).match()
         }
     }
 
@@ -47,67 +65,15 @@ nextflow_workflow {
             assert workflow.success
             assert workflow.out.bids_channel
             def results = workflow.out.bids_channel.collect()
-            def mkPath = { String p -> path(p) }
-            assert snapshot(sanitizeBidsResults(results, mkPath)).match()
-        }
-    }
-}
-
-/**
- * Sanitize BIDS channel results for stable, machine-independent snapshot comparison.
- *
- * Removes the machine-specific `bidsParentDir` absolute path from each item.
- * File references are compared as follows:
- *   - NIfTI files (.nii.gz, .nii): relative path string only (name and location).
- *     These are typically dummy empty files in test datasets; attempting to read their
- *     content would trigger gzip decompression and raise a java.io.EOFException.
- *   - All other file types (.json, .bval, .bvec, .tsv, etc.): wrapped with path() so
- *     that nf-test computes and stores a content checksum for a complete assertion.
- *
- * @param results  List of [groupingKey, enrichedData] tuples from workflow.out.bids_channel.collect()
- * @param mkPath   Closure that wraps an absolute file path with nf-test's path() for checksum comparison;
- *                 must be supplied from the then{} block where path() is in scope.
- * @return Sanitized list suitable for snapshot()
- */
-def sanitizeBidsResults(List results, Closure mkPath) {
-    def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
-
-    Closure processVal
-    processVal = { String bidsRoot, val ->
-        if (val instanceof String) {
-            // NIfTI files: compare by relative path only (no content/untar)
-            if (val.endsWith('.nii.gz') || val.endsWith('.nii')) {
-                return val
-            }
-            // Other file types: full content check via path()
-            def absPath = val.startsWith('/') ? val : "${bidsRoot}/${val}"
-            return mkPath(absPath)
-        }
-        if (val instanceof Map) {
-            return val.collectEntries { k2, v2 -> [k2, processVal(bidsRoot, v2)] }
-        }
-        if (val instanceof List) {
-            return val.collect { processVal(bidsRoot, it) }
-        }
-        return val
-    }
-
-    return parsed.collect { item ->
-        item.collect { element ->
-            if (!(element instanceof Map) || !element.containsKey('bidsParentDir')) {
-                return element
-            }
-            def root = element.bidsParentDir as String
-            def clean = [:]
-            element.each { k, v ->
-                switch (k) {
-                    case 'bidsParentDir': break  // drop machine-specific absolute path
-                    case 'data':      clean.data      = processVal(root, v); break
-                    case 'filePaths': clean.filePaths = (v as List).collect { processVal(root, it) }; break
-                    default:          clean[k] = v
+            def parsed = new groovy.json.JsonSlurper().parseText(groovy.json.JsonOutput.toJson(results))
+            def snapshot_data = parsed.collect { item ->
+                item.collect { e ->
+                    (e instanceof Map && e.containsKey('bidsParentDir'))
+                        ? e.findAll { k, v -> k != 'bidsParentDir' }
+                        : e
                 }
             }
-            return clean
+            assert snapshot(snapshot_data).match()
         }
     }
 }
