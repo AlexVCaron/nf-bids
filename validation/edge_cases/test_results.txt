@@ -1,0 +1,7 @@
+╔════════════════════════════════════════════════════════════════╗
+║  Edge Case Test Suite - Closure-Based Channel Operators       ║
+╚════════════════════════════════════════════════════════════════╝
+
+Running: Test 1: Very Large Items
+
+Running: Test 2: Many Small Items (100k)
