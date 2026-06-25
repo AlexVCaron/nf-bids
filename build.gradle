@@ -18,3 +18,5 @@ nextflowPlugin {
     }
 
 }
+
+apply from: "${rootDir}/gradle/docs.gradle"

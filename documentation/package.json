@@ -1,0 +1,16 @@
+{
+  "name": "nf-bids-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Antora documentation site for the nf-bids Nextflow plugin",
+  "scripts": {
+    "fetch-tools": "bin/fetch-tools.sh",
+    "diagrams": "bin/build-docs.sh --diagrams-only",
+    "build": "bin/build-docs.sh",
+    "serve": "npx --yes http-server build/site -p 5050 -c-1"
+  },
+  "devDependencies": {
+    "@antora/cli": "3.1.10",
+    "@antora/site-generator": "3.1.10"
+  }
+}

@@ -1,0 +1,11 @@
+# Node / Antora local toolchain (installed, not committed)
+node_modules/
+
+# Generated site output
+build/
+
+# Downloaded build tools
+lib/*.jar
+
+# Rendered diagram output (generated from diagrams/*.puml during the build)
+modules/ROOT/images/generated/

@@ -1,0 +1,31 @@
+#
+# Antora playbook for local builds of the nf-bids documentation site.
+#
+# Build locally with:   npm run build           (from the documentation/ dir)
+# or via Gradle:        ./gradlew docs           (from the repo root)
+#
+site:
+  title: nf-bids Plugin Documentation
+  start_page: nf-bids::index.adoc
+  # url is overridden in CI for GitHub Pages (see .github/workflows/docs.yml)
+  url: https://nf-neuro.github.io/nf-bids
+
+content:
+  sources:
+    - url: ..
+      start_path: documentation
+      branches: HEAD
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+
+output:
+  dir: ./build/site
+
+runtime:
+  fetch: false
+  log:
+    level: warn
+    failure_level: error
