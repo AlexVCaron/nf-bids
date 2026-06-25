@@ -4,9 +4,17 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 /**
- * Centralized logging for BIDS operations
+ * Centralized structured logging for nf-bids operations.
  *
- * Provides consistent logging patterns with colored output and progress tracking
+ * <p>All methods delegate to SLF4J ({@code @Slf4j}) at the appropriate level
+ * and prefix each message with a context identifier enclosed in brackets
+ * (e.g. {@code "[nf-bids-parser] Parsed 42 files"}) for easy log filtering.</p>
+ *
+ * <p>Static factory methods ({@link #logProgress}, {@link #logSuccess},
+ * {@link #logWarning}, {@link #logError}, {@link #logDebug}, {@link #withTiming})
+ * cover all operational needs; the single-argument convenience aliases
+ * ({@link #info}, {@link #warn}, {@link #debug}, {@link #trace}) use the
+ * default context {@code "nf-bids"}.</p>
  */
 @Slf4j
 @CompileStatic

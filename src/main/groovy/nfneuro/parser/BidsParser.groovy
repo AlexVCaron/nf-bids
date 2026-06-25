@@ -11,13 +11,12 @@ import nfneuro.plugin.util.BidsCsvParser
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Main BIDS dataset parser
+ * Main BIDS dataset parser.
  *
- * Orchestrates the parsing of BIDS datasets using libBIDS.sh wrapper
- * and converts results to BidsDataset and Nextflow channels
- *
- * @reference Parser implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
+ * <p>Orchestrates dataset parsing by delegating to {@link LibBidsShWrapper} to execute
+ * the {@code libBIDSsh_parse_bids_to_csv} bash function, then converting the resulting
+ * CSV into {@link nfneuro.plugin.model.BidsFile} objects via {@link nfneuro.plugin.util.BidsCsvParser},
+ * and finally assembling them into a {@link nfneuro.plugin.model.BidsDataset}.</p>
  */
 @Slf4j
 @CompileStatic
@@ -27,6 +26,11 @@ class BidsParser {
     private final LibBidsShWrapper libBidsWrapper
     private final BidsCsvParser csvParser
 
+    /**
+     * Construct a parser bound to the given Nextflow session.
+     *
+     * @param session the active Nextflow session (reserved for future session-scoped configuration)
+     */
     BidsParser(Session session) {
         this.session = session
         this.libBidsWrapper = new LibBidsShWrapper()

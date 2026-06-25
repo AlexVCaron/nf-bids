@@ -7,10 +7,16 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * Represents a BIDS dataset
+ * Represents a parsed BIDS dataset.
  *
- * @reference BIDS dataset structure:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf
+ * <p>Holds the root path, the dataset name and description loaded from
+ * {@code dataset_description.json}, the full list of {@link BidsFile} objects
+ * produced by the parser, and the participant table from {@code participants.tsv}
+ * (if present).</p>
+ *
+ * <p>Provides convenience query methods ({@link #getFilesBySuffix},
+ * {@link #getFilesByEntity}, {@link #getSubjects}, {@link #getSessions},
+ * {@link #getSuffixes}) used by the grouping handlers.</p>
  */
 @CompileStatic
 class BidsDataset {
@@ -21,6 +27,16 @@ class BidsDataset {
     List<BidsFile> files
     List<Map<String, String>> participants
 
+    /**
+     * Construct a {@code BidsDataset} for the given root directory.
+     *
+     * <p>The constructor validates and canonicalises the path to prevent directory-traversal
+     * attacks, then attempts to load {@code dataset_description.json} to populate
+     * {@link #name} and {@link #description}.</p>
+     *
+     * @param path absolute path to the BIDS dataset root directory
+     * @throws IllegalArgumentException if the path is null, empty, or contains a traversal attempt
+     */
     BidsDataset(String path) {
         if (!path) {
             throw new IllegalArgumentException("Dataset path cannot be null or empty")

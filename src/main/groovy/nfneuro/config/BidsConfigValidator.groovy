@@ -3,14 +3,23 @@ package nfneuro.plugin.config
 import groovy.util.logging.Slf4j
 
 /**
- * Validates bids2nf configuration files
- * 
- * Provides comprehensive validation of YAML configuration structure and values.
- * Returns detailed error messages for troubleshooting.
+ * Validates {@code bids2nf.yaml} configuration maps.
+ *
+ * <p>Performs structural and semantic validation of the parsed YAML configuration,
+ * returning a {@link ValidationResult} that accumulates errors and warnings.
+ * Validation covers: set-type presence (exactly one of {@code plain_set},
+ * {@code named_set}, {@code sequential_set}, {@code mixed_set} per suffix),
+ * required named groups, sequential ordering, and the global {@code loop_over} key.</p>
  */
 @Slf4j
 class BidsConfigValidator {
 
+    /**
+     * Holds the outcome of a configuration validation pass.
+     *
+     * <p>Errors indicate conditions that will prevent correct operation.
+     * Warnings indicate non-fatal issues that may produce unexpected behaviour.</p>
+     */
     static class ValidationResult {
 
         List<String> errors = []

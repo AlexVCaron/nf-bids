@@ -21,18 +21,29 @@ import nextflow.Session
 import nextflow.trace.TraceObserver
 
 /**
- * Implements an observer that allows implementing custom
- * logic on nextflow execution events.
+ * Nextflow trace observer for the nf-bids plugin.
+ *
+ * <p>Hooks into the Nextflow execution lifecycle to emit startup and
+ * completion messages.  Extended in future releases to emit BIDS-specific
+ * run summaries.</p>
  */
 @Slf4j
 @CompileStatic
 class BidsObserver implements TraceObserver {
 
+    /**
+     * Called when the Nextflow pipeline session is created and about to start.
+     *
+     * @param session the newly created Nextflow session
+     */
     @Override
     void onFlowCreate(Session session) {
         println "Pipeline is starting! 🚀"
     }
 
+    /**
+     * Called when the Nextflow pipeline has finished executing all processes.
+     */
     @Override
     void onFlowComplete() {
         println "Pipeline complete! 👋"

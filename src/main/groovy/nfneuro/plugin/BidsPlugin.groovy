@@ -20,11 +20,21 @@ import nextflow.plugin.BasePlugin
 import org.pf4j.PluginWrapper
 
 /**
- * The plugin entry point
+ * Entry point for the nf-bids Nextflow plugin.
+ *
+ * <p>Registered as a PF4J plugin, this class is discovered and loaded by the
+ * Nextflow plugin system.  It delegates lifecycle management to
+ * {@link nextflow.plugin.BasePlugin} and activates the
+ * {@link BidsExtension} DSL extension and {@link BidsFactory} trace observer.</p>
  */
 @CompileStatic
 class BidsPlugin extends BasePlugin {
 
+    /**
+     * Construct the plugin instance.
+     *
+     * @param wrapper PF4J plugin wrapper provided by the Nextflow plugin system
+     */
     BidsPlugin(PluginWrapper wrapper) {
         super(wrapper)
     }

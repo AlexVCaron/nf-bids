@@ -13,13 +13,15 @@ import java.nio.file.Paths
 import java.nio.file.Files
 
 /**
- * Channel factory for creating BIDS-structured Nextflow channels
+ * Channel factory for creating BIDS-structured Nextflow channels.
  *
- * Main entry point for Channel.fromBIDS() functionality
- * Orchestrates BIDS parsing, grouping, and channel emission
+ * <p>Orchestrates the full {@code Channel.fromBIDS()} workflow: pre-flight validation,
+ * invocation of {@link nfneuro.plugin.parser.BidsParser} via libBIDS.sh, configuration
+ * loading, routing to the appropriate {@link nfneuro.plugin.grouping.BaseSetHandler}
+ * sub-class, and emission of structured BIDS data onto a Dataflow channel.</p>
  *
- * @reference Main workflow implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf
+ * <p>The main entry point is {@link #fromBIDS(String, String, Map)}, which is called by
+ * {@link nfneuro.plugin.BidsExtension}.</p>
  */
 @Slf4j
 @CompileStatic
@@ -27,6 +29,11 @@ class BidsChannelFactory {
 
     private final Session session
 
+    /**
+     * Construct a new factory bound to the given Nextflow session.
+     *
+     * @param session the active Nextflow session used for channel creation and ignition
+     */
     BidsChannelFactory(Session session) {
         this.session = session
     }

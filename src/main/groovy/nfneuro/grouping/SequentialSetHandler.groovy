@@ -6,22 +6,22 @@ import nfneuro.plugin.model.BidsChannelData
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Handler for sequential BIDS sets
+ * Handler for sequential BIDS sets.
  *
- * Processes sequential groupings where files are ordered by one or more sequence entities.
- * Supports both single-entity (flat array) and multi-entity (nested arrays) sequencing.
+ * <p>Groups files that are ordered along one or more BIDS entities (e.g. echo, flip,
+ * inversion).  Produces a flat or hierarchical array of files sorted by the
+ * sequence entity values.</p>
  *
- * Single-entity example (by_entity: "echo"):
- *   VFA -> [echo-1_file, echo-2_file, echo-3_file]
+ * <ul>
+ *   <li>Single-entity ({@code by_entity: echo}) → flat array:
+ *       {@code [echo-1_file, echo-2_file, echo-3_file]}</li>
+ *   <li>Multi-entity hierarchical ({@code by_entities: [flip, inversion]}) →
+ *       nested map: {@code {flip-1: {inv-1: file, inv-2: file}, …}}</li>
+ *   <li>Multi-entity flat ({@code by_entities: [echo, flip], order: flat}) →
+ *       2-D array: {@code [[echo-1_flip-1, echo-1_flip-2], …]}</li>
+ * </ul>
  *
- * Multi-entity hierarchical example (by_entities: [flip, inversion]):
- *   TB1SRGE -> {flip-1: {inv-1: file, inv-2: file}, flip-2: {inv-1: file, inv-2: file}}
- *
- * Multi-entity flat example (by_entities: [echo, flip], order: flat):
- *   TB1EPI -> [[echo-1_flip-1, echo-1_flip-2], [echo-2_flip-1, echo-2_flip-2]]
- *
- * @reference Sequential set implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_sequential_sets.nf
+ * <p>Corresponds to {@code sequential_set:} entries in {@code bids2nf.yaml}.</p>
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class SequentialSetHandler extends BaseSetHandler {

@@ -5,12 +5,12 @@ import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 
 /**
- * Utility methods for working with BIDS entities
+ * Utility methods for matching and grouping {@link nfneuro.plugin.model.BidsFile} objects
+ * by their {@link nfneuro.plugin.model.BidsEntity} values.
  *
- * Provides common entity operations like filtering, matching, and extraction
- *
- * @reference Entity utilities from:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
+ * <p>The key method is {@link #groupByEntities}, which is called by
+ * {@link nfneuro.plugin.grouping.BaseSetHandler} to partition files into per-group
+ * buckets before set-type–specific packing.</p>
  */
 @CompileStatic
 class BidsEntityUtils {

@@ -11,17 +11,29 @@ import nfneuro.plugin.util.SuffixMapper
 import groovyx.gpars.dataflow.DataflowQueue
 
 /**
- * Base handler for BIDS set processing
+ * Abstract base class for all BIDS set handlers.
  *
- * Provides common functionality for plain, named, sequential, and mixed sets.
- * Each handler implements specific grouping and organization logic.
+ * <p>Provides the shared pipeline for grouping {@link nfneuro.plugin.model.BidsFile} objects
+ * by their loop-over entities, matching each file against the configuration, packing
+ * matched files into typed set structures, and delegating group emission to the
+ * concrete sub-class ({@link PlainSetHandler}, {@link NamedSetHandler},
+ * {@link SequentialSetHandler}, {@link MixedSetHandler}).</p>
  *
- * @reference Set processing implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/
+ * <p>Sub-classes must implement:
+ * {@link #setName()}, {@link #getSetIndex}, {@link #packFileIntoSet},
+ * {@link #processGroup}, {@link #getSetConfig}, and {@link #getSequenceByEntities}.</p>
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 abstract class BaseSetHandler {
 
+    /**
+     * Return the set-type key present in the suffix configuration map
+     * (one of {@code "plain_set"}, {@code "named_set"}, {@code "sequential_set"},
+     * {@code "mixed_set"}), or {@code null} if none is found.
+     *
+     * @param suffixConfig the per-suffix configuration map entry
+     * @return the matched set-type string, or {@code null}
+     */
     final static String getSetType(Map suffixConfig) {
         if (suffixConfig.containsKey('plain_set')) {
             return "plain_set"

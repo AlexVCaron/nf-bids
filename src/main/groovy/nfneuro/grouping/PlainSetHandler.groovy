@@ -7,14 +7,14 @@ import nfneuro.plugin.model.BidsChannelData
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Handler for plain BIDS sets
+ * Handler for plain BIDS sets.
  *
- * Processes simple 1:1 file mappings without complex grouping.
- * Plain sets emit each file individually with its entities as grouping key.
+ * <p>Processes simple 1:1 file-per-suffix mappings.  For each loop-over entity group,
+ * each matching primary file (e.g. {@code .nii.gz}) is emitted together with its
+ * sidecar files (JSON, bval/bvec, …) grouped by extension type into a nested map:
+ * {@code {nii: path, json: path, …}}.</p>
  *
- * @reference Plain set implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_plain_sets.nf
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/plain_set_utils.nf
+ * <p>Corresponds to {@code plain_set:} entries in {@code bids2nf.yaml}.</p>
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class PlainSetHandler extends BaseSetHandler {

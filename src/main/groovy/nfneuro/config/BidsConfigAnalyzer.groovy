@@ -5,12 +5,13 @@ import groovy.util.logging.Slf4j
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Analyzes BIDS configuration to determine channel emission strategy
- * 
- * Determines how to group and emit BIDS files based on configuration
- * 
- * @reference Configuration analysis: 
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/config_analyzer.nf
+ * Analyzes a {@code bids2nf} configuration map to determine which set-handler
+ * sub-workflows are required.
+ *
+ * <p>Scans every top-level suffix entry in the config and returns a result map
+ * with boolean flags {@code hasNamedSets}, {@code hasSequentialSets},
+ * {@code hasMixedSets}, {@code hasPlainSets}.  The result drives handler
+ * selection in {@link nfneuro.plugin.channel.BidsHandler}.</p>
  */
 @Slf4j
 @CompileStatic

@@ -21,12 +21,20 @@ import nextflow.trace.TraceObserver
 import nextflow.trace.TraceObserverFactory
 
 /**
- * Implements a factory object required to create
- * the {@link BidsObserver} instance.
+ * Factory that registers {@link BidsObserver} with the Nextflow trace system.
+ *
+ * <p>Implements {@link nextflow.trace.TraceObserverFactory} so that Nextflow
+ * instantiates one {@code BidsObserver} per pipeline run.</p>
  */
 @CompileStatic
 class BidsFactory implements TraceObserverFactory {
 
+    /**
+     * Create the set of trace observers for the current session.
+     *
+     * @param session the active Nextflow session
+     * @return a singleton list containing a new {@link BidsObserver}
+     */
     @Override
     Collection<TraceObserver> create(Session session) {
         return List.<TraceObserver>of(new BidsObserver())

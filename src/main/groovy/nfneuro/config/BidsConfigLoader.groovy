@@ -6,12 +6,11 @@ import org.yaml.snakeyaml.Yaml
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Configuration loader for BIDS workflows
+ * Loads and validates {@code bids2nf.yaml} configuration files.
  *
- * Loads and validates YAML configuration files
- *
- * @reference Configuration loading:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/bids2nf.yaml
+ * <p>Delegates structural validation to {@link BidsConfigValidator}.
+ * Throws {@link IllegalArgumentException} if the configuration is invalid
+ * and {@link FileNotFoundException} if the file does not exist.</p>
  */
 @Slf4j
 @CompileStatic
@@ -19,6 +18,9 @@ class BidsConfigLoader {
 
     private final Yaml yaml
 
+    /**
+     * Construct a loader backed by a SnakeYAML parser.
+     */
     BidsConfigLoader() {
         this.yaml = new Yaml()
     }
