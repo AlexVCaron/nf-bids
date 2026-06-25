@@ -1,0 +1,93 @@
+@startuml libbids-integration
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 11
+skinparam componentBackgroundColor #EEF3FF
+skinparam componentBorderColor #4472C4
+skinparam componentFontStyle bold
+skinparam databaseBackgroundColor #FFF8E8
+skinparam databaseBorderColor #CC8800
+skinparam nodeBackgroundColor #F0FFF0
+skinparam nodeBorderColor #44AA44
+skinparam artifactBackgroundColor #FFF0E8
+skinparam artifactBorderColor #CC5500
+skinparam packageBackgroundColor #F8F8F8
+skinparam packageBorderColor #888888
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #AAAAAA
+skinparam arrowColor #444444
+skinparam arrowFontSize 9
+skinparam TitleFontSize 13
+
+title libBIDS.sh Integration — Bundling and Runtime Discovery
+
+' ── Repository / Build-time ──────────────────────────────────────────────
+package "Git Repository  (build-time)" as repo #F0F0F0 {
+
+  database "libBIDS.sh/\n(git submodule)" as submodule #FFF8E8
+  note bottom of submodule
+    Bash library that scans a BIDS
+    dataset directory and outputs a
+    structured CSV of all files and
+    their entity key-value pairs.
+    Pinned via .gitmodules.
+  end note
+
+  artifact "build.gradle\nfileTree('libBIDS.sh')\n{ include '*.sh' }" as gradle #FFF0E8
+}
+
+submodule --> gradle : included by\nfileTree()
+
+artifact "nf-bids-x.y.z.jar\n(plugin JAR)" as jar #E8F4E8
+gradle --> jar : implementation\nbundles *.sh into\nplugin lib/
+
+' ── Runtime installed plugin ─────────────────────────────────────────────
+package "~/.nextflow/plugins/nf-bids-x.y.z/  (runtime)" as installed #F0FFF0 {
+  node "lib/libBIDS.sh\n(embedded)" as embedded #F0FFF0
+}
+
+jar --> embedded : extracted to\nplugin lib/ on install
+
+' ── Runtime discovery chain ──────────────────────────────────────────────
+package "LibBidsShWrapper.findLibBidsScript()  (runtime discovery)" as discovery #EEF3FF {
+
+  component "① Embedded\ngetPluginLibPath()\n→ plugin lib/libBIDS.sh" as step1 #EEF3FF
+  component "② SEARCH_PATHS scan\nlib/libBIDS.sh\nlibBIDS.sh/libBIDS.sh\n/usr/local/bin/libBIDS.sh\n~/.local/bin/libBIDS.sh" as step2 #EEF3FF
+  component "③ Workspace-relative\n<user.dir>/libBIDS.sh/libBIDS.sh" as step3 #EEF3FF
+
+  step1 -right-> step2 : not found?
+  step2 -right-> step3 : not found?
+}
+
+embedded   --> step1 : resolved here\n(normal install)
+step3 -down-> step3 : throws FileNotFoundException\nwith remediation hints if\nnone found
+
+' ── Execution ────────────────────────────────────────────────────────────
+component "BidsParser\n(orchestrator)" as bidsparser #EEF3FF
+component "LibBidsShWrapper\n(bash bridge)" as wrapper #EEF3FF
+node "libBIDS.sh\n(bash subprocess)" as bashscript #FFFDE7
+artifact "bids_parsed_*.csv\n(temp file)" as csv #FFF0E8
+
+discovery --> wrapper : resolved script path
+
+bidsparser --> wrapper : parseBidsToCSV(bidsDir)
+wrapper -> bashscript : Process.execute()\nbash libBIDS.sh <bidsDir> <csv>
+bashscript --> csv : writes structured\nCSV output
+wrapper <-- csv : returns File handle
+bidsparser <-- wrapper : CSV file
+
+' ── Optional validator (future) ──────────────────────────────────────────
+package "Optional  (v1.1 planned)" as opt #FFF8F8 {
+  component "BidsValidator\n(stub)" as validator #FFE8E8
+  note right of validator
+    STUB — not yet wired.
+    Will invoke bids/validator Docker
+    image for structural validation
+    before parsing. Currently skipped.
+  end note
+}
+
+bidsparser ..> validator : disabled in\ncurrent version
+
+@enduml

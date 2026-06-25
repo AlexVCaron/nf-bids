@@ -1,0 +1,297 @@
+@startuml class-core
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 10
+skinparam classBackgroundColor #FAFAFA
+skinparam classBorderColor #666666
+skinparam classFontSize 11
+skinparam classFontStyle bold
+skinparam classAttributeFontSize 9
+skinparam packageBackgroundColor #F0F4FF
+skinparam packageBorderColor #4472C4
+skinparam packageFontStyle bold
+skinparam packageFontSize 10
+skinparam arrowColor #444444
+skinparam arrowFontSize 9
+skinparam TitleFontSize 13
+skinparam nodesep 20
+skinparam ranksep 40
+
+title nf-bids — Core Class Diagram
+
+' ============================================================
+' Entry Points
+' ============================================================
+package "nfneuro.plugin  (entry points)" as P_plugin #EEF3FF {
+
+  class BidsPlugin {
+    + BidsPlugin(wrapper: PluginWrapper)
+  }
+
+  class BidsExtension {
+    - session: Session
+    ..@Factory..
+    + fromBIDS(bidsDir, configPath, options): DataflowWriteChannel
+    ..@Operator..
+    + groupTupleBy(source, keyExtractor, opts): DataflowWriteChannel
+    + joinBy(left, right, leftKey, rightKey, opts): DataflowWriteChannel
+    + combineBy(left, right, leftKey, rightKey, opts): DataflowWriteChannel
+    ..lifecycle..
+    # init(session): void
+  }
+
+  class BidsFactory {
+    + create(session): Collection<TraceObserver>
+  }
+
+  class BidsObserver {
+    + onFlowCreate(session): void
+    + onFlowComplete(): void
+  }
+}
+
+' ============================================================
+' Channel Layer
+' ============================================================
+package "nfneuro.plugin.channel  (orchestration)" as P_channel #E8F4E8 {
+
+  class BidsChannelFactory {
+    - session: Session
+    + fromBIDS(bidsDir, configPath, options): DataflowWriteChannel
+    - preFlightChecks(bidsDir, configPath, options): void
+  }
+
+  class BidsHandler {
+    - target: DataflowWriteChannel
+    - bidsDir: String
+    - config: Map
+    - configAnalysis: Map
+    - loopOverEntities: List<String>
+    - parser: BidsParser
+    ..builder..
+    + withConfig(configPath): BidsHandler
+    + withBidsDir(bidsDir): BidsHandler
+    + withOpts(options): BidsHandler
+    + withParser(parser): BidsHandler
+    + ignite(session): DataflowWriteChannel
+    ..execution..
+    - execute(): void
+    - processDatasets(...): DataflowQueue
+    - applyCrossModalBroadcasting(...): DataflowQueue
+    - validateAndEmitChannel(results): void
+  }
+}
+
+' ============================================================
+' Operators
+' ============================================================
+package "nfneuro.plugin.channel.operations  (operators)" as P_ops #E8F8E8 {
+
+  class GroupTupleByOp {
+    - source: DataflowReadChannel
+    - keyExtractor: Closure
+    - opts: Map
+    + apply(): DataflowWriteChannel
+  }
+
+  class JoinByOp {
+    - left: DataflowReadChannel
+    - right: DataflowReadChannel
+    - leftKeyExtractor: Closure
+    - rightKeyExtractor: Closure
+    + apply(): DataflowWriteChannel
+  }
+
+  class CombineByOp {
+    - left: DataflowReadChannel
+    - right: DataflowReadChannel
+    - leftKeyExtractor: Closure
+    - rightKeyExtractor: Closure
+    + apply(): DataflowWriteChannel
+  }
+}
+
+package "nfneuro.plugin.channel.operations.keys" as P_keys #E8F8E8 {
+
+  class KeyExtractor <<utility>> {
+    + {static} extractKey(item, keyExtractor, operatorName): Object
+    + {static} validateKeyExtractor(keyExtractor, operatorName): void
+    + {static} keysEqual(key1, key2): boolean
+  }
+
+  class CompositeKey {
+    + parts: List<Object>
+    + size(): int
+    + get(index): Object
+  }
+}
+
+' ============================================================
+' Parser
+' ============================================================
+package "nfneuro.plugin.parser  (BIDS parsing)" as P_parser #FFF8E8 {
+
+  class BidsParser {
+    - libBidsWrapper: LibBidsShWrapper
+    - csvParser: BidsCsvParser
+    + parseToDataset(bidsDir, libBidsShPath): BidsDataset
+  }
+
+  class LibBidsShWrapper {
+    - {static} SEARCH_PATHS: List<String>
+    + parseBidsToCSV(bidsDir, libBidsShPath): File
+    - findLibBidsScript(): String
+    - getPluginLibPath(): String
+    - buildParseCommand(scriptPath, bidsDir, outputFile): List
+  }
+
+  class BidsValidator <<stub v1.1>> {
+    + validate(bidsDir, ignoreCodes): void
+  }
+}
+
+' ============================================================
+' Config
+' ============================================================
+package "nfneuro.plugin.config  (configuration)" as P_config #FFF0E8 {
+
+  class BidsConfigLoader {
+    + load(configPath): Map
+  }
+
+  class BidsConfigValidator <<static>> {
+    + {static} validate(config): ValidationResult
+  }
+
+  class BidsConfigAnalyzer {
+    + analyzeConfiguration(config): Map
+    + getLoopOverEntities(config): List<String>
+    + getConfigurationSummary(config): Map
+  }
+}
+
+' ============================================================
+' Grouping
+' ============================================================
+package "nfneuro.plugin.grouping  (set handlers)" as P_grouping #FFF0FF {
+
+  abstract class BaseSetHandler {
+    + process(datasetRoot, bidsFiles, config, loopOverEntities, suffixMapping): DataflowQueue
+    + {static} getSetType(suffixConfig): String
+    # {abstract} getSetConfig(suffixConfig): Map
+    # {abstract} setName(): String
+    # {abstract} getSequenceByEntities(setConfig): List<String>
+    # {abstract} getSetIndex(file, setConfig, configKey): Map
+    # {abstract} packFileIntoSet(sets, allFiles, index, file, ordering): void
+    # {abstract} processGroup(datasetRoot, sets, allFiles, config, loopOverEntities, suffixMapping): BidsChannelData
+  }
+
+  class PlainSetHandler {
+    # setName(): String
+    # processGroup(...): BidsChannelData
+  }
+
+  class NamedSetHandler {
+    # setName(): String
+    # processGroup(...): BidsChannelData
+    - findMatchingGroupName(file, namedSetConfig): String
+  }
+
+  class SequentialSetHandler {
+    # setName(): String
+    # processGroup(...): BidsChannelData
+  }
+
+  class MixedSetHandler {
+    # setName(): String
+    # processGroup(...): BidsChannelData
+    - findMatchingMixedGroupName(file, mixedSetConfig): String
+  }
+}
+
+' ============================================================
+' Model
+' ============================================================
+package "nfneuro.plugin.model  (domain model)" as P_model #F8E8FF {
+
+  class BidsDataset {
+    + path: String
+    + name: String
+    + files: List<BidsFile>
+    + participants: List<Map>
+    + addFile(file): void
+    + loadParticipants(): void
+    + getFiles(): List<BidsFile>
+  }
+
+  class BidsFile {
+    + path: String
+    + suffix: String
+    + entities: List<BidsEntity>
+    + getEntity(name): BidsEntity
+    + isPrimaryFile(): boolean
+    + getBasename(): String
+    + getType(): String
+    + relativeTo(root): String
+  }
+
+  class BidsEntity {
+    + name: String
+    + value: String
+    + {static} normalizeName(entityName): String
+    + {static} sanitizeValue(value): String
+    + {static} longEntityExists(name): boolean
+  }
+
+  class BidsChannelData {
+    + data: Map<String, Object>
+    + filePaths: List<String>
+    + entities: Map<String, String>
+    + addSuffixData(suffix, data): void
+    + addFilePath(filePath): void
+    + addEntity(name, value): void
+    + toChannelTuple(loopOverEntities): List
+  }
+}
+
+' ============================================================
+' Inheritance
+' ============================================================
+BidsPlugin       --|> "BasePlugin (nextflow)"
+BidsExtension    --|> "PluginExtensionPoint (nextflow)"
+BidsFactory      ..|> "TraceObserverFactory (nextflow)"
+BidsObserver     ..|> "TraceObserver (nextflow)"
+
+PlainSetHandler      --|> BaseSetHandler
+NamedSetHandler      --|> BaseSetHandler
+SequentialSetHandler --|> BaseSetHandler
+MixedSetHandler      --|> BaseSetHandler
+
+' ============================================================
+' Associations
+' ============================================================
+BidsExtension    --> BidsChannelFactory : creates & calls\nfromBIDS()
+BidsFactory      --> BidsObserver       : instantiates
+
+BidsChannelFactory --> BidsHandler   : builder chain\n.withParser().ignite()
+BidsChannelFactory --> BidsParser    : new BidsParser(session)
+
+BidsHandler --> BidsParser           : parseToDataset()
+BidsHandler --> BidsConfigLoader     : load(configPath)
+BidsHandler --> BidsConfigAnalyzer   : analyzeConfiguration()
+BidsHandler --> BaseSetHandler       : processDatasets()\nroutes to handler
+
+BidsParser  --> LibBidsShWrapper     : parseBidsToCSV()
+BidsParser  --> BidsDataset          : creates & returns
+BidsDataset "1" *-- "0..*" BidsFile : files
+BidsFile    "1" *-- "0..*" BidsEntity : entities
+
+BaseSetHandler --> BidsChannelData   : processGroup()\nreturns
+
+GroupTupleByOp --> KeyExtractor      : extractKey()
+JoinByOp       --> KeyExtractor      : extractKey()
+CombineByOp    --> KeyExtractor      : extractKey()
+KeyExtractor   --> CompositeKey      : wraps List keys
+
+@enduml

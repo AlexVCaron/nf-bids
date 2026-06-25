@@ -1,0 +1,148 @@
+@startuml sequence-frombids
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 11
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #EEF3FF
+skinparam sequenceParticipantBorderColor #4472C4
+skinparam sequenceParticipantFontStyle bold
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceBoxBackgroundColor #F8F8F8
+skinparam sequenceBoxBorderColor #AAAAAA
+skinparam noteBorderColor #888888
+skinparam noteBackgroundColor #FFFDE7
+skinparam TitleFontSize 13
+skinparam responseMessageBelowArrow true
+
+title Channel.fromBIDS() — Full Execution Sequence
+
+actor "Nextflow\nWorkflow" as user
+
+participant BidsExtension  #EEF3FF
+participant BidsChannelFactory #EEF3FF
+participant BidsHandler #E8F4E8
+participant BidsParser #FFF8E8
+participant LibBidsShWrapper #FFF8E8
+participant "libBIDS.sh\n(bash)" as script #FFE8E8
+participant BidsCsvParser #FFF8E8
+participant "BaseSetHandler\n(Plain/Named/Sequential/Mixed)" as handler #FFF0FF
+
+' ── Phase 1: Call entry point ──────────────────────────────────────────────
+user -> BidsExtension : fromBIDS(bidsDir, configPath, options)
+activate BidsExtension
+
+BidsExtension -> BidsChannelFactory : new BidsChannelFactory(session)\n.fromBIDS(bidsDir, configPath, options)
+activate BidsChannelFactory
+
+BidsChannelFactory -> BidsChannelFactory : preFlightChecks(bidsDir, configPath, options)
+note right
+  Validates:
+  • bidsDir exists and is a directory
+  • configPath file exists (if provided)
+  • options.libbids_sh path (if provided)
+end note
+
+BidsChannelFactory -> BidsHandler : new BidsHandler()\n.withConfig(configPath)\n.withBidsDir(bidsDir)\n.withOpts(options)\n.withParser(new BidsParser(session))
+
+activate BidsHandler
+
+BidsHandler -> BidsHandler : loadConfiguration(configPath)
+note right : BidsConfigLoader.load() +\nBidsConfigValidator.validate() +\nBidsConfigAnalyzer.analyzeConfiguration()
+
+BidsChannelFactory <-- BidsHandler : configured BidsHandler
+
+' ── Phase 2: Return channel immediately (async scheduling) ─────────────────
+BidsChannelFactory -> BidsHandler : ignite(session)
+
+BidsHandler -> BidsHandler : CH.create() → assigns target channel
+BidsHandler -> "Nextflow Session" as nfsession : session.addIgniter { perform(true) }
+note right : Channel returned immediately;\nexecution is deferred until\nNextflow DSL2 ignites the workflow
+
+BidsChannelFactory <-- BidsHandler : DataflowWriteChannel (target)
+deactivate BidsHandler
+
+BidsExtension <-- BidsChannelFactory : DataflowWriteChannel
+deactivate BidsChannelFactory
+
+user <-- BidsExtension : DataflowWriteChannel
+deactivate BidsExtension
+
+== Async execution (Nextflow igniter fires) ==
+
+"Nextflow Session" as nfsession -> BidsHandler : igniter fires → perform(async=true)
+activate BidsHandler
+
+BidsHandler -> BidsHandler : executeAsync()\n→ CompletableFuture.runAsync { execute() }
+
+' ── Phase 3: Dataset parsing ───────────────────────────────────────────────
+group Dataset Parsing
+  BidsHandler -> BidsParser : parseToDataset(bidsDir, libBidsShPath)
+  activate BidsParser
+
+  BidsParser -> LibBidsShWrapper : parseBidsToCSV(bidsDir, libBidsShPath)
+  activate LibBidsShWrapper
+
+  LibBidsShWrapper -> LibBidsShWrapper : findLibBidsScript()
+  note right
+    Discovery order:
+    1. Embedded — getPluginLibPath()
+       (~/.nextflow/plugins/nf-bids-x.y.z/lib/)
+    2. SEARCH_PATHS — lib/libBIDS.sh,
+       libBIDS.sh/libBIDS.sh (submodule),
+       /usr/local/bin, ~/.local/bin
+    3. Workspace-relative —
+       <user.dir>/libBIDS.sh/libBIDS.sh
+  end note
+
+  LibBidsShWrapper -> script : buildParseCommand().execute()\n(bash subprocess)
+  activate script
+  script --> LibBidsShWrapper : exit 0 + CSV output file
+  deactivate script
+
+  BidsParser <-- LibBidsShWrapper : CSV temp file
+  deactivate LibBidsShWrapper
+
+  BidsParser -> BidsCsvParser : parse(csvFile)
+  activate BidsCsvParser
+  BidsCsvParser --> BidsParser : List<BidsFile>
+  deactivate BidsCsvParser
+
+  BidsParser -> BidsParser : new BidsDataset(bidsDir)\n→ addFile(bidsFile) for each\n→ loadParticipants()
+
+  BidsHandler <-- BidsParser : BidsDataset
+  deactivate BidsParser
+end
+
+' ── Phase 4: Grouping & emission ───────────────────────────────────────────
+group Set Handler Routing
+  BidsHandler -> BidsHandler : dataset.getFiles() → List<BidsFile>
+
+  BidsHandler -> handler : process(datasetRoot, bidsFiles,\nconfig, loopOverEntities, suffixMapping)
+  activate handler
+
+  handler -> handler : BidsEntityUtils.groupByEntities(files, loopOverEntities)\n→ Map<groupKey, List<BidsFile>>
+
+  loop for each entity group
+    handler -> handler : findMatchingGrouping(file, config, suffixMapping)\n→ getSetIndex() → packFileIntoSet()
+    handler -> handler : processGroup(datasetRoot, sets, allFiles,\nconfig, loopOverEntities, suffixMapping)\n→ BidsChannelData
+  end
+
+  BidsHandler <-- handler : DataflowQueue of BidsChannelData
+  deactivate handler
+end
+
+group Cross-modal Broadcasting & Emission
+  BidsHandler -> BidsHandler : applyCrossModalBroadcasting(results, config, loopOverEntities)
+
+  loop for each BidsChannelData item
+    BidsHandler -> BidsHandler : item.toChannelTuple(loopOverEntities)\n→ flattenTupleToMap([key, enrichedData], entityValues)
+    BidsHandler -> BidsHandler : target.bind(flatMap)
+  end
+
+  BidsHandler -> BidsHandler : target.bind(Channel.STOP)
+end
+
+deactivate BidsHandler
+
+@enduml
