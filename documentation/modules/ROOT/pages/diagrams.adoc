@@ -1,0 +1,54 @@
+= Diagram Gallery
+:navtitle: Diagram Gallery
+
+[.lead]
+Visual reference for the nf-bids plugin architecture, runtime call flow, and external dependencies.
+Each diagram is generated from PlantUML sources in `documentation/diagrams/`.
+
+== Package Dependency Graph
+
+image::generated/package-dependencies.svg[Package dependency graph]
+
+Shows the nine logical packages of `nfneuro.plugin.*` as layered nodes with directed dependency
+edges derived from real `import` statements in the source.
+Notable: `nfneuro.plugin.util` carries a back-edge to `nfneuro.plugin.grouping` because
+`SuffixMapper` imports `BaseSetHandler.getSetType()` — a circular dependency between the utility
+and grouping layers.
+See xref:architecture.adoc[Architecture Overview] for the full package map and responsibilities.
+
+== Core Class Diagram
+
+image::generated/class-core.svg[Core class diagram]
+
+Covers the most important fields and methods of every major class: the Nextflow entry-point
+classes (`BidsPlugin`, `BidsExtension`, `BidsFactory`, `BidsObserver`), the channel orchestration
+layer (`BidsChannelFactory`, `BidsHandler`), the three closure-based operators and their key
+utilities (`KeyExtractor`, `CompositeKey`), the parser subsystem (`BidsParser`,
+`LibBidsShWrapper`), all four set-handler subclasses that extend `BaseSetHandler`, and the domain
+model (`BidsDataset`, `BidsFile`, `BidsEntity`, `BidsChannelData`).
+See xref:concepts/plugin-bootstrap.adoc[Plugin Bootstrap] for entry-point lifecycle details and
+xref:concepts/output-shaping.adoc[Output Shaping] for set-handler behaviour.
+
+== Channel.fromBIDS() Sequence
+
+image::generated/sequence-frombids.svg[fromBIDS sequence diagram]
+
+Traces the complete execution path of a `Channel.fromBIDS()` call: synchronous pre-flight
+validation and channel creation in `BidsChannelFactory`, deferred async execution via a Nextflow
+igniter, `LibBidsShWrapper` bash subprocess invocation with its three-step discovery fallback,
+CSV parsing via `BidsCsvParser`, file grouping through the appropriate `BaseSetHandler` subclass,
+and final tuple flattening and channel emission in `BidsHandler.validateAndEmitChannel()`.
+See xref:concepts/bids-parsing.adoc[BIDS Parsing] and xref:dependencies/libbids-sh.adoc[libBIDS.sh Dependency] for more detail.
+
+== libBIDS.sh Integration
+
+image::generated/libbids-integration.svg[libBIDS.sh integration diagram]
+
+Component-level view of how the bundled bash library is packaged and discovered at runtime.
+The `libBIDS.sh/` git submodule is bundled into the plugin JAR via
+`implementation fileTree('libBIDS.sh') { include '*.sh' }` in `build.gradle`.
+At runtime, `LibBidsShWrapper.findLibBidsScript()` tries three locations in order:
+① the embedded plugin lib directory, ② a list of conventional search paths (workspace submodule,
+system install, user install), and ③ a working-directory-relative fallback.
+`BidsValidator` is shown as a stub — full BIDS structural validation is planned for v1.1.
+See xref:dependencies/libbids-sh.adoc[libBIDS.sh Dependency] for setup instructions.

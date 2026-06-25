@@ -1,0 +1,301 @@
+= Testing Guide
+:navtitle: Testing Guide
+
+[.lead]
+nf-bids uses a four-layer test strategy that builds from fast unit tests to
+full BIDS dataset validation and documentation verification.
+Each layer has a clear gate: a failure in an earlier layer should be fixed
+before moving to the next.
+
+Before running any tests, complete the
+xref:guides/installation.adoc#path-b-local-development-installation-build-from-source[local development installation].
+After fixing bugs, proceed to the xref:guides/release.adoc[Release Guide].
+See xref:appendices/performance.adoc[Performance Benchmark] for information
+on benchmarking the closure-based operators.
+
+== Layer 1 — Unit Tests (Spock / JUnit)
+
+Unit tests live under `src/test/groovy/nfneuro/` and cover the plugin's
+individual classes in isolation using the
+https://spockframework.org[Spock Framework].
+
+=== Run the Unit Test Suite
+
+[source,bash]
+----
+./gradlew test
+# or equivalently:
+make test
+----
+
+=== Test Classes
+
+[cols="2,3"]
+|===
+| Class | What it covers
+
+| `channel/BidsHandlerFlattenSpec`
+| Flat-output format: `meta` key structure, top-level config-key access, `flatten_output` opt-out
+
+| `config/BidsConfigLoaderSpec`
+| YAML config loading, reserved-key (`meta`) rejection, field validation
+
+| `grouping/HeterogeneousSuffixMappingSpec`
+| Multiple configs sharing the same `suffix_maps_to` target; `exclude_entities` interplay
+
+| `util/SuffixMapperSpec`
+| `configKey → targetSuffix` mapping direction; `resolveConfigKeys()` return shape
+
+| `channel/operations/GroupTupleByOpTest`
+| `groupTupleBy` key extraction, grouping correctness, composite keys
+
+| `channel/operations/JoinByOpTest`
+| `joinBy` single and dual key extractors, missing-match behaviour
+
+| `channel/operations/CombineByOpTest`
+| `combineBy` cartesian-product semantics, key symmetry, output shape
+
+| `channel/operations/keys/CompositeKeyTest`
+| Multi-field composite key construction and equality
+
+| `channel/operations/keys/KeyExtractorTest`
+| Closure-based key extractor — type safety, null handling
+
+| `plugin/BidsExtensionTest`
+| Plugin extension registration; operator availability on `Channel`
+|===
+
+=== Evidence / Failure Signals
+
+*Passing:* All unit tests succeed in under a minute.
+Test reports appear at `build/reports/tests/test/index.html` — open in a
+browser for per-test detail.
+
+*Failing:* A unit test failure means core logic is broken.
+The stack trace in the Gradle output points directly to the failing
+assertion.
+*Do not proceed to integration tests* while unit tests are red — the
+integration suite will also fail and you will lose diagnostic resolution.
+
+To run a single test class:
+
+[source,bash]
+----
+./gradlew test --tests nfneuro.plugin.channel.BidsHandlerFlattenSpec
+----
+
+== Layer 2 — Integration / Validation Tests (nf-test)
+
+Integration tests live under `validation/` and use
+https://www.nf-test.com[nf-test] to run the full plugin against real BIDS
+example datasets.
+
+`nf-test.config` configures the suite:
+
+[source,groovy]
+----
+config {
+    testsDir "validation"
+    workDir  ".nf-test"
+    configFile "nextflow.config"
+    profile ""
+}
+----
+
+=== Run the Full Integration Suite
+
+From the repository root:
+
+[source,bash]
+----
+nf-test test validation/
+----
+
+=== Test Suites
+
+[cols="2,3"]
+|===
+| Suite file | Datasets / scenario
+
+| `comparison_plain_sets.nf.test`
+| Plain-set subjects (single file per suffix); baseline comparison
+
+| `comparison_named_sets.nf.test`
+| Named sets (entity-based dimensions, e.g. `dwi_ap`/`dwi_pa`); baseline comparison
+
+| `comparison_sequential_sets.nf.test`
+| Sequential sets (ordered echo/flip arrays); baseline comparison
+
+| `comparison_mixed_sets.nf.test`
+| Mixed sets (nested grouping + sequencing, e.g. `qmri_mpm`); baseline comparison
+
+| `comparison_custom_datasets.nf.test`
+| Custom datasets not in bids-examples; edge-of-spec scenarios
+
+| `test_heterogeneous_suffix_mapping.nf.test`
+| Multiple configs sharing the same BIDS suffix (`suffix_maps_to`); heterogeneous DWI
+
+| `test_flattened_output.nf.test`
+| Flat output format: `meta` key, top-level config-key access, `Path` types
+|===
+
+=== Update Snapshots
+
+nf-test compares channel output against committed snapshot files
+(`*.nf.test.snap`).
+If you intentionally changed the output shape of a test, regenerate its
+snapshot, then re-run the full suite to ensure no other test regressed:
+
+[source,bash]
+----
+# Regenerate snapshot for a specific suite
+nf-test test validation/comparison_plain_sets.nf.test --update-snapshot
+
+# Then run the full suite to check for regressions
+nf-test test validation/
+----
+
+NOTE: Never run `--update-snapshot` across the full suite unless you have
+intentionally changed behaviour in *all* suites.  Doing so silently accepts
+regressions.
+
+=== Evidence / Failure Signals
+
+*Passing:* All 25+ test cases succeed.
+The suite exercises 18 BIDS datasets achieving 100% baseline alignment
+(see xref:appendices/performance.adoc[Performance Benchmark]).
+
+*Failing:* A mismatch between the test output and the snapshot means the
+plugin emits different data than expected.
+Check whether the change was intentional (update snapshot) or a regression
+(fix the code).
+*Do not merge* a branch with integration failures.
+
+=== Legacy Manual Integration Test
+
+A standalone Nextflow workflow (not nf-test) can be run for a quick sanity
+check:
+
+[source,bash]
+----
+cd validation
+nextflow run main.nf
+----
+
+NOTE: `main.nf` does not compare against a baseline; it is a smoke test only.
+Passing it does *not* substitute for the nf-test suite.
+
+== Layer 3 — Edge Cases and Benchmarks [[layer-3-edge-cases-and-benchmarks]]
+
+=== Edge Case Tests
+
+Edge case tests are in `validation/edge_cases/` and target operator
+behaviour at the boundaries: large items, many items, missing fields,
+concurrent execution, and complex joins.
+
+Run with nf-test:
+
+[source,bash]
+----
+nf-test test validation/edge_cases/edge_cases.nf.test
+----
+
+Or run all edge-case workflows directly (useful for interactive inspection of
+`NF_WORK` output):
+
+[source,bash]
+----
+cd validation/edge_cases
+./run_all_tests.sh
+----
+
+Individual edge-case workflows:
+
+[cols="2,3"]
+|===
+| Workflow | Scenario
+
+| `test1_large_items.nf`   | Single items with very large payloads
+| `test2_many_items.nf`    | High item count (10 000+) stress test
+| `test3_nested_structures.nf` | Deeply nested maps as items
+| `test4_missing_fields.nf` | Items with absent optional keys
+| `test5_concurrent.nf`    | Concurrent operator execution (thread-safety)
+| `test6_join_many.nf`     | `joinBy` with a high-fan-out right channel
+| `test7_complex_filter.nf` | Chained operators with filter predicates
+| `test8_combineby_edge_cases.nf` | `combineBy` with no-match, duplicate, and empty keys
+|===
+
+*Evidence:* Edge-case failures surface operator-level thread-safety or
+boundary bugs that the main nf-test suite does not trigger.
+A failure here should be fixed before releasing.
+
+=== Performance Benchmarks
+
+Benchmark workflows live in `validation/benchmark/` and compare each
+closure-based operator against its Nextflow built-in counterpart.
+
+[source,bash]
+----
+cd validation/benchmark
+nextflow run benchmark_grouptuple.nf
+nextflow run benchmark_join.nf
+nextflow run benchmark_combine.nf
+nextflow run benchmark_combineby_new.nf
+----
+
+*Evidence:* Timing output is printed to stdout.
+Expected overhead is 10–30 ms per operator for typical BIDS datasets.
+See xref:appendices/performance.adoc[Performance Benchmark] for the
+reference numbers and the analysis.
+Benchmark regressions (sustained increases >50 %) should be investigated
+before release.
+
+== Layer 4 — Documentation Build Verification
+
+The documentation site (`./gradlew docs`) is itself a build artefact
+that must succeed before a release.
+
+=== Build the Documentation
+
+From the repository root:
+
+[source,bash]
+----
+./gradlew docs
+# or equivalently:
+make docs
+----
+
+This runs three steps in sequence:
+
+. `apiDocs` — generates GroovyDoc from `src/main/groovy/`
+. `buildDocsSite` — renders PlantUML diagrams and builds the Antora site
+. `integrateApiDocs` — copies the GroovyDoc into `documentation/build/site/`
+
+The finished site lands at `documentation/build/site/`.
+
+=== Preview Locally
+
+[source,bash]
+----
+make docs-serve
+# serves at http://localhost:5050
+----
+
+=== Render Only the Diagrams
+
+[source,bash]
+----
+./gradlew renderDiagrams
+# or:
+make docs-diagrams
+----
+
+*Evidence:* A successful `./gradlew docs` run with no warnings confirms:
+broken cross-references (xref:) are caught by Antora, all PlantUML
+diagrams render to SVG, and the GroovyDoc is wired into the site.
+
+*Failure mode:* Antora aborts on unresolved page references or malformed
+AsciiDoc; PlantUML aborts if `dot` (Graphviz) is missing from the PATH.
+Check the xref:guides/installation.adoc#prerequisites[Prerequisites] section
+for Graphviz and Node.js requirements.

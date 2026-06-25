@@ -1,0 +1,204 @@
+= Output Shaping & Set Handling
+:navtitle: Output Shaping & Set Handling
+
+[.lead]
+This page describes how the four set-handler classes convert grouped `BidsFile` lists
+into the flat output maps emitted into the Nextflow channel.
+
+== The handler hierarchy
+
+`BaseSetHandler` is an abstract class that owns the generic file-grouping loop.  Its
+`process()` method:
+
+. Groups all `BidsFile` objects by the `loop_over` entity combination (one key per
+  subject-session, or whatever entities the config declares).
+. For each group, iterates over files, calls `findMatchingGrouping()` to identify the
+  config key and set type, and accumulates a `sets` map via `packFileIntoSet()`.
+. Applies `required` validation — if any mandatory named group is absent, the item is
+  discarded.
+. Sorts sequential entries by their sequence-entity value.
+. Delegates to the abstract `processGroup()` to produce the final `BidsChannelData`.
+. Pushes each `BidsChannelData` into a `DataflowQueue`.
+
+The four concrete subclasses implement `getSetConfig()`, `setName()`,
+`getSequenceByEntities()`, and `getSetIndex()`.
+
+== Set types in detail
+
+=== PlainSetHandler — `plain_set`
+
+Used for data types with a single file (or small fixed set of files) per subject:
+no named variants, no sequencing dimension.
+
+.Config
+[source,yaml]
+----
+T1w:
+  plain_set: {}
+----
+
+.Output
+[source,groovy]
+----
+[
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    T1w: [
+        nii:  Path('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
+        json: Path('/data/bids/sub-01/anat/sub-01_T1w.json')
+    ]
+]
+// Access: item.T1w.nii
+----
+
+=== NamedSetHandler — `named_set`
+
+Used when the same BIDS suffix appears in multiple acquisitions distinguished by
+an entity value (direction, flip angle, etc.).
+
+.Config
+[source,yaml]
+----
+dwi_ap:
+  named_set:
+    ap: {direction: dir-AP}
+    pa: {direction: dir-PA}
+  required: [ap, pa]
+  additional_extensions: [.bval, .bvec]
+  suffix_maps_to: dwi
+----
+
+.Output
+[source,groovy]
+----
+[
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    dwi_ap: [
+        ap: [nii:  Path('...sub-01_dir-AP_dwi.nii.gz'),
+             bval: Path('...sub-01_dir-AP_dwi.bval'),
+             bvec: Path('...sub-01_dir-AP_dwi.bvec')],
+        pa: [nii:  Path('...sub-01_dir-PA_dwi.nii.gz'),
+             bval: Path('...sub-01_dir-PA_dwi.bval'),
+             bvec: Path('...sub-01_dir-PA_dwi.bvec')]
+    ]
+]
+// Access: item.dwi_ap.ap.nii, item.dwi_ap.pa.bval
+----
+
+NOTE: The top-level key in the output is the _config key_ (`dwi_ap`), not the BIDS
+suffix (`dwi`).  This allows two different config groups to share the same file suffix
+via `suffix_maps_to`.
+
+=== SequentialSetHandler — `sequential_set`
+
+Used when the same suffix appears once per value of a sequence entity (echo, time-point,
+inversion).
+
+.Config
+[source,yaml]
+----
+mese:
+  sequential_set:
+    by_entity: echo
+----
+
+.Output
+[source,groovy]
+----
+[
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    mese: [
+        [nii:  Path('...sub-01_echo-1_MESE.nii.gz'),
+         json: Path('...sub-01_echo-1_MESE.json')],
+        [nii:  Path('...sub-01_echo-2_MESE.nii.gz'),
+         json: Path('...sub-01_echo-2_MESE.json')]
+    ]
+]
+// Access: item.mese[0].nii, item.mese.size()
+----
+
+Use `by_entities: [echo, run]` when multiple entities define the sequence order.
+Set `order: flat` (default) or `order: hierarchical` to control nesting.
+
+=== MixedSetHandler — `mixed_set`
+
+Combines a named dimension (acquisition, inversion) with a sequential dimension (echo,
+time-point).  Internally `MixedSetHandler` delegates to the `NamedSetHandler` and
+`SequentialSetHandler` logic for each dimension.
+
+.Config
+[source,yaml]
+----
+mpm:
+  mixed_set:
+    named_dimension: acquisition
+    sequential_dimension: echo
+    named_groups:
+      MTw: {acquisition: acq-MTw}
+      PDw: {acquisition: acq-PDw}
+      T1w: {acquisition: acq-T1w}
+  required: [MTw, PDw, T1w]
+----
+
+.Output
+[source,groovy]
+----
+[
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    mpm: [
+        MTw: [nii:  [Path('...acq-MTw_echo-1_MPM.nii.gz'),
+                     Path('...acq-MTw_echo-2_MPM.nii.gz')],
+              json: [Path('...acq-MTw_echo-1_MPM.json'),
+                     Path('...acq-MTw_echo-2_MPM.json')]],
+        PDw: [ ... ],
+        T1w: [ ... ]
+    ]
+]
+// Access: item.mpm.MTw.nii[0], item.mpm.T1w.json.size()
+----
+
+== Flat vs legacy output formats
+
+=== Flat format (default since 0.1.0-beta.9)
+
+Each channel item is a single `Map` with:
+
+* `meta` — entity values for the grouping key.
+* One entry per config key — a nested `Map` (plain/named/mixed) or a `List` of maps
+  (sequential).
+
+All file paths are `java.nio.file.Path` objects with absolute paths, ready for
+Nextflow `path` process inputs and cloud storage URIs.
+
+=== Legacy format (opt-in via `flatten_output: false`)
+
+[source,groovy]
+----
+Channel.fromBIDS(bids_dir, config, [flatten_output: false])
+----
+
+Emits `[groupingKey, enrichedDataMap]` tuples where file paths are _relative strings_.
+Use only when migrating incrementally from pre-beta.9 code.
+
+WARNING: The legacy format will be removed in v0.2.0.  See
+xref:appendices/migration-bids.adoc[BIDS Migration Guide].
+
+== Cross-modal broadcasting
+
+`include_cross_modal` copies data from one suffix group into another.  For example,
+adding a T1w into every DWI item:
+
+[source,yaml]
+----
+dwi_ap:
+  named_set: { ... }
+  include_cross_modal: [T1w]
+----
+
+The T1w sub-map is merged into each `dwi_ap` item, giving direct access to both in the
+same channel element.
+
+== Related pages
+
+* xref:concepts/configuration.adoc[Configuration Loading & Validation]
+* xref:concepts/bids-parsing.adoc[BIDS Parsing & Dataset Normalization]
+* xref:appendices/migration-bids.adoc[BIDS Migration Guide]

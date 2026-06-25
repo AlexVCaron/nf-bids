@@ -1,0 +1,168 @@
+= Plugin Bootstrap & DSL Registration
+:navtitle: Plugin Bootstrap & DSL Registration
+
+[.lead]
+This page explains how the four classes in `nfneuro.plugin` wire nf-bids into
+Nextflow's plugin framework, making `Channel.fromBIDS()` and the closure-based
+operators available in user workflows.
+
+== Nextflow plugin framework primer
+
+Nextflow uses https://pf4j.org/[pf4j] for plugin management.  Each plugin JAR bundles
+a manifest entry that tells Nextflow which class is the _plugin entry point_.  At
+runtime, Nextflow instantiates that class, then discovers service implementations via
+Java's `ServiceLoader`.
+
+nf-bids registers two services:
+
+[cols="1,2"]
+|===
+| Service interface | Implementation
+
+| `nextflow.plugin.extension.PluginExtensionPoint`
+| `BidsExtension` — exposes channel factory and operators.
+
+| `nextflow.trace.TraceObserverFactory`
+| `BidsFactory` — creates the `BidsObserver` lifecycle listener.
+|===
+
+== BidsPlugin
+
+[source,groovy]
+----
+package nfneuro.plugin
+
+@CompileStatic
+class BidsPlugin extends BasePlugin {
+    BidsPlugin(PluginWrapper wrapper) {
+        super(wrapper)
+    }
+}
+----
+
+`BidsPlugin` is intentionally minimal.  It extends pf4j's `BasePlugin` and serves
+only as the entry point registered in the JAR manifest.  All meaningful behaviour lives
+in `BidsExtension` and `BidsFactory`.
+
+== BidsExtension
+
+`BidsExtension` extends `PluginExtensionPoint` and is the main user-facing API surface.
+It is initialised with the active `Session` via its `init(Session)` override.
+
+=== @Factory — Channel.fromBIDS
+
+[source,groovy]
+----
+@Factory
+DataflowWriteChannel fromBIDS(
+    String bidsDir,
+    String configPath = null,
+    Map options = [:]
+)
+----
+
+The `@Factory` annotation causes Nextflow's DSL engine to expose this method as
+`Channel.fromBIDS(...)`.  Internally it delegates immediately to
+`BidsChannelFactory(session).fromBIDS(bidsDir, configPath, options)`.
+
+=== @Operator — groupTupleBy
+
+[source,groovy]
+----
+@Operator
+DataflowWriteChannel groupTupleBy(
+    DataflowReadChannel source,
+    Closure keyExtractor,
+    Map opts = [:]
+)
+----
+
+`@Operator` registers a dot-style channel extension.  Nextflow injects `source` as the
+channel the operator is called on; users see: `channel.groupTupleBy { ... }`.
+
+`KeyExtractor.validateKeyExtractor` checks arity before constructing `GroupTupleByOp`.
+
+=== @Operator — joinBy
+
+[source,groovy]
+----
+@Operator
+DataflowWriteChannel joinBy(
+    DataflowReadChannel left,
+    DataflowReadChannel right,
+    Closure leftKeyExtractor,
+    Closure rightKeyExtractor = null,   // defaults to leftKeyExtractor
+    Map opts = [:]
+)
+----
+
+When `rightKeyExtractor` is `null` the left extractor is reused, making single-closure
+usage (`channel.joinBy(other) { it.field }`) the common case.
+
+=== @Operator — combineBy (overloaded)
+
+`combineBy` is registered with three overloads to support the single-extractor and
+optional-opts call patterns:
+
+[source,groovy]
+----
+// Full signature
+DataflowWriteChannel combineBy(left, right, leftClosure, rightClosure, Map opts)
+
+// Single extractor — applied to both channels
+DataflowWriteChannel combineBy(left, right, Closure keyExtractor)
+DataflowWriteChannel combineBy(left, right, Closure keyExtractor, Map opts)
+----
+
+=== Importing operators in a workflow
+
+[source,groovy]
+----
+include { fromBIDS }     from 'plugin/nf-bids'
+include { groupTupleBy } from 'plugin/nf-bids'
+include { joinBy }       from 'plugin/nf-bids'
+include { combineBy }    from 'plugin/nf-bids'
+----
+
+The `include` statement is required even though the plugin is loaded in
+`nextflow.config`.  Without it Nextflow raises "Missing process or function".
+
+== BidsFactory and BidsObserver
+
+`BidsFactory` implements `TraceObserverFactory` and its sole job is to return a list
+containing a `BidsObserver`:
+
+[source,groovy]
+----
+@CompileStatic
+class BidsFactory implements TraceObserverFactory {
+    @Override
+    Collection<TraceObserver> create(Session session) {
+        return List.of(new BidsObserver())
+    }
+}
+----
+
+`BidsObserver` implements `TraceObserver` and prints lifecycle messages:
+
+[source,groovy]
+----
+@Override
+void onFlowCreate(Session session) {
+    println "Pipeline is starting! 🚀"
+}
+
+@Override
+void onFlowComplete() {
+    println "Pipeline complete! 👋"
+}
+----
+
+These are currently informational placeholders; the pattern can be extended to emit
+metrics or validate outputs post-run.
+
+== Related pages
+
+* xref:concepts/bids-parsing.adoc[BIDS Parsing & Dataset Normalization]
+* xref:concepts/channel-operators.adoc[Closure-Based Channel Operators]
+* xref:architecture.adoc[Architecture Overview]
