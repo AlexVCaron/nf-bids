@@ -67,9 +67,10 @@ class ParticipantsMetadataMerger {
         }
 
         if (matchedRows.size() > 1) {
+            String metaSummary = buildMetaSummary(meta)
             BidsLogger.logProgress(
                 "nf-bids-handler",
-                "├─ Warning: multiple participants.tsv rows matched equally for meta ${meta}. Using deterministic merge order by participants.tsv row index."
+                "├─ Warning: multiple participants.tsv rows matched equally for ${metaSummary}. Using deterministic merge order by participants.tsv row index."
             )
         }
 
@@ -242,5 +243,22 @@ class ParticipantsMetadataMerger {
         }
 
         return result
+    }
+
+    private String buildMetaSummary(Map meta) {
+        List<String> preferredKeys = ['subject', 'session', 'run', 'task', 'echo']
+        Map selected = [:]
+
+        preferredKeys.each { String key ->
+            if (meta.containsKey(key) && meta[key] != null) {
+                selected[key] = meta[key]
+            }
+        }
+
+        if (selected.isEmpty()) {
+            selected = meta ?: [:]
+        }
+
+        return "meta ${selected}"
     }
 }
