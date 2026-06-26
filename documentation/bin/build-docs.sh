@@ -24,6 +24,9 @@ PLANTUML_JAR="${DOC_DIR}/lib/plantuml.jar"
 DIAGRAM_SRC="${DOC_DIR}/diagrams"
 DIAGRAM_OUT="${DOC_DIR}/modules/ROOT/images/generated"
 PLAYBOOK="${DOC_DIR}/antora-playbook.yml"
+UI_OVERRIDE_CSS="${DOC_DIR}/ui/site-overrides.css"
+UI_OVERRIDE_JS="${DOC_DIR}/ui/site-overrides.js"
+GROOVYDOC_OUT="${DOC_DIR}/build/groovydoc"
 DIAGRAMS_ONLY=0
 # In strict mode (used by CI) missing diagram tooling is a hard error instead
 # of a warning, so an incomplete site can never be published silently.
@@ -34,7 +37,11 @@ SNAP_DIR=""
 
 # Single cleanup hook: EXIT fires on success AND on failure under `set -e`,
 # unlike a RETURN trap which is skipped when the shell aborts.
-cleanup() { [[ -n "${SNAP_DIR}" ]] && rm -rf "${SNAP_DIR}"; }
+cleanup() {
+  if [[ -n "${SNAP_DIR}" ]]; then
+    rm -rf "${SNAP_DIR}"
+  fi
+}
 trap cleanup EXIT
 
 log() { printf '\033[1;34m[docs]\033[0m %s\n' "$*"; }
@@ -115,6 +122,43 @@ build_site() {
   log "Site built at ${DOC_DIR}/build/site/index.html"
 }
 
+integrate_api_docs() {
+  local version_dir
+  version_dir="$(find "${DOC_DIR}/build/site/nf-bids" -mindepth 1 -maxdepth 1 -type d | head -n1 || true)"
+  [[ -n "${version_dir}" ]] || fail "Could not locate built component version directory under build/site/nf-bids/"
+
+  log "Generating GroovyDoc API reference..."
+  (cd "${REPO_ROOT}" && ./gradlew groovydoc --no-daemon --console=plain)
+  [[ -f "${GROOVYDOC_OUT}/index.html" ]] || fail "GroovyDoc generation failed (missing ${GROOVYDOC_OUT}/index.html)."
+
+  rm -rf "${version_dir}/api"
+  mkdir -p "${version_dir}/api"
+  rsync -a "${GROOVYDOC_OUT}/" "${version_dir}/api/"
+  log "Integrated GroovyDoc at ${version_dir}/api/index.html"
+}
+
+apply_ui_overrides() {
+  local site_css="${DOC_DIR}/build/site/_/css/site.css"
+  local site_js="${DOC_DIR}/build/site/_/js/site.js"
+
+  [[ -f "${site_css}" ]] || fail "Missing generated stylesheet: ${site_css}"
+  [[ -f "${site_js}" ]] || fail "Missing generated script bundle: ${site_js}"
+
+  if [[ -f "${UI_OVERRIDE_CSS}" ]]; then
+    printf '\n\n/* nf-bids local overrides */\n' >> "${site_css}"
+    cat "${UI_OVERRIDE_CSS}" >> "${site_css}"
+  fi
+
+  if [[ -f "${UI_OVERRIDE_JS}" ]]; then
+    printf '\n\n// nf-bids local overrides\n' >> "${site_js}"
+    cat "${UI_OVERRIDE_JS}" >> "${site_js}"
+  fi
+
+  log "Applied local UI overrides (layout + image behavior)."
+}
+
 render_diagrams
 [[ "${DIAGRAMS_ONLY}" -eq 1 ]] && exit 0
 build_site
+integrate_api_docs
+apply_ui_overrides

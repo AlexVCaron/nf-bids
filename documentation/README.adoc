@@ -57,8 +57,16 @@ Or directly with npm, from this `documentation/` directory:
 ----
 npm install               # install Antora (first time only)
 npm run fetch-tools       # download the PlantUML jar into lib/
-npm run build             # render diagrams + build the site
-npm run serve             # preview at http://localhost:5050
+npm run build             # render diagrams + build site + integrate GroovyDoc
+npm run serve             # preview at http://localhost:5050 (or next free port)
+----
+
+If port `5050` is already in use, `npm run serve` automatically picks the next free port.
+You can force a specific port with `DOCS_PORT`, for example:
+
+[source,bash]
+----
+DOCS_PORT=6060 npm run serve
 ----
 
 The generated site is written to `documentation/build/site/`; open

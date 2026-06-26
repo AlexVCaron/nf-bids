@@ -4,8 +4,6 @@ skinparam shadowing false
 skinparam defaultFontName SansSerif
 skinparam defaultFontSize 11
 skinparam RectangleBorderColor #4472C4
-skinparam RectangleBackgroundColor #EEF3FF
-skinparam RectangleFontColor #1A1A2E
 skinparam ArrowColor #444444
 skinparam ArrowFontSize 9
 skinparam ArrowFontColor #444444
@@ -13,53 +11,20 @@ skinparam TitleFontSize 14
 skinparam nodesep 30
 skinparam ranksep 50
 
-title nf-bids — Package Dependency Graph
+title nf-bids — High-Level Architecture
 
-rectangle "**nfneuro.plugin**\n──────────────────\nBidsPlugin  ·  BidsExtension\nBidsFactory  ·  BidsObserver" as plugin #EEF3FF
+rectangle "**Workflow**\nChannel.fromBIDS()\n+ closure operators" as workflow #EEF3FF
+rectangle "**Extension Layer**\nBidsExtension\nBidsChannelFactory" as extension #E8F4E8
+rectangle "**Runtime Pipeline**\nBidsHandler orchestration" as runtime #E8F4E8
+rectangle "**Parsing Layer**\nBidsParser + libBIDS.sh wrapper" as parsing #FFF8E8
+rectangle "**Config + Grouping**\nConfig analysis + set handlers" as grouping #FFF0E8
+rectangle "**Output Channels**\nFlat map emission\n(+ optional joins/groups)" as output #F8E8FF
 
-rectangle "**nfneuro.plugin.channel**\n──────────────────\nBidsChannelFactory  ·  BidsHandler" as channel #E8F4E8
-
-rectangle "**nfneuro.plugin.channel.operations**\n──────────────────\nGroupTupleByOp  ·  JoinByOp  ·  CombineByOp" as ops #E8F4E8
-
-rectangle "**nfneuro.plugin.channel.operations.keys**\n──────────────────\nKeyExtractor  ·  CompositeKey" as keys #E8F4E8
-
-rectangle "**nfneuro.plugin.parser**\n──────────────────\nBidsParser  ·  LibBidsShWrapper\nBidsValidator  _(stub)_" as parser #FFF8E8
-
-rectangle "**nfneuro.plugin.config**\n──────────────────\nBidsConfigLoader  ·  BidsConfigValidator\nBidsConfigAnalyzer" as config #FFF8E8
-
-rectangle "**nfneuro.plugin.grouping**\n──────────────────\nBaseSetHandler  ·  PlainSetHandler\nNamedSetHandler  ·  SequentialSetHandler\nMixedSetHandler" as grouping #FFF0E8
-
-rectangle "**nfneuro.plugin.model**\n──────────────────\nBidsDataset  ·  BidsEntity\nBidsFile  ·  BidsChannelData" as model #F8E8FF
-
-rectangle "**nfneuro.plugin.util**\n──────────────────\nBidsLogger  ·  SuffixMapper\nBidsEntityUtils  ·  BidsErrorHandler  ·  BidsCsvParser" as util #F8E8FF
-
-' Entry points → channel layer
-plugin -down-> channel : BidsExtension delegates\nfromBIDS() call
-plugin -right-> ops : BidsExtension wraps\ngroupTupleBy / joinBy / combineBy
-plugin -right-> keys : KeyExtractor.validate()\non operator input
-
-' channel → downstream
-channel -down-> parser : BidsChannelFactory creates BidsParser;\nBidsHandler.execute() calls parseToDataset()
-channel -down-> config : BidsHandler loads config\nvia BidsConfigLoader;\nanalyzes via BidsConfigAnalyzer
-channel -down-> grouping : BidsHandler.processDatasets()\nroutes files to set handlers
-channel -right-> model : BidsHandler reads BidsFile list;\ncasts BidsChannelData output
-channel -right-> util : BidsLogger, SuffixMapper
-
-' Operators → keys
-ops -down-> keys : all three ops call\nKeyExtractor.extractKey()
-
-' parser → model + util
-parser -down-> model : BidsParser builds BidsDataset;\npopulates BidsFile + BidsEntity
-parser -right-> util : BidsLogger, BidsErrorHandler\nBidsCsvParser
-
-' config → util
-config -right-> util : BidsConfigLoader\nuses BidsLogger
-
-' grouping → model + util
-grouping -down-> model : handlers read BidsFile;\nproduce BidsChannelData
-grouping -right-> util : BidsLogger, BidsEntityUtils\nSuffixMapper
-
-' Structural surprise: circular edge util → grouping
-util ..> grouping : <<circular>>\nSuffixMapper imports\nBaseSetHandler.getSetType()
+workflow --> extension : calls API
+extension --> runtime : configures + ignites
+runtime --> parsing : parse dataset
+runtime --> grouping : shape by config
+grouping --> output : emit channel items
+workflow ..> output : consume in pipeline
 
 @enduml

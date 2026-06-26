@@ -7,7 +7,7 @@
     "fetch-tools": "bin/fetch-tools.sh",
     "diagrams": "bin/build-docs.sh --diagrams-only",
     "build": "bin/build-docs.sh",
-    "serve": "npx --yes http-server build/site -p 5050 -c-1"
+    "serve": "bin/serve-docs.sh"
   },
   "devDependencies": {
     "@antora/cli": "3.1.10",
