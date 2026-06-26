@@ -183,9 +183,7 @@ class BidsHandler {
 
         BidsDataset dataset = parser.parseToDataset(bidsDir, options.libbids_sh as String)
         List<BidsFile> bidsFiles = dataset.getFiles()
-        this.participantsMetadata = (dataset.participants ?: []).collect { row ->
-            row as Map<String, String>
-        } as List<Map<String, String>>
+        this.participantsMetadata = (dataset.participants ?: []) as List<Map<String, String>>
 
         // Route to appropriate handlers based on configuration
         DataflowQueue results = processDatasets(getBidsParentDir(), bidsFiles, config, configAnalysis, loopOverEntities)
@@ -385,7 +383,10 @@ class BidsHandler {
                 return
             }
 
-            List<Integer> priority = buildCoveragePriority(candidateKeys, normalizedLoopEntities)
+            List<Integer> priority = []
+            if (candidateKeys.size() >= bestCoverage) {
+                priority = buildCoveragePriority(candidateKeys, normalizedLoopEntities)
+            }
             if (candidateKeys.size() > bestCoverage || (
                 candidateKeys.size() == bestCoverage && comparePriority(priority, bestPriority) > 0
             )) {
@@ -515,7 +516,7 @@ class BidsHandler {
             String prefix = cleanValue.substring(0, sep)
             String remainder = cleanValue.substring(sep + 1)
             if (BidsEntity.normalizeName(prefix) == entityKey || (
-                entityKey == 'sub' && SUBJECT_ID_COLUMN_ALIASES.contains("${prefix}_id".toString())
+                entityKey == 'sub' && SUBJECT_ID_COLUMN_ALIASES.contains("${prefix}_id")
             )) {
                 cleanValue = remainder
             }
