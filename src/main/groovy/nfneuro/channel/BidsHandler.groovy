@@ -407,7 +407,7 @@ class BidsHandler {
         }
 
         if (!(parsed instanceof Map)) {
-            throw new IllegalStateException("JSON sidecar must contain an object: ${jsonPath}")
+            throw new IllegalStateException("JSON sidecar must contain a JSON object (map/dictionary): ${jsonPath}")
         }
 
         return parsed as Map
