@@ -21,6 +21,7 @@ import nfneuro.plugin.grouping.*
 import nfneuro.plugin.model.*
 import nfneuro.plugin.parser.BidsParser
 import nfneuro.plugin.util.BidsLogger
+import nfneuro.plugin.util.ParticipantsMetadataMerger
 import nfneuro.plugin.util.SuffixMapper
 import nfneuro.plugin.config.BidsConfigAnalyzer
 import nfneuro.plugin.config.BidsConfigLoader
@@ -51,14 +52,6 @@ import nfneuro.plugin.config.BidsConfigLoader
 @CompileStatic
 class BidsHandler {
 
-    private static final String NA_VALUE = 'NA'
-    private static final Set<String> SUBJECT_ID_COLUMN_ALIASES = [
-        'participant_id',
-        'participant',
-        'subject_id',
-        'sub_id'
-    ] as Set<String>
-
     private DataflowWriteChannel target
     private String bidsDir
     private Map options
@@ -68,6 +61,7 @@ class BidsHandler {
     private Map<String, Map<String, String>> suffixMapping
     private BidsParser parser
     private List<Map<String, String>> participantsMetadata = []
+    private final ParticipantsMetadataMerger participantsMetadataMerger = new ParticipantsMetadataMerger()
 
     /**
      * Load and analyze the YAML configuration file.
@@ -182,6 +176,7 @@ class BidsHandler {
         }
 
         BidsDataset dataset = parser.parseToDataset(bidsDir, options.libbids_sh as String)
+        dataset.loadParticipants()
         List<BidsFile> bidsFiles = dataset.getFiles()
         this.participantsMetadata = (dataset.participants ?: []) as List<Map<String, String>>
 
@@ -353,198 +348,7 @@ class BidsHandler {
     }
 
     private void mergeParticipantMetadata(Map meta) {
-        if (!meta || participantsMetadata == null || participantsMetadata.isEmpty()) {
-            return
-        }
-
-        Map<String, String> normalizedMeta = normalizeEntityMap(meta)
-        List<String> normalizedLoopEntities = (loopOverEntities ?: [])
-            .collect { name -> BidsEntity.normalizeName(name) }
-            .unique() as List<String>
-
-        List<Map<String, Object>> matchedRows = []
-        int bestCoverage = -1
-        List<Integer> bestPriority = []
-
-        participantsMetadata.eachWithIndex { Map<String, String> row, int rowIndex ->
-            Map<String, String> normalizedRow = normalizeEntityMap(row)
-            List<String> candidateKeys = normalizedLoopEntities.findAll { String entity ->
-                normalizedMeta.containsKey(entity) && normalizedRow.containsKey(entity)
-            } as List<String>
-
-            if (!candidateKeys) {
-                return
-            }
-
-            boolean matches = candidateKeys.every { String entity ->
-                normalizedMeta[entity] == normalizedRow[entity]
-            }
-            if (!matches) {
-                return
-            }
-
-            List<Integer> priority = []
-            if (candidateKeys.size() >= bestCoverage) {
-                priority = buildCoveragePriority(candidateKeys, normalizedLoopEntities)
-            }
-            if (candidateKeys.size() > bestCoverage || (
-                candidateKeys.size() == bestCoverage && comparePriority(priority, bestPriority) > 0
-            )) {
-                bestCoverage = candidateKeys.size()
-                bestPriority = priority
-                matchedRows = [[row: row, candidateKeys: candidateKeys, rowIndex: rowIndex, priority: priority]]
-            } else if (candidateKeys.size() == bestCoverage && comparePriority(priority, bestPriority) == 0) {
-                matchedRows << [row: row, candidateKeys: candidateKeys, rowIndex: rowIndex, priority: priority]
-            }
-        }
-
-        if (!matchedRows) {
-            return
-        }
-
-        if (matchedRows.size() > 1) {
-            BidsLogger.logProgress(
-                "nf-bids-handler",
-                "├─ Warning: multiple participants.tsv rows matched equally for meta ${meta}. Using deterministic merge order."
-            )
-        }
-
-        // Deterministic order when ambiguous
-        List<Map<String, Object>> sortedRows = matchedRows.sort { Map<String, Object> a, Map<String, Object> b ->
-            (a.rowIndex as Integer) <=> (b.rowIndex as Integer)
-        }
-
-        Map<String, String> mergedParticipantValues = [:]
-        sortedRows.each { Map<String, Object> match ->
-            Map<String, String> row = match.row as Map<String, String>
-            List<String> candidateKeys = match.candidateKeys as List<String>
-
-            row.each { String rawKey, String rawValue ->
-                String trimmedValue = rawValue?.trim()
-                if (!trimmedValue || trimmedValue == NA_VALUE) {
-                    return
-                }
-
-                String normalizedKey = normalizeEntityKey(rawKey)
-                if (normalizedKey && candidateKeys.contains(normalizedKey)) {
-                    return
-                }
-
-                if (mergedParticipantValues.containsKey(rawKey) && mergedParticipantValues[rawKey] != trimmedValue) {
-                    BidsLogger.logProgress(
-                        "nf-bids-handler",
-                        "├─ Warning: conflicting participants.tsv values for '${rawKey}' (${mergedParticipantValues[rawKey]} vs ${trimmedValue}); keeping first value."
-                    )
-                    return
-                }
-                mergedParticipantValues[rawKey] = trimmedValue
-            }
-        }
-
-        mergedParticipantValues.each { String key, String value ->
-            if (meta.containsKey(key) && meta[key] != value) {
-                BidsLogger.logProgress(
-                    "nf-bids-handler",
-                    "├─ Warning: participants.tsv key '${key}' conflicts with existing meta value '${meta[key]}'; keeping existing value."
-                )
-                return
-            }
-
-            if (!meta.containsKey(key)) {
-                meta[key] = value
-            }
-        }
-    }
-
-    private Map<String, String> normalizeEntityMap(Map values) {
-        Map<String, String> normalized = [:]
-        values.each { rawKey, rawValue ->
-            String entityKey = normalizeEntityKey(rawKey?.toString())
-            if (!entityKey) {
-                return
-            }
-
-            String entityValue = normalizeEntityValue(entityKey, rawValue?.toString())
-            if (!entityValue || entityValue == NA_VALUE) {
-                return
-            }
-            normalized[entityKey] = entityValue
-        }
-        return normalized
-    }
-
-    private String normalizeEntityKey(String key) {
-        if (!key) {
-            return null
-        }
-
-        String cleanKey = key.trim().toLowerCase()
-        if (!cleanKey) {
-            return null
-        }
-
-        if (SUBJECT_ID_COLUMN_ALIASES.contains(cleanKey)) {
-            return 'sub'
-        }
-
-        if (cleanKey.endsWith('_id')) {
-            String base = cleanKey.substring(0, cleanKey.length() - 3)
-            if (BidsEntity.longEntityExists(base) || BidsEntity.shortEntityExists(base)) {
-                return BidsEntity.normalizeName(base)
-            }
-        }
-
-        if (BidsEntity.longEntityExists(cleanKey) || BidsEntity.shortEntityExists(cleanKey)) {
-            return BidsEntity.normalizeName(cleanKey)
-        }
-
-        return null
-    }
-
-    private String normalizeEntityValue(String entityKey, String value) {
-        if (!value) {
-            return null
-        }
-
-        String cleanValue = value.trim()
-        if (!cleanValue || cleanValue == NA_VALUE) {
-            return null
-        }
-
-        int sep = cleanValue.indexOf('-')
-        if (sep > 0 && sep < cleanValue.length() - 1) {
-            String prefix = cleanValue.substring(0, sep)
-            String remainder = cleanValue.substring(sep + 1)
-            if (BidsEntity.normalizeName(prefix) == entityKey || (
-                entityKey == 'sub' && SUBJECT_ID_COLUMN_ALIASES.contains("${prefix}_id")
-            )) {
-                cleanValue = remainder
-            }
-        }
-
-        return BidsEntity.sanitizeValue(cleanValue)
-    }
-
-    private List<Integer> buildCoveragePriority(List<String> candidateKeys, List<String> orderedLoopEntities) {
-        return orderedLoopEntities.collect { String entity ->
-            return candidateKeys.contains(entity) ? 1 : 0
-        } as List<Integer>
-    }
-
-    private int comparePriority(List<Integer> left, List<Integer> right) {
-        if (right == null || right.isEmpty()) {
-            return (left && !left.isEmpty()) ? 1 : 0
-        }
-
-        int size = Math.max(left?.size() ?: 0, right.size())
-        for (int i = 0; i < size; i++) {
-            int a = (left != null && i < left.size()) ? left[i] : 0
-            int b = i < right.size() ? right[i] : 0
-            if (a != b) {
-                return a <=> b
-            }
-        }
-        return 0
+        participantsMetadataMerger.mergeIntoMeta(meta, participantsMetadata, loopOverEntities)
     }
 
     /**

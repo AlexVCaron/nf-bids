@@ -237,6 +237,24 @@ class BidsHandlerFlattenSpec extends Specification {
         flat.meta.handedness == 'right'
     }
 
+    def 'should match participants aliases loaded from json config'() {
+        given:
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject', 'session']
+        setParticipants(handler, [
+            [participant: 'sub-01', session_id: 'ses-01', cohort: 'config-alias']
+        ])
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01'], [
+            data: [T1w: [nii: 'anat/sub-01_T1w.nii.gz']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.meta.cohort == 'config-alias'
+    }
+
     def 'should resolve ambiguous best matches deterministically and preserve existing meta values'() {
         given:
         def handler = new BidsHandler()
