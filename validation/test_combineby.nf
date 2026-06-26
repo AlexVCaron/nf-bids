@@ -88,7 +88,7 @@ workflow {
             { it.subjId }       // extract from 'subjId' field
         )
         .map { fused ->
-            println "  Subject=${fused.subjectId}: ${fused.modality} + ${fused.method}"
+            println "  Subject(left=${fused.subjectId}, right=${fused.subjId}): ${fused.modality} + ${fused.method}"
             [subject: fused.subjectId, modality: fused.modality, method: fused.method]
         }
         .collect()
@@ -147,19 +147,19 @@ workflow {
     
     println "\n=== Test 6: String key extraction from simple values ===\n"
     
-    subjects_simple = channel.of('sub-01', 'sub-02', 'sub-03')
-    sessions_simple = channel.of('ses-01', 'ses-02', 'ses-03')
+    subjects_simple = channel.of([subject: 'sub-01'], [subject: 'sub-02'], [subject: 'sub-03'])
+    sessions_simple = channel.of([session: 'ses-01'], [session: 'ses-02'], [session: 'ses-03'])
     
     // Extract numeric part as key (combine sub-N with ses-N)
     subjects_simple
         .combineBy(
             sessions_simple,
-            { it.split('-')[1] },   // extract '01', '02', '03'
-            { it.split('-')[1] }
+            { it.subject.split('-')[1] },   // extract '01', '02', '03'
+            { it.session.split('-')[1] }
         )
         .map { fused ->
-            println "  Pair: ${fused[0]} × ${fused[1]}"
-            [subject: fused[0], session: fused[1]]
+            println "  Pair: ${fused.subject} × ${fused.session}"
+            [subject: fused.subject, session: fused.session]
         }
         .collect()
     

@@ -49,7 +49,7 @@ workflow {
     subjects
         .joinBy(participants, { it.id }, { it.participant_id })
         .map { fused ->
-            println "  Joined: ${fused.id} with ${fused.participant_id}"
+            println "  Joined: id=${fused.id}, participant_id=${fused.participant_id}"
             [id: fused.id, data: fused.data, info: fused.info]
         }
         .collect()
@@ -133,8 +133,12 @@ workflow {
     left2
         .joinBy(right2, { it.id }, [remainder: true])
         .map { fused ->
-            println "  Result: ${fused}"
-            fused
+            def leftId = fused.containsKey('val') ? fused.id : 'null'
+            def rightId = fused.containsKey('data') ? fused.id : 'null'
+            def val = fused.containsKey('val') ? fused.val : 'null'
+            def data = fused.containsKey('data') ? fused.data : 'null'
+            println "  Result: id=${fused.id}, left=${leftId}, right=${rightId}, val=${val}, data=${data}"
+            [id: fused.id, left_id: leftId, right_id: rightId, val: val, data: data]
         }
         .collect()
     
