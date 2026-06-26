@@ -150,6 +150,7 @@ Load and parse a BIDS dataset into a Nextflow channel.
 |`bids_dir`|`path-like`|Directory containing a valid [BIDS](https://bids-specification.readthedocs.io/en/stable/) input dataset.|
 |`config`|`path-like`|Path to a `yaml` configuration file for entity parsing. See [Configuration](https://nf-neuro.github.io/nf-bids/concepts/configuration.html).|
 |`options.libbids_sh`|`path-like`|(Optional) Path to an alternative [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh) parsing script.|
+|`options.entity_aliases_json`|`path-like`|(Optional) Path to a custom JSON entity-alias map used when normalizing BIDS entities for participants metadata merging.|
 |`options.validate`|`boolean`|(Not implemented) Run the [BIDS Validator](https://github.com/bids-standard/bids-validator) on the input dataset before parsing.|
 |`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|
 |`options.ignore_codes`|`path-like`|(Not implemented) [BIDS Validator](https://github.com/bids-standard/bids-validator) error codes to ignore.|

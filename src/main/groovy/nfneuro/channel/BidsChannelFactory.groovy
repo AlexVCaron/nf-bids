@@ -45,8 +45,7 @@ class BidsChannelFactory {
      *
      * @param bidsDir Path to BIDS dataset directory
      * @param configPath Path to bids2nf YAML configuration (optional)
-     * @param options Additional options map (validation, libbids_sh path, flatten_output,
-     *                unpack_json_sidecar, etc.)
+     * @param options Additional options map (validation, libbids_sh path, entity_aliases_json, etc.)
      * @return DataflowWriteChannel containing structured BIDS data
      *
      * @reference Workflow orchestration:
@@ -107,6 +106,13 @@ class BidsChannelFactory {
             Path libBidsPath = Paths.get(options.libbids_sh as String)
             if (!Files.exists(libBidsPath)) {
                 throw new IllegalArgumentException("libBIDS.sh not found: ${options.libbids_sh}")
+            }
+        }
+
+        if (options.entity_aliases_json) {
+            Path aliasesPath = Paths.get(options.entity_aliases_json as String)
+            if (!Files.exists(aliasesPath) || !Files.isRegularFile(aliasesPath)) {
+                throw new IllegalArgumentException("Entity aliases JSON file not found: ${options.entity_aliases_json}")
             }
         }
 

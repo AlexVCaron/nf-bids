@@ -1,0 +1,23 @@
+{
+  "sub": ["participant_id", "participant", "subject_id"],
+  "ses": ["session_id"],
+  "run": ["run_id"],
+  "echo": ["echo_id"],
+  "task": ["task_id"],
+  "acq": ["acquisition_id"],
+  "dir": ["direction_id"],
+  "rec": ["reconstruction_id"],
+  "ce": ["ceagent_id"],
+  "trc": ["tracer_id"],
+  "inv": ["inversion_id"],
+  "mt": ["mtransfer_id"],
+  "proc": ["processing_id"],
+  "hemi": ["hemisphere_id"],
+  "seg": ["segmentation_id"],
+  "res": ["resolution_id"],
+  "den": ["density_id"],
+  "desc": ["description_id"],
+  "mod": ["modality_id"],
+  "nuc": ["nucleus_id"],
+  "voi": ["volume_id"]
+}

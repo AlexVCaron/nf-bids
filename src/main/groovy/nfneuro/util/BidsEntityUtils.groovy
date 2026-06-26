@@ -1,8 +1,13 @@
 package nfneuro.plugin.util
 
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * Utility methods for matching and grouping {@link nfneuro.plugin.model.BidsFile} objects
@@ -14,6 +19,9 @@ import nfneuro.plugin.model.BidsFile
  */
 @CompileStatic
 class BidsEntityUtils {
+
+    static final String NA_VALUE = 'NA'
+    static final String ENTITY_ALIASES_RESOURCE = 'nfneuro/entity_aliases.json'
 
     /**
      * Check if entities match the required pattern
@@ -248,6 +256,133 @@ class BidsEntityUtils {
         return BidsEntityUtils.comparisonKey(
             file, entities.collect { name -> BidsEntity.normalizeName(name) }
         )
+    }
+
+    static Map<String, String> buildAliasToEntityMap(String aliasesJsonPath = null) {
+        Map<String, String> result = [:]
+
+        BidsEntity.SHORT_ENTITY_MAPPING.each { String longName, String shortName ->
+            String canonical = BidsEntity.normalizeName(longName)
+            Set<String> aliases = new LinkedHashSet<String>()
+            aliases << canonical
+            aliases << longName.toLowerCase()
+            aliases << (canonical + '_id')
+            aliases << (longName.toLowerCase() + '_id')
+            aliases.each { String alias -> result[alias] = canonical }
+        }
+
+        addAliasesFromStream(
+            BidsEntityUtils.class.classLoader.getResourceAsStream(ENTITY_ALIASES_RESOURCE),
+            result,
+            "classpath resource '${ENTITY_ALIASES_RESOURCE}'"
+        )
+
+        if (aliasesJsonPath) {
+            Path aliasesPath = Paths.get(aliasesJsonPath)
+            if (Files.exists(aliasesPath) && Files.isRegularFile(aliasesPath)) {
+                addAliasesFromStream(Files.newInputStream(aliasesPath), result, "file '${aliasesJsonPath}'")
+            }
+            else {
+                throw new IllegalArgumentException("Entity aliases JSON file not found: ${aliasesJsonPath}")
+            }
+        }
+
+        return result
+    }
+
+    static Map<String, String> normalizeEntityMap(Map values, Map<String, String> aliasToEntity) {
+        Map<String, String> aliases = aliasToEntity ?: [:]
+        Map<String, String> normalized = [:]
+        values.each { rawKey, rawValue ->
+            String entityKey = normalizeEntityKey(rawKey?.toString(), aliases)
+            if (!entityKey) {
+                return
+            }
+
+            String entityValue = normalizeEntityValue(entityKey, rawValue?.toString(), aliases)
+            if (!entityValue || entityValue == NA_VALUE) {
+                return
+            }
+            normalized[entityKey] = entityValue
+        }
+        return normalized
+    }
+
+    static String normalizeEntityKey(String key, Map<String, String> aliasToEntity) {
+        Map<String, String> aliases = aliasToEntity ?: [:]
+        if (!key) {
+            return null
+        }
+
+        String cleanKey = key.trim().toLowerCase()
+        if (!cleanKey) {
+            return null
+        }
+
+        String canonicalFromAlias = aliases[cleanKey]
+        if (canonicalFromAlias) {
+            return canonicalFromAlias
+        }
+
+        if (cleanKey.endsWith('_id')) {
+            String base = cleanKey.substring(0, cleanKey.length() - 3)
+            if (BidsEntity.longEntityExists(base) || BidsEntity.shortEntityExists(base)) {
+                return BidsEntity.normalizeName(base)
+            }
+        }
+
+        if (BidsEntity.longEntityExists(cleanKey) || BidsEntity.shortEntityExists(cleanKey)) {
+            return BidsEntity.normalizeName(cleanKey)
+        }
+
+        return null
+    }
+
+    static String normalizeEntityValue(String entityKey, String value, Map<String, String> aliasToEntity) {
+        if (!value) {
+            return null
+        }
+
+        String cleanValue = value.trim()
+        if (!cleanValue || cleanValue == NA_VALUE) {
+            return null
+        }
+
+        int sep = cleanValue.indexOf('-')
+        if (sep > 0 && sep < cleanValue.length() - 1) {
+            String prefix = cleanValue.substring(0, sep)
+            String remainder = cleanValue.substring(sep + 1)
+            String normalizedPrefix = normalizeEntityKey(prefix, aliasToEntity)
+            if (normalizedPrefix == entityKey) {
+                cleanValue = remainder
+            }
+        }
+
+        return BidsEntity.sanitizeValue(cleanValue)
+    }
+
+    private static void addAliasesFromStream(InputStream stream, Map<String, String> result, String sourceName = 'entity aliases') {
+        if (stream == null) {
+            return
+        }
+
+        try (InputStream closeable = stream) {
+            try {
+                Map parsed = (Map) new JsonSlurper().parse(closeable)
+                parsed.each { Object key, Object value ->
+                    String canonical = BidsEntity.normalizeName(key.toString().toLowerCase())
+                    List aliases = value instanceof List ? (List) value : []
+                    aliases.each { Object alias ->
+                        String cleanAlias = alias?.toString()?.trim()?.toLowerCase()
+                        if (cleanAlias) {
+                            result[cleanAlias] = canonical
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to parse ${sourceName}: ${e.message}", e)
+            }
+        }
     }
 
 }

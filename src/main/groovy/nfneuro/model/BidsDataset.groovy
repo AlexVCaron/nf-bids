@@ -55,21 +55,31 @@ class BidsDataset {
      * Load participants.tsv if it exists
      */
     void loadParticipants() {
+        this.participants = []
         try {
-            def participantsFile = Paths.get(path, "participants.tsv")
+            Path participantsFile = Paths.get(path, "participants.tsv")
             if (Files.exists(participantsFile)) {
-                def lines = participantsFile.toFile().readLines()
+                List<String> lines = Files.readAllLines(participantsFile)
                 if (lines.size() > 1) {
-                    def headers = lines[0].split('\t')
+                    List<String> headers = lines[0]
+                        .replace('\uFEFF', '')
+                        .split('\t', -1)
+                        .collect { it.trim() } as List<String>
                     lines[1..-1].each { line ->
-                        def values = line.split('\t')
+                        if (!line?.trim()) {
+                            return
+                        }
+
+                        List<String> values = line.split('\t', -1) as List<String>
                         Map<String, String> participant = [:]
                         headers.eachWithIndex { header, idx ->
-                            if (idx < values.size()) {
-                                participant[header] = values[idx]
+                            if (header && idx < values.size()) {
+                                participant[header] = values[idx]?.trim()
                             }
                         }
-                        participants << participant
+                        if (!participant.isEmpty()) {
+                            participants << participant
+                        }
                     }
                 }
             }
