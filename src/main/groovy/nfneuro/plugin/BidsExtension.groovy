@@ -63,7 +63,7 @@ class BidsExtension extends PluginExtensionPoint {
      *
      * @param bidsDir Path to BIDS dataset directory
      * @param configPath Path to configuration YAML file (optional)
-     * @param options Additional options map (bids_validation, libbids_sh_path, etc.)
+     * @param options Additional options map (bids_validation, libbids_sh_path, entity_aliases_json, etc.)
      * @return DataflowWriteChannel containing structured BIDS data
      *
      * @reference Main workflow implementation:

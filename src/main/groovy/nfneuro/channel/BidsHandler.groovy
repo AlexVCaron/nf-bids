@@ -61,7 +61,7 @@ class BidsHandler {
     private Map<String, Map<String, String>> suffixMapping
     private BidsParser parser
     private List<Map<String, String>> participantsMetadata = []
-    private final ParticipantsMetadataMerger participantsMetadataMerger = new ParticipantsMetadataMerger()
+    private ParticipantsMetadataMerger participantsMetadataMerger = new ParticipantsMetadataMerger()
 
     /**
      * Load and analyze the YAML configuration file.
@@ -93,7 +93,8 @@ class BidsHandler {
      * @return {@code this} for method chaining
      */
     BidsHandler withOpts(Map options) {
-        this.options = options
+        this.options = options ?: [:]
+        this.participantsMetadataMerger = new ParticipantsMetadataMerger(this.options.entity_aliases_json as String)
         return this
     }
 

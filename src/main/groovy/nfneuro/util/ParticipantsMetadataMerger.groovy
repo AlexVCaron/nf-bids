@@ -1,19 +1,17 @@
 package nfneuro.plugin.util
 
-import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import nfneuro.plugin.model.BidsEntity
 
 @CompileStatic
 class ParticipantsMetadataMerger {
 
-    private static final String NA_VALUE = 'NA'
-    private static final String ENTITY_ALIASES_RESOURCE = 'nfneuro/entity_aliases.json'
+    private static final String NA_VALUE = BidsEntityUtils.NA_VALUE
 
     private final Map<String, String> aliasToEntity
 
-    ParticipantsMetadataMerger() {
-        this.aliasToEntity = buildAliasToEntityMap()
+    ParticipantsMetadataMerger(String aliasesJsonPath = null) {
+        this.aliasToEntity = BidsEntityUtils.buildAliasToEntityMap(aliasesJsonPath)
     }
 
     void mergeIntoMeta(Map meta, List<Map<String, String>> participantsMetadata, List<String> loopOverEntities) {
@@ -122,72 +120,15 @@ class ParticipantsMetadataMerger {
     }
 
     private Map<String, String> normalizeEntityMap(Map values) {
-        Map<String, String> normalized = [:]
-        values.each { rawKey, rawValue ->
-            String entityKey = normalizeEntityKey(rawKey?.toString())
-            if (!entityKey) {
-                return
-            }
-
-            String entityValue = normalizeEntityValue(entityKey, rawValue?.toString())
-            if (!entityValue || entityValue == NA_VALUE) {
-                return
-            }
-            normalized[entityKey] = entityValue
-        }
-        return normalized
+        return BidsEntityUtils.normalizeEntityMap(values, aliasToEntity)
     }
 
     private String normalizeEntityKey(String key) {
-        if (!key) {
-            return null
-        }
-
-        String cleanKey = key.trim().toLowerCase()
-        if (!cleanKey) {
-            return null
-        }
-
-        String canonicalFromAlias = aliasToEntity[cleanKey]
-        if (canonicalFromAlias) {
-            return canonicalFromAlias
-        }
-
-        if (cleanKey.endsWith('_id')) {
-            String base = cleanKey.substring(0, cleanKey.length() - 3)
-            if (BidsEntity.longEntityExists(base) || BidsEntity.shortEntityExists(base)) {
-                return BidsEntity.normalizeName(base)
-            }
-        }
-
-        if (BidsEntity.longEntityExists(cleanKey) || BidsEntity.shortEntityExists(cleanKey)) {
-            return BidsEntity.normalizeName(cleanKey)
-        }
-
-        return null
+        return BidsEntityUtils.normalizeEntityKey(key, aliasToEntity)
     }
 
     private String normalizeEntityValue(String entityKey, String value) {
-        if (!value) {
-            return null
-        }
-
-        String cleanValue = value.trim()
-        if (!cleanValue || cleanValue == NA_VALUE) {
-            return null
-        }
-
-        int sep = cleanValue.indexOf('-')
-        if (sep > 0 && sep < cleanValue.length() - 1) {
-            String prefix = cleanValue.substring(0, sep)
-            String remainder = cleanValue.substring(sep + 1)
-            String normalizedPrefix = normalizeEntityKey(prefix)
-            if (normalizedPrefix == entityKey) {
-                cleanValue = remainder
-            }
-        }
-
-        return BidsEntity.sanitizeValue(cleanValue)
+        return BidsEntityUtils.normalizeEntityValue(entityKey, value, aliasToEntity)
     }
 
     private List<Integer> buildCoveragePriority(List<String> candidateKeys, List<String> orderedLoopEntities) {
@@ -210,39 +151,6 @@ class ParticipantsMetadataMerger {
             }
         }
         return 0
-    }
-
-    private Map<String, String> buildAliasToEntityMap() {
-        Map<String, String> result = [:]
-
-        BidsEntity.SHORT_ENTITY_MAPPING.each { String longName, String shortName ->
-            String canonical = BidsEntity.normalizeName(longName)
-            Set<String> aliases = new LinkedHashSet<String>()
-            aliases << canonical
-            aliases << longName.toLowerCase()
-            aliases << (canonical + '_id')
-            aliases << (longName.toLowerCase() + '_id')
-            aliases.each { String alias -> result[alias] = canonical }
-        }
-
-        InputStream stream = this.class.classLoader.getResourceAsStream(ENTITY_ALIASES_RESOURCE)
-        if (stream == null) {
-            return result
-        }
-
-        Map parsed = (Map) new JsonSlurper().parse(stream)
-        parsed.each { Object key, Object value ->
-            String canonical = BidsEntity.normalizeName(key.toString().toLowerCase())
-            List aliases = value instanceof List ? (List) value : []
-            aliases.each { Object alias ->
-                String cleanAlias = alias?.toString()?.trim()?.toLowerCase()
-                if (cleanAlias) {
-                    result[cleanAlias] = canonical
-                }
-            }
-        }
-
-        return result
     }
 
     private String buildMetaSummary(Map meta) {
