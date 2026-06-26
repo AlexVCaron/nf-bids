@@ -2,6 +2,7 @@ package nfneuro.plugin.channel
 
 import java.util.concurrent.CompletableFuture
 
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import groovyx.gpars.dataflow.DataflowWriteChannel
@@ -14,6 +15,7 @@ import nextflow.Channel
 import nextflow.extension.CH
 import nextflow.file.FileHelper
 
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -198,8 +200,12 @@ class BidsHandler {
     private void validateAndEmitChannel(DataflowQueue results) {
         int count = 0
         boolean shouldFlatten = true
+        boolean unpackJsonSidecar = false
         if (options?.containsKey('flatten_output')) {
             shouldFlatten = (options.flatten_output as Boolean)
+        }
+        if (options?.containsKey('unpack_json_sidecar')) {
+            unpackJsonSidecar = (options.unpack_json_sidecar as Boolean)
         }
 
         // Consume items from results queue and bind each valid one to output
@@ -210,13 +216,13 @@ class BidsHandler {
                 try {
                     def tuple = item instanceof BidsChannelData ? item.toChannelTuple(loopOverEntities) : item
                     if (!shouldFlatten) {
-                        target << item
+                        target << (unpackJsonSidecar ? unpackJsonSidecarsForLegacyOutput(item) : item)
                     } else {
                         if (tuple instanceof List && tuple.size() >= 2) {
                             def groupingKey = tuple[0]
                             def enrichedData = tuple[1] as Map
                             def entityValues = extractEntityValues(groupingKey, loopOverEntities)
-                            def flat = flattenTupleToMap([groupingKey, enrichedData], entityValues)
+                            def flat = flattenTupleToMap([groupingKey, enrichedData], entityValues, unpackJsonSidecar)
                             target << flat
                         } else {
                             // Item is already flattened map; emit as-is
@@ -257,6 +263,14 @@ class BidsHandler {
      * @return Map with keys [meta: {...}, data: {...}]
      */
     private Map flattenTupleToMap(List tuple, Map<String, String> entityValues) {
+        return flattenTupleToMap(tuple, entityValues, false)
+    }
+
+    private Map flattenTupleToMap(
+        List tuple,
+        Map<String, String> entityValues,
+        boolean unpackJsonSidecar
+    ) {
         List groupingKey = tuple[0] as List
         Map enrichedData = tuple[1] as Map
 
@@ -301,21 +315,13 @@ class BidsHandler {
             if (val instanceof Path) return val  // Already a Path, return as-is
             if (val instanceof String) {
                 String pathStr = val
-                
-                // Use FileHelper.asPath for robust path handling
-                // Handles local files, URIs (s3://, gs://, az://), absolute and relative paths
-                Path result
-                if (pathStr.contains('://') || pathStr.startsWith('/')) {
-                    // Absolute path or URI - parse directly
-                    result = FileHelper.asPath(pathStr)
-                } else {
-                    // Relative path - resolve against bidsParentDir
-                    String fullPath = bidsParentDir 
-                        ? Paths.get(bidsParentDir, pathStr).toString() 
-                        : pathStr
-                    result = FileHelper.asPath(fullPath)
+
+                if (unpackJsonSidecar && isJsonPath(pathStr)) {
+                    return parseJsonSidecar(pathStr, bidsParentDir)
                 }
-                
+
+                Path result = resolvePath(pathStr, bidsParentDir)
+
                 return result  // Returns java.nio.file.Path
             }
             if (val instanceof List) {
@@ -339,6 +345,72 @@ class BidsHandler {
         (dataCopy as Map<String, Object>).each { String k, Object v -> flat.put(k, v) }
 
         return flat
+    }
+
+    private Object unpackJsonSidecarsForLegacyOutput(Object item) {
+        if (!(item instanceof List) || (item as List).size() < 2) {
+            return item
+        }
+
+        List tuple = item as List
+        Map enrichedData = tuple[1] as Map
+        if (!(enrichedData?.data instanceof Map)) {
+            return item
+        }
+
+        String bidsParentDir = enrichedData.bidsParentDir as String
+        Map transformedData = recursivelyUnpackJson(enrichedData.data as Map, bidsParentDir) as Map
+        Map transformedEnrichedData = new LinkedHashMap(enrichedData)
+        transformedEnrichedData.data = transformedData
+        return [tuple[0], transformedEnrichedData]
+    }
+
+    private Object recursivelyUnpackJson(Object value, String bidsParentDir) {
+        if (value instanceof String && isJsonPath(value as String)) {
+            return parseJsonSidecar(value as String, bidsParentDir)
+        }
+        if (value instanceof List) {
+            return (value as List).collect { recursivelyUnpackJson(it, bidsParentDir) }
+        }
+        if (value instanceof Map) {
+            Map transformed = [:]
+            (value as Map).each { k, v -> transformed[(String)k] = recursivelyUnpackJson(v, bidsParentDir) }
+            return transformed
+        }
+        return value
+    }
+
+    private boolean isJsonPath(String pathStr) {
+        return pathStr.toLowerCase().endsWith('.json')
+    }
+
+    private Path resolvePath(String pathStr, String bidsParentDir) {
+        if (pathStr.contains('://') || pathStr.startsWith('/')) {
+            return FileHelper.asPath(pathStr)
+        }
+
+        String fullPath = bidsParentDir
+            ? Paths.get(bidsParentDir, pathStr).toString()
+            : pathStr
+        return FileHelper.asPath(fullPath)
+    }
+
+    private Map parseJsonSidecar(String pathStr, String bidsParentDir) {
+        Path jsonPath = resolvePath(pathStr, bidsParentDir)
+        if (!Files.exists(jsonPath)) {
+            throw new IllegalStateException("JSON sidecar not found: ${jsonPath}")
+        }
+
+        def slurper = new JsonSlurper()
+        Object parsed = Files.newBufferedReader(jsonPath).withCloseable { reader ->
+            slurper.parse(reader)
+        }
+
+        if (!(parsed instanceof Map)) {
+            throw new IllegalStateException("JSON sidecar must contain a JSON object (map/dictionary): ${jsonPath}")
+        }
+
+        return parsed as Map
     }
 
     /**

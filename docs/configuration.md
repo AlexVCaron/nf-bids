@@ -35,6 +35,7 @@ Channel.fromBIDS(
     'config.yaml',
     [
         flatten_output: true,        // default
+        unpack_json_sidecar: false,  // default
         libbids_sh: '/custom/path',  // optional
         validate: false              // not implemented
     ]
@@ -131,6 +132,24 @@ Use when:
 - Using custom BIDS parsing logic
 - Pinning specific libBIDS.sh version
 
+### `unpack_json_sidecar` (Boolean)
+
+**Default:** `false`
+
+When enabled, `.json` sidecars are parsed and emitted as Groovy maps (dictionary-like objects) instead of path values.
+
+**When `false` (default):**
+```groovy
+item.T1w.json == Path('/abs/path/to/sub-01_T1w.json')
+```
+
+**When `true`:**
+```groovy
+item.T1w.json == [RepetitionTime: 2.0, TaskName: 'rest']
+```
+
+Works with both flattened output (`flatten_output: true`) and legacy tuple output (`flatten_output: false`).
+
 ### `validate` (Boolean)
 
 **Not implemented** - Reserved for future BIDS validator integration
@@ -214,7 +233,7 @@ loop_over:
 - Any other valid [BIDS entity](https://bids-specification.readthedocs.io/en/stable/appendices/entities.html)
 
 >[!NOTE]
->- Entities are extracted from filenames ! _Json sidecar parsing to come in the future_
+>- Entities are extracted from filenames (JSON sidecar unpacking is optional via `unpack_json_sidecar`)
 >- Order matters: defines the hierarchy of grouping
 >- Missing entities default to "NA" in the output
 

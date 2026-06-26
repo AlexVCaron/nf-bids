@@ -45,7 +45,8 @@ class BidsChannelFactory {
      *
      * @param bidsDir Path to BIDS dataset directory
      * @param configPath Path to bids2nf YAML configuration (optional)
-     * @param options Additional options map (validation, libbids_sh path, etc.)
+     * @param options Additional options map (validation, libbids_sh path, flatten_output,
+     *                unpack_json_sidecar, etc.)
      * @return DataflowWriteChannel containing structured BIDS data
      *
      * @reference Workflow orchestration:
