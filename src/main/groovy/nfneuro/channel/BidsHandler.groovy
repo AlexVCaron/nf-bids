@@ -282,7 +282,7 @@ class BidsHandler {
                 }
             }
         }
-        mergeParticipantMetadata(meta)
+        participantsMetadataMerger.mergeIntoMeta(meta, participantsMetadata, loopOverEntities)
 
         // Clone data map so original structure is not mutated; we will move suffixes to top level
         Map dataCopy = [:]
@@ -346,10 +346,6 @@ class BidsHandler {
         (dataCopy as Map<String, Object>).each { String k, Object v -> flat.put(k, v) }
 
         return flat
-    }
-
-    private void mergeParticipantMetadata(Map meta) {
-        participantsMetadataMerger.mergeIntoMeta(meta, participantsMetadata, loopOverEntities)
     }
 
     /**

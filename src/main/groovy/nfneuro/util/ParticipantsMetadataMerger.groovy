@@ -19,7 +19,7 @@ class ParticipantsMetadataMerger {
             return
         }
 
-        Map<String, String> normalizedMeta = normalizeEntityMap(meta)
+        Map<String, String> normalizedMeta = BidsEntityUtils.normalizeEntityMap(meta, aliasToEntity)
         List<String> normalizedLoopEntities = (loopOverEntities ?: [])
             .collect { name -> BidsEntity.normalizeName(name) }
             .unique() as List<String>
@@ -29,7 +29,7 @@ class ParticipantsMetadataMerger {
         List<Integer> bestPriority = []
 
         participantsMetadata.eachWithIndex { Map<String, String> row, int rowIndex ->
-            Map<String, String> normalizedRow = normalizeEntityMap(row)
+            Map<String, String> normalizedRow = BidsEntityUtils.normalizeEntityMap(row, aliasToEntity)
             List<String> candidateKeys = normalizedLoopEntities.findAll { String entity ->
                 normalizedMeta.containsKey(entity) && normalizedRow.containsKey(entity)
             } as List<String>
@@ -88,7 +88,7 @@ class ParticipantsMetadataMerger {
                     return
                 }
 
-                String normalizedKey = normalizeEntityKey(rawKey)
+                String normalizedKey = BidsEntityUtils.normalizeEntityKey(rawKey, aliasToEntity)
                 if (normalizedKey && candidateKeys.contains(normalizedKey)) {
                     return
                 }
@@ -117,18 +117,6 @@ class ParticipantsMetadataMerger {
                 meta[key] = value
             }
         }
-    }
-
-    private Map<String, String> normalizeEntityMap(Map values) {
-        return BidsEntityUtils.normalizeEntityMap(values, aliasToEntity)
-    }
-
-    private String normalizeEntityKey(String key) {
-        return BidsEntityUtils.normalizeEntityKey(key, aliasToEntity)
-    }
-
-    private String normalizeEntityValue(String entityKey, String value) {
-        return BidsEntityUtils.normalizeEntityValue(entityKey, value, aliasToEntity)
     }
 
     private List<Integer> buildCoveragePriority(List<String> candidateKeys, List<String> orderedLoopEntities) {
