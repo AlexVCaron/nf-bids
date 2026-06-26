@@ -229,10 +229,10 @@ def x = item[1]
 When adding features, update relevant docs:
 
 - [README.md](README.md) - For user-facing changes
-- [API docs](docs/api.md) - For new public methods
-- [Examples](docs/examples.md) - For new use cases
-- [Configuration](docs/configuration.md) - For configuration changes
-- [Architecture docs](docs/architecture.md) - For structural changes
+- [API Reference](https://nf-neuro.github.io/nf-bids/api-reference.html) - For new public methods
+- [Workflow Examples](https://nf-neuro.github.io/nf-bids/guides/examples.html) - For new use cases
+- [Configuration](https://nf-neuro.github.io/nf-bids/concepts/configuration.html) - For configuration changes
+- [Architecture Overview](https://nf-neuro.github.io/nf-bids/architecture.html) - For structural changes
 
 ---
 

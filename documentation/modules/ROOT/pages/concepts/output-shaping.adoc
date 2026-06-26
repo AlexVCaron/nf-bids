@@ -168,6 +168,7 @@ Each channel item is a single `Map` with:
 
 All file paths are `java.nio.file.Path` objects with absolute paths, ready for
 Nextflow `path` process inputs and cloud storage URIs.
+When `unpack_json_sidecar: true` is provided, `.json` sidecars are emitted as parsed maps instead of paths.
 
 === Legacy format (opt-in via `flatten_output: false`)
 
