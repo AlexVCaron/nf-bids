@@ -271,12 +271,19 @@ class BidsEntityUtils {
             aliases.each { String alias -> result[alias] = canonical }
         }
 
-        addAliasesFromStream(BidsEntityUtils.class.classLoader.getResourceAsStream(ENTITY_ALIASES_RESOURCE), result)
+        addAliasesFromStream(
+            BidsEntityUtils.class.classLoader.getResourceAsStream(ENTITY_ALIASES_RESOURCE),
+            result,
+            "classpath resource '${ENTITY_ALIASES_RESOURCE}'"
+        )
 
         if (aliasesJsonPath) {
             Path aliasesPath = Paths.get(aliasesJsonPath)
             if (Files.exists(aliasesPath) && Files.isRegularFile(aliasesPath)) {
-                addAliasesFromStream(Files.newInputStream(aliasesPath), result)
+                addAliasesFromStream(Files.newInputStream(aliasesPath), result, "file '${aliasesJsonPath}'")
+            }
+            else {
+                throw new IllegalArgumentException("Entity aliases JSON file not found: ${aliasesJsonPath}")
             }
         }
 
@@ -354,22 +361,26 @@ class BidsEntityUtils {
         return BidsEntity.sanitizeValue(cleanValue)
     }
 
-    private static void addAliasesFromStream(InputStream stream, Map<String, String> result) {
+    private static void addAliasesFromStream(InputStream stream, Map<String, String> result, String sourceName = 'entity aliases') {
         if (stream == null) {
             return
         }
 
         try (InputStream closeable = stream) {
-            Map parsed = (Map) new JsonSlurper().parse(closeable)
-            parsed.each { Object key, Object value ->
-                String canonical = BidsEntity.normalizeName(key.toString().toLowerCase())
-                List aliases = value instanceof List ? (List) value : []
-                aliases.each { Object alias ->
-                    String cleanAlias = alias?.toString()?.trim()?.toLowerCase()
-                    if (cleanAlias) {
-                        result[cleanAlias] = canonical
+            try {
+                Map parsed = (Map) new JsonSlurper().parse(closeable)
+                parsed.each { Object key, Object value ->
+                    String canonical = BidsEntity.normalizeName(key.toString().toLowerCase())
+                    List aliases = value instanceof List ? (List) value : []
+                    aliases.each { Object alias ->
+                        String cleanAlias = alias?.toString()?.trim()?.toLowerCase()
+                        if (cleanAlias) {
+                            result[cleanAlias] = canonical
+                        }
                     }
                 }
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to parse ${sourceName}: ${e.message}", e)
             }
         }
     }
