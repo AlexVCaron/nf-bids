@@ -256,6 +256,7 @@ If `options.flatten_output` is `true` (the default since beta.9), `flattenTupleT
 File paths are converted to `java.nio.file.Path` objects via `nextflow.file.FileHelper.asPath()`, which handles local files, S3 URIs, GCS URIs, and Azure Blob Storage URIs transparently.
 
 If `flatten_output` is `false`, the legacy `[groupingKey, enrichedData]` tuple is emitted directly.
+If `options.unpack_json_sidecar` is `true`, `.json` sidecars are parsed and emitted as maps in either output mode.
 
 After all items are emitted, the channel is closed with `target << Channel.STOP`.
 If zero items were emitted, an `IllegalStateException` is thrown.

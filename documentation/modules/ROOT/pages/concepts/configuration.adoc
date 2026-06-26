@@ -197,6 +197,7 @@ Channel.fromBIDS(
     'config.yaml',
     [
         flatten_output: true,          // default; set false for legacy tuple format
+        unpack_json_sidecar: false,    // default; set true to parse JSON sidecars into maps
         libbids_sh: '/custom/path',    // override embedded libBIDS.sh location
         validate: false,               // not yet implemented
         validator_version: '...',      // not yet implemented
@@ -204,6 +205,8 @@ Channel.fromBIDS(
     ]
 )
 ----
+
+When `unpack_json_sidecar` is `true`, any `.json` sidecar values are emitted as parsed maps instead of `Path` objects.
 
 == Related pages
 
