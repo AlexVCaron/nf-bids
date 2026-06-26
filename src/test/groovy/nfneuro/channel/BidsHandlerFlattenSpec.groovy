@@ -173,4 +173,125 @@ class BidsHandlerFlattenSpec extends Specification {
         emitted.meta.task == 'rest'
     }
 
+    def 'should merge participants metadata with subject-only matching'() {
+        given:
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject', 'session', 'run', 'echo']
+        setParticipants(handler, [
+            [participant_id: 'sub-01', age: '34', group: 'control']
+        ])
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-02', 'run-1', 'echo-2'], [
+            data: [T1w: [nii: 'anat/sub-01_T1w.nii.gz']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.meta.subject == 'sub-01'
+        flat.meta.age == '34'
+        flat.meta.group == 'control'
+        !flat.meta.containsKey('participant_id')
+    }
+
+    def 'should select most specific participants row across session run and echo'() {
+        given:
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject', 'session', 'run', 'echo']
+        setParticipants(handler, [
+            [participant_id: 'sub-01', age: '30', cohort: 'base'],
+            [participant_id: 'sub-01', session_id: 'ses-01', cohort: 'ses'],
+            [participant_id: 'sub-01', session_id: 'ses-01', run: 'run-1', cohort: 'run'],
+            [participant_id: 'sub-01', session_id: 'ses-01', run: 'run-1', echo: 'echo-2', cohort: 'echo']
+        ])
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01', 'run-1', 'echo-2'], [
+            data: [bold: [nii: 'func/sub-01_task-rest_bold.nii.gz']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.meta.cohort == 'echo'
+        flat.meta.subject == 'sub-01'
+        flat.meta.session == 'ses-01'
+        flat.meta.run == 'run-1'
+        flat.meta.echo == 'echo-2'
+    }
+
+    def 'should support normalized keys and values from participants metadata'() {
+        given:
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject', 'session', 'run']
+        setParticipants(handler, [
+            [subject_id: '01', session_id: '01', run: '1', handedness: 'right']
+        ])
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01', 'run-1'], [
+            data: [dwi: [nii: 'dwi/sub-01_run-01_dwi.nii.gz']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.meta.handedness == 'right'
+    }
+
+    def 'should resolve ambiguous best matches deterministically and preserve existing meta values'() {
+        given:
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject', 'session']
+        setParticipants(handler, [
+            [participant_id: 'sub-01', session_id: 'ses-01', sex: 'F', site: 'A'],
+            [participant_id: 'sub-01', session_id: 'ses-01', sex: 'M', site: 'B']
+        ])
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01'], [
+            data: [T1w: [nii: 'anat/sub-01_T1w.nii.gz']],
+            bidsParentDir: '/data/bids',
+            site: 'meta-site'
+        ])
+
+        then:
+        flat.meta.sex == 'F'
+        flat.meta.site == 'meta-site'
+    }
+
+    def 'should keep meta unchanged when no participants row matches'() {
+        given:
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject', 'session']
+        setParticipants(handler, [
+            [participant_id: 'sub-02', age: '40']
+        ])
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01'], [
+            data: [T1w: [nii: 'anat/sub-01_T1w.nii.gz']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.meta.subject == 'sub-01'
+        flat.meta.session == 'ses-01'
+        !flat.meta.containsKey('age')
+    }
+
+    private static void setParticipants(BidsHandler handler, List<Map<String, String>> participants) {
+        def field = handler.getClass().getDeclaredField('participantsMetadata')
+        field.setAccessible(true)
+        field.set(handler, participants)
+    }
+
+    private static Map invokeFlatten(BidsHandler handler, List<String> groupingKey, Map enrichedData) {
+        def method = handler.getClass().getDeclaredMethod('flattenTupleToMap', List, Map)
+        method.setAccessible(true)
+        Map entityValues = [:]
+        handler.loopOverEntities.eachWithIndex { entity, idx ->
+            entityValues[entity] = groupingKey[idx]
+        }
+        return method.invoke(handler, [groupingKey, enrichedData], entityValues) as Map
+    }
+
 }
