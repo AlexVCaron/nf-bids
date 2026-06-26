@@ -3,9 +3,9 @@
 
 [.lead]
 Contributor-oriented setup and day-to-day commands for working on nf-bids. This
-page replaces the old ad-hoc development notes from `docs/` with pointers to the
-current Antora guides that reflect the repository's actual build, test, and
-documentation flow.
+page replaces the legacy Markdown development notes from the retired `docs/`
+directory with pointers to the current Antora guides that reflect the
+repository's actual build, test, and documentation flow.
 
 == First-time setup
 

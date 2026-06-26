@@ -4,7 +4,7 @@
 [.lead]
 Practical nf-bids usage patterns for common neuroimaging workflows. These
 examples assume the plugin is enabled in `nextflow.config` and use the default
-flat output format introduced in the current Antora documentation.
+flat output format (the standard output shape since `0.1.0-beta.9`).
 
 Start with xref:guides/installation.adoc[Installation] and
 xref:concepts/configuration.adoc[Configuration Loading & Validation] if you need

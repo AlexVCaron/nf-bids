@@ -9,7 +9,9 @@ https://plantuml.com[PlantUML] (diagrams).
 
 == Layout
 
-All user-facing documentation now lives in `modules/ROOT/pages/`. The legacy repository-level `docs/` directory has been retired, so new documentation changes should be made only in Antora source files.
+All user-facing documentation now lives in `modules/ROOT/pages/`.
+The legacy repository-level `docs/` directory has been retired.
+New documentation changes should be made only in Antora source files.
 
 [cols="1,3"]
 |===
