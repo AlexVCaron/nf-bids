@@ -218,8 +218,8 @@ class ParticipantsMetadataMerger {
             Set<String> aliases = new LinkedHashSet<String>()
             aliases << canonical
             aliases << longName.toLowerCase()
-            aliases << "${canonical}_id"
-            aliases << "${longName.toLowerCase()}_id"
+            aliases << (canonical + '_id')
+            aliases << (longName.toLowerCase() + '_id')
             aliases.each { String alias -> result[alias] = canonical }
         }
 
