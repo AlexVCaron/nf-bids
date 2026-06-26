@@ -5,10 +5,17 @@ import java.nio.file.Paths
 import groovy.transform.CompileStatic
 
 /**
- * Represents a BIDS file with metadata
+ * Represents a single file entry in a BIDS dataset.
  *
- * @reference BIDS file structure from parsing:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
+ * <p>Stores the file path, BIDS suffix (e.g. {@code "T1w"}, {@code "bold"}),
+ * the list of {@link BidsEntity} key–value pairs parsed from the filename,
+ * optional JSON sidecar and other associated file paths, and file-system
+ * metadata (size, modification time) loaded on demand.</p>
+ *
+ * <p>Instances are created by {@link nfneuro.plugin.util.BidsCsvParser} from
+ * the CSV output of {@code libBIDSsh_parse_bids_to_csv}.  The
+ * {@link #isPrimaryFile()} and {@link #getBasename()} helpers drive grouping
+ * logic in the set handlers.</p>
  */
 @CompileStatic
 class BidsFile {
@@ -55,6 +62,14 @@ class BidsFile {
         return TYPE_ALLOWING_PARTS.contains(type)
     }
 
+    /**
+     * Construct a {@code BidsFile} for the given path.
+     *
+     * <p>The BIDS suffix is extracted automatically from the filename if possible.</p>
+     *
+     * @param path absolute or relative path to the BIDS file
+     * @throws IllegalArgumentException if {@code path} is null or empty
+     */
     BidsFile(String path) {
         if (!path) {
             throw new IllegalArgumentException("File path cannot be null or empty")

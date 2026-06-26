@@ -1,0 +1,79 @@
+@startuml class-core
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 11
+skinparam classBackgroundColor #FAFAFA
+skinparam classBorderColor #666666
+skinparam classFontSize 11
+skinparam classFontStyle bold
+skinparam packageBackgroundColor #F0F4FF
+skinparam packageBorderColor #4472C4
+skinparam arrowColor #444444
+skinparam arrowFontSize 9
+skinparam TitleFontSize 13
+skinparam nodesep 24
+skinparam ranksep 40
+
+title nf-bids — Mid-Level Runtime Classes
+
+package "Entry points" as P_entry #EEF3FF {
+  class BidsExtension {
+    + fromBIDS(...)
+    + groupTupleBy(...)
+    + joinBy(...)
+    + combineBy(...)
+  }
+
+  class BidsChannelFactory {
+    + fromBIDS(...)
+  }
+}
+
+package "Runtime core" as P_runtime #E8F4E8 {
+  class BidsHandler {
+    + ignite(session)
+    + execute()
+    + processDatasets(...)
+  }
+}
+
+package "Dataset parsing" as P_parser #FFF8E8 {
+  class BidsParser {
+    + parseToDataset(...)
+  }
+
+  class LibBidsShWrapper {
+    + parseBidsToCSV(...)
+    - findLibBidsScript()
+  }
+}
+
+package "Output shaping" as P_grouping #FFF0E8 {
+  abstract class BaseSetHandler {
+    + process(...)
+  }
+
+  class PlainSetHandler
+  class NamedSetHandler
+  class SequentialSetHandler
+  class MixedSetHandler
+}
+
+class BidsDataset #F8E8FF
+class BidsChannelData #F8E8FF
+
+BidsExtension --> BidsChannelFactory : delegates fromBIDS()
+BidsChannelFactory --> BidsHandler : configures + ignites
+BidsHandler --> BidsParser : parseToDataset()
+BidsParser --> LibBidsShWrapper : execute libBIDS.sh
+BidsParser --> BidsDataset : builds model
+BidsHandler --> BaseSetHandler : routes by set type
+BaseSetHandler --> BidsChannelData : produces channel payload
+
+PlainSetHandler --|> BaseSetHandler
+NamedSetHandler --|> BaseSetHandler
+SequentialSetHandler --|> BaseSetHandler
+MixedSetHandler --|> BaseSetHandler
+
+@enduml

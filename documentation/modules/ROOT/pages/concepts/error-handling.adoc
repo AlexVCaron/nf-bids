@@ -1,0 +1,170 @@
+= Error Handling & Logging
+:navtitle: Error Handling & Logging
+
+[.lead]
+`BidsErrorHandler` and `BidsLogger` are the two utility classes that centralise
+error propagation and log formatting throughout the plugin.
+
+== BidsErrorHandler
+
+All public methods are `static`, `@CompileStatic`, and slf4j-backed.
+
+=== tryWithContext
+
+[source,groovy]
+----
+static <T> T tryWithContext(String context, Closure<T> closure)
+----
+
+Wraps any closure with a named context.  On success, returns the closure result.
+On exception, logs `[context] Error occurred: <message>` at `ERROR` level, emits the
+stack trace at `DEBUG` level, and re-throws as `RuntimeException("Error in context: …")`.
+
+Use this for critical operations that must not swallow failures:
+
+[source,groovy]
+----
+BidsErrorHandler.tryWithContext("nf-bids-parser") {
+    dataset.loadParticipants()
+}
+----
+
+=== safeExecute
+
+[source,groovy]
+----
+static <T> T safeExecute(String context, Closure<T> closure, T defaultValue = null)
+----
+
+Like `tryWithContext` but catches exceptions, logs at `WARN` level, and returns
+`defaultValue` instead of re-throwing.  Use for optional operations where a fallback
+is acceptable.
+
+=== validateWithContext
+
+[source,groovy]
+----
+static void validateWithContext(boolean condition, String context, String message)
+----
+
+Asserts `condition`; throws `IllegalStateException("[context] message")` if false.
+
+=== handleError / handleErrorWithMessage
+
+[source,groovy]
+----
+static void handleError(String context, Exception e)
+static void handleErrorWithMessage(String context, String message)
+----
+
+Both log at `ERROR` level and throw `RuntimeException`.  Use when you have already
+caught an exception and want to re-package it with context.
+
+=== createDetailedError
+
+[source,groovy]
+----
+static String createDetailedError(String error, List<String> suggestions)
+----
+
+Formats a multi-line error string with a numbered suggestions list.  Used by
+`LibBidsShWrapper` for the "libBIDS.sh not found" diagnostic.
+
+=== Custom exception types
+
+Three domain-specific exception classes are nested inside `BidsErrorHandler`:
+
+[cols="1,2"]
+|===
+| Class | When to use
+
+| `BidsProcessingException`
+| Runtime processing failures (file I/O, parsing).
+
+| `BidsValidationException`
+| BIDS structure or config validation failures.
+
+| `BidsConfigurationException`
+| Configuration loading or structural errors.
+|===
+
+All extend `RuntimeException` and accept both `(String message)` and
+`(String message, Throwable cause)` constructors.
+
+== BidsLogger
+
+All methods are `static` and delegate to an slf4j logger named for the class.
+Callers may pass an explicit `context` string (injected as `[context]` prefix) or
+use the single-argument overloads which default to the `"nf-bids"` context.
+
+=== Log methods
+
+[cols="1,3"]
+|===
+| Method | Level / format
+
+| `logProgress(context, message)` / `logProgress(message)`
+| `INFO` — `[context] message`
+
+| `logDebug(context, message)` / `logDebug(message)`
+| `DEBUG` — only emitted when debug logging is enabled
+
+| `logWarning(context, message)` / `logWarning(message)`
+| `WARN` — `[context] ⚠︎ message`
+
+| `logError(context, message)` / `logError(message)`
+| `ERROR` — `[context] ⛔️ message`
+
+| `logSuccess(context, message)` / `logSuccess(message)`
+| `INFO` — `[context] ✅ message`
+
+| `logConfig(context, config)`
+| `INFO` — iterates the config map and logs each key/value
+
+| `logStats(context, stats)`
+| `INFO` — iterates the stats map and logs each key/value
+
+| `logTiming(context, operation, duration)`
+| `DEBUG` — `⏱ operation took Xs`
+|===
+
+=== withTiming
+
+[source,groovy]
+----
+static <T> T withTiming(String context, String operation, Closure<T> closure)
+----
+
+Executes the closure, measures wall-clock time, and logs a `DEBUG` timing line after
+completion regardless of success or failure.
+
+=== Convenience aliases
+
+`info()`, `debug()`, `warn()`, and `trace()` are single-argument aliases that
+delegate to the corresponding `log*` methods with the default context.  They exist
+for compatibility with code that calls `BidsLogger` as a drop-in for a standard logger.
+
+== Context labels used in the codebase
+
+[cols="1,2"]
+|===
+| Context string | Where used
+
+| `nf-bids`
+| Default / general progress messages
+
+| `nf-bids-parser`
+| `BidsParser.parseToDataset`
+
+| `nf-bids-config`
+| `BidsConfigLoader.load`
+
+| `libBIDS-wrapper`
+| `LibBidsShWrapper`
+|===
+
+== Related pages
+
+* xref:concepts/bids-parsing.adoc[BIDS Parsing & Dataset Normalization]
+* xref:concepts/configuration.adoc[Configuration Loading & Validation]
+* xref:architecture.adoc[Architecture Overview]

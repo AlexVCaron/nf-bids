@@ -6,13 +6,15 @@ import nfneuro.plugin.util.BidsLogger
 import nfneuro.plugin.util.BidsErrorHandler
 
 /**
- * Wrapper for libBIDS.sh bash library
+ * Wrapper for the {@code libBIDS.sh} bash library.
  *
- * Executes external libBIDS.sh script to parse BIDS datasets
- * and handles the interface between Groovy and Bash
+ * <p>Locates the {@code libBIDS.sh} script (embedded in the plugin distribution,
+ * checked out as a git submodule, or provided explicitly by the caller), then
+ * invokes {@code libBIDSsh_parse_bids_to_csv} to produce a CSV file that is
+ * subsequently read by {@link nfneuro.plugin.util.BidsCsvParser}.</p>
  *
- * @reference Bash parser wrapper:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf
+ * <p>All user-supplied paths are validated against a shell-metacharacter deny-list
+ * before being passed to the subprocess to prevent command injection.</p>
  */
 @Slf4j
 @CompileStatic
@@ -288,10 +290,11 @@ class LibBidsShWrapper {
     }
 
     /**
-     * Validate libBIDS.sh script exists and is executable
+     * Verify that a {@code libBIDS.sh} script exists, is readable, and contains the
+     * expected {@code libBIDSsh_parse_bids_to_csv} function signature.
      *
-     * @param scriptPath Path to libBIDS.sh
-     * @return true if valid, false otherwise
+     * @param scriptPath absolute path to the candidate {@code libBIDS.sh} file
+     * @return {@code true} if the script is usable; {@code false} otherwise (errors are logged)
      */
     boolean validateLibBidsScript(String scriptPath) {
         def script = new File(scriptPath)
@@ -320,10 +323,12 @@ class LibBidsShWrapper {
     }
 
     /**
-     * Get version of libBIDS.sh if available
+     * Attempt to extract the version string from a {@code libBIDS.sh} script.
      *
-     * @param scriptPath Path to libBIDS.sh
-     * @return Version string or "unknown"
+     * <p>Looks for a {@code VERSION="x.y.z"} assignment near the top of the file.</p>
+     *
+     * @param scriptPath absolute path to the {@code libBIDS.sh} file
+     * @return the version string (e.g. {@code "1.2.0"}), or {@code "unknown"} if not found or on any error
      */
     String getLibBidsVersion(String scriptPath) {
         try {

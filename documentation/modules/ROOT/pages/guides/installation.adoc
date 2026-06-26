@@ -1,0 +1,241 @@
+= Installation Guide
+:navtitle: Installation Guide
+
+[.lead]
+nf-bids can be consumed directly from the Nextflow Plugin Registry (for pipeline
+authors), installed from a local build (for contributors and CI), or cloned with
+its libBIDS.sh submodule (for full development).
+Choose the path that matches your situation, then verify the
+xref:guides/installation.adoc#prerequisites[Prerequisites] section before
+proceeding to the xref:guides/testing.adoc[Testing Guide].
+
+See also xref:dependencies/matrix.adoc[Dependency Matrix] and
+xref:dependencies/libbids-sh.adoc[libBIDS.sh Dependency] for version and
+compatibility details.
+
+== Path A — End-User Installation (Nextflow Plugin Registry)
+
+The plugin is published to the https://registry.nextflow.io/plugins/nf-bids[Nextflow Plugin Registry].
+No build tools are required; Nextflow downloads and caches the plugin automatically on first run.
+
+Add the following block to your `nextflow.config`:
+
+[source,groovy]
+----
+plugins {
+    id 'nf-bids@{plugin-version}'
+}
+----
+
+Then import and use the operators in your workflow:
+
+[source,groovy]
+----
+include { fromBIDS }                      from 'plugin/nf-bids'
+include { groupTupleBy; joinBy; combineBy } from 'plugin/nf-bids'
+----
+
+*What this gives you:* Nextflow resolves and caches the plugin JAR under
+`~/.nextflow/plugins/nf-bids-{plugin-version}/` the first time the workflow runs.
+*Failure mode:* If the registry is unreachable or the version string is wrong,
+Nextflow aborts before execution starts with a plugin-resolution error.
+Re-check the version string against the
+https://registry.nextflow.io/plugins/nf-bids[registry listing].
+
+== Path B — Local Development Installation (Build from Source) [[path-b-local-development-installation-build-from-source]]
+
+Use this path when you are developing or testing changes to the plugin itself.
+
+=== Step 1 — Clone the Repository
+
+[source,bash]
+----
+git clone https://github.com/nf-neuro/nf-bids.git
+cd nf-bids
+----
+
+=== Step 2 — Initialize Submodules
+
+libBIDS.sh is a Git submodule.
+Run the following *after* cloning (or pull the submodule into an existing clone):
+
+[source,bash]
+----
+git submodule update --init --recursive
+----
+
+*Evidence:* The directory `libBIDS.sh/` should now be populated.
+If it remains empty, see <<path-c-submodule,Path C>> below.
+
+=== Step 3 — Assemble the Plugin JAR
+
+[source,bash]
+----
+./gradlew assemble
+# or equivalently:
+make assemble
+----
+
+*Evidence:* `build/libs/nf-bids-{plugin-version}.jar` exists after a
+successful build.
+*Failure mode:* A compilation failure here blocks every subsequent step —
+fix the compile errors before proceeding to installation or tests.
+
+=== Step 4 — Install into the Local Nextflow Plugin Cache
+
+[source,bash]
+----
+./gradlew install
+# or equivalently:
+make install
+----
+
+This places the built plugin under `~/.nextflow/plugins/nf-bids-{plugin-version}/`.
+Any workflow that declares `id 'nf-bids@{plugin-version}'` will now resolve to
+the locally installed build instead of the registry copy.
+
+*Evidence:* Running `nextflow -version` in the same shell should complete
+without errors; launching a workflow that uses `nf-bids@{plugin-version}` should
+not trigger a registry download.
+*Failure mode:* If the install directory is missing, verify that
+`$NXF_HOME` (default: `~/.nextflow`) is writable and that the `assemble` step
+produced a JAR.
+
+== Path C — Submodule Initialisation / Update [[path-c-submodule]]
+
+The libBIDS.sh Bash parsing library lives at the repository root as a Git
+submodule pointing to `https://github.com/CoBrALab/libBIDS.sh.git`
+(tag `{libbids-sh-version}`).
+See xref:dependencies/libbids-sh.adoc[libBIDS.sh Dependency] for the role it plays.
+
+*First-time initialisation* (after a fresh clone that skipped `--recurse-submodules`):
+
+[source,bash]
+----
+git submodule update --init --recursive
+----
+
+*Updating to the latest tracked commit* (after a pull that advanced the parent pointer):
+
+[source,bash]
+----
+git submodule update --recursive
+----
+
+*Evidence:* `libBIDS.sh/` contains shell scripts (`.sh` files).
+Running `ls libBIDS.sh/*.sh` should list at least one file.
+*Failure mode:* An empty `libBIDS.sh/` directory means the submodule was not
+initialised.  Re-run `git submodule update --init --recursive`.
+An outdated libBIDS.sh version can cause BIDS parsing failures at runtime;
+always sync the submodule after pulling upstream changes.
+
+== Prerequisites [[prerequisites]]
+
+The table below lists every tool required, why it is needed, and how to
+confirm it is present.
+
+=== Java (Plugin Runtime & Build)
+
+*Why:* The Gradle wrapper (`./gradlew`) and the plugin runtime both require a
+JDK.  The plugin source (`build.gradle`) targets Java 11 compatibility.
+
+[source,bash]
+----
+java -version
+----
+
+Expected output includes a version number ≥ 11
+(e.g. `openjdk version "17.0.x"`).
+If the command is not found, install a JDK from
+https://adoptium.net[Eclipse Temurin] or your OS package manager.
+
+NOTE: The documentation build (`./gradlew docs`) has been validated with Java 17+.
+If you only need to run the plugin (not build docs), Java 11 is sufficient.
+
+=== Nextflow (Workflow Execution)
+
+*Why:* Required to execute any pipeline that uses `nf-bids`.
+The minimum tested version is `{nextflow-min-version}`.
+
+[source,bash]
+----
+nextflow -version
+----
+
+Expected output shows a version ≥ `{nextflow-min-version}`.
+Install or upgrade with:
+
+[source,bash]
+----
+curl -s https://get.nextflow.io | bash
+mv nextflow ~/bin/   # or any directory on your PATH
+----
+
+=== Gradle Wrapper (Build, Test, and Docs)
+
+*Why:* All build, test, and documentation tasks run through `./gradlew`.
+The wrapper downloads Gradle 8.14 automatically — you do *not* need a separate
+Gradle installation.
+
+[source,bash]
+----
+./gradlew --version
+----
+
+Expected output: `Gradle 8.14` on the `Gradle:` line.
+The wrapper downloads the distribution on first run; subsequent calls use the
+cached copy under `~/.gradle/wrapper/dists/`.
+
+=== Bash (libBIDS.sh Shell Parser)
+
+*Why:* The plugin shells out to libBIDS.sh (a Bash script) to parse the BIDS
+directory structure at workflow runtime.
+
+[source,bash]
+----
+bash --version
+----
+
+Any version ≥ 3.2 is sufficient; modern Linux distributions ship Bash 5+.
+
+=== Node.js / npm (Documentation Build Only)
+
+*Why:* Antora (the static-site generator) runs on Node.js.
+Only required when building or serving the documentation site locally.
+
+[source,bash]
+----
+node --version   # expect 18+
+npm  --version
+----
+
+Install via https://nodejs.org[nodejs.org] or `nvm`.
+
+=== Graphviz (Diagram Rendering, Documentation Build Only)
+
+*Why:* PlantUML uses the `dot` executable (part of Graphviz) to render
+class and package diagrams to SVG.
+
+[source,bash]
+----
+dot -V
+----
+
+Install with:
+
+[source,bash]
+----
+# Debian / Ubuntu
+apt-get install graphviz
+
+# macOS
+brew install graphviz
+----
+
+=== PlantUML (Diagram Rendering, Documentation Build Only)
+
+*Why:* The `./gradlew docs` task renders `documentation/diagrams/*.puml` files
+to SVG before passing content to Antora.
+PlantUML is *downloaded automatically* into `documentation/lib/` by the build
+script (`documentation/bin/fetch-tools.sh`).
+No manual installation is required.

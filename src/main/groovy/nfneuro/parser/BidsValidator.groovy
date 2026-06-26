@@ -4,19 +4,14 @@ package nfneuro.plugin.parser
 import groovy.util.logging.Slf4j
 
 /**
- * BIDS dataset validator using bids-validator
- * 
- * ⚠️ FUTURE FEATURE - Deferred to v1.1
- * 
- * This is a stub implementation. Full BIDS validation functionality
- * will be implemented in v1.1. For now, users should:
- * 1. Run bids-validator manually before using the plugin, OR
- * 2. Disable validation in configuration (bids_validation: false)
- * 
- * Executes BIDS validation and handles ignore codes
- * 
- * @reference BIDS validation implementation: 
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf
+ * BIDS dataset validator — stub implementation (deferred to v1.1).
+ *
+ * <p>In the current release the {@link #validate} method logs a warning and returns
+ * immediately without performing actual validation.  Users should run
+ * {@code bids-validator} manually, or set {@code bids_validation: false} in their
+ * configuration to suppress the warning.</p>
+ *
+ * <p>The full Docker-based bids-validator integration is planned for v1.1.</p>
  */
 @Slf4j
 // @CompileStatic // TODO v1.1: Implement full validation with bids-validator integration
@@ -25,18 +20,13 @@ class BidsValidator {
     private static final String VALIDATOR_IMAGE = "bids/validator:latest"
     
     /**
-     * Validate BIDS dataset structure
-     * 
-     * ⚠️ STUB IMPLEMENTATION - v1.1 Feature
-     * 
-     * Currently logs a warning. Full validation will be implemented in v1.1.
-     * Runs bids-validator (typically in Docker) with specified ignore codes
-     * 
-     * @param bidsDir Path to BIDS dataset
-     * @param ignoreCodes List of BIDS validation codes to ignore
-     * 
-     * @reference BIDS_VALIDATOR process: 
-     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf#L1-L30
+     * Validate BIDS dataset structure.
+     *
+     * <p><strong>Stub — v1.1 feature.</strong>  Currently logs a warning and returns without
+     * performing validation.  Full Docker-based bids-validator integration is planned for v1.1.</p>
+     *
+     * @param bidsDir    path to the BIDS dataset root directory
+     * @param ignoreCodes list of BIDS validator error codes to suppress (no-op in current stub)
      */
     void validate(String bidsDir, List<Integer> ignoreCodes = []) {
         log.warn("⚠️ BIDS validation is not yet implemented (v1.1 feature). Skipping validation for: ${bidsDir}")
@@ -95,16 +85,18 @@ class BidsValidator {
     // }
 
     /**
-     * Perform pre-flight checks before main workflow
-     * 
-     * Validates that required files and directories exist
-     * 
-     * @param bidsDir BIDS directory
-     * @param configPath Configuration file path
-     * @param libBidsPath libBIDS.sh path
-     * 
-     * @reference preFlightChecks function: 
-     *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/bids_validator.nf#L55-L85
+     * Perform pre-flight checks before the main workflow.
+     *
+     * <p>Verifies that the BIDS directory exists and is a directory, that
+     * {@code dataset_description.json} is present (warns if not), that the
+     * configuration file exists (if provided), and that {@code libBIDS.sh}
+     * exists (if provided).</p>
+     *
+     * @param bidsDir     path to the BIDS dataset root directory
+     * @param configPath  path to the {@code bids2nf.yaml} configuration file, or {@code null}
+     * @param libBidsPath path to the {@code libBIDS.sh} script, or {@code null}
+     * @throws FileNotFoundException    if a required path does not exist
+     * @throws IllegalArgumentException if {@code bidsDir} is not a directory
      */
     void preFlightChecks(String bidsDir, String configPath, String libBidsPath) {
         log.info("✈︎✈︎✈︎ Pre-flight checks started")

@@ -7,25 +7,26 @@ import nfneuro.plugin.model.BidsChannelData
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Handler for named BIDS sets
+ * Handler for named BIDS sets.
  *
- * Processes named groupings using pattern-based matching.
- * Files are matched to custom group names (e.g., T1w, MTw, PDw) based on
- * entity value patterns defined in configuration.
+ * <p>Processes groupings where each file is assigned to a <em>named group</em>
+ * (e.g. {@code T1w}, {@code MTw}, {@code PDw}) based on entity-value patterns
+ * defined in the configuration.  All entity patterns for a group must match a
+ * file for it to be assigned to that group.</p>
  *
- * Named sets create: suffix -> {groupName -> {nii: file, json: file}}
+ * <p>Produces: {@code suffix → {groupName → {ext: filePath, …}}}.</p>
  *
- * Example configuration:
+ * <p>Example configuration:</p>
+ * <pre>
  * MTS:
  *   named_set:
  *     T1w: {flip: "flip-02", mtransfer: "mt-off"}
  *     MTw: {flip: "flip-01", mtransfer: "mt-on"}
  *     PDw: {flip: "flip-01", mtransfer: "mt-off"}
  *   required: ["T1w", "MTw", "PDw"]
+ * </pre>
  *
- * @reference Named set implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_named_sets.nf
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf
+ * <p>Corresponds to {@code named_set:} entries in {@code bids2nf.yaml}.</p>
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class NamedSetHandler extends BaseSetHandler {

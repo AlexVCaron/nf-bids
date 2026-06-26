@@ -6,13 +6,12 @@ import nfneuro.plugin.model.BidsEntity
 import nfneuro.plugin.model.BidsFile
 
 /**
- * CSV parser for libBIDS.sh output
+ * CSV parser for the output of {@code libBIDSsh_parse_bids_to_csv}.
  *
- * Parses the CSV format produced by libBIDSsh_parse_bids_to_csv
- *
- * @reference CSV format:
- *            derivatives,data_type,subject,session,sample,task,...,suffix,extension,path
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/libBIDS.sh/libBIDS.sh#L503-L524
+ * <p>Reads the header row to discover column indices, then converts each data row
+ * into a {@link nfneuro.plugin.model.BidsFile} object with all BIDS entity fields
+ * and the file path populated.  Columns correspond to BIDS entities plus
+ * {@code suffix}, {@code extension}, and {@code path}.</p>
  */
 @Slf4j
 @CompileStatic

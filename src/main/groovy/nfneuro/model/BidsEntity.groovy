@@ -3,10 +3,16 @@ package nfneuro.plugin.model
 import groovy.transform.CompileStatic
 
 /**
- * Represents a BIDS entity (subject, session, run, task, etc.)
+ * Represents a single BIDS entity (key–value pair such as {@code sub-01} or {@code ses-BL}).
  *
- * @reference BIDS entity specification:
- *            https://bids-specification.readthedocs.io/en/stable/
+ * <p>Stores the entity in its short form (e.g. {@code "sub"}) regardless of whether
+ * the long form (e.g. {@code "subject"}) was supplied on construction.
+ * Equality and hash-code are based on normalised name and sanitised value, so
+ * {@code "flip-02"} equals {@code "flip-2"}.</p>
+ *
+ * <p>The static utility methods {@link #normalizeName}, {@link #normalizeValue},
+ * and {@link #sanitizeValue} are used throughout the grouping handlers for
+ * consistent entity comparison.</p>
  */
 @CompileStatic
 class BidsEntity {
@@ -124,6 +130,15 @@ class BidsEntity {
     String name
     String value
 
+    /**
+     * Construct a BIDS entity.
+     *
+     * <p>The name is normalised to its short form via {@link #normalizeName}.</p>
+     *
+     * @param name  entity key in long or short form (e.g. {@code "subject"} or {@code "sub"})
+     * @param value entity value without prefix (e.g. {@code "01"})
+     * @throws IllegalArgumentException if {@code name} or {@code value} is null or empty
+     */
     BidsEntity(String name, String value) {
         if (!name) {
             throw new IllegalArgumentException("Entity name cannot be null or empty")

@@ -7,14 +7,15 @@ import nfneuro.plugin.model.BidsChannelData
 import nfneuro.plugin.util.BidsLogger
 
 /**
- * Handler for mixed BIDS sets
+ * Handler for mixed BIDS sets.
  *
- * Processes combined named and sequential groupings with nested structures.
- * Mixed sets use pattern-based matching for the named dimension (like NamedSetHandler)
- * and sequential ordering for the sequential dimension.
- * Creates structure: suffix -> {groupName -> [orderedFiles]}
+ * <p>Combines named and sequential grouping dimensions.  Files are first matched
+ * to named groups (like {@link NamedSetHandler}) using entity-value patterns for
+ * the {@code named_dimension}, then ordered along the {@code sequential_dimension}
+ * entity.  Produces: {@code suffix → {groupName → [orderedFiles]}}.</p>
  *
- * Example configuration:
+ * <p>Example configuration:</p>
+ * <pre>
  * MPM:
  *   mixed_set:
  *     named_dimension: "acquisition"
@@ -24,9 +25,9 @@ import nfneuro.plugin.util.BidsLogger
  *       PDw: {acquisition: "acq-PDw", flip: "flip-1", mtransfer: "mt-off"}
  *       T1w: {acquisition: "acq-T1w", flip: "flip-2", mtransfer: "mt-off"}
  *     required: ["MTw", "PDw", "T1w"]
+ * </pre>
  *
- * @reference Mixed set implementation:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf
+ * <p>Corresponds to {@code mixed_set:} entries in {@code bids2nf.yaml}.</p>
  */
 // @CompileStatic - TODO: Requires refactoring to align with BidsChannelData model
 class MixedSetHandler extends BaseSetHandler {

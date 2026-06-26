@@ -3,12 +3,17 @@ package nfneuro.plugin.model
 import groovy.transform.CompileStatic
 
 /**
- * Represents channel data structure for BIDS processing
+ * Container for BIDS channel data assembled by the set handlers.
  *
- * Contains grouped and organized BIDS data ready for Nextflow channels
+ * <p>Accumulates per-suffix data maps, associated file paths, and loop-over entity
+ * values during the grouping phase.  {@link #toChannelTuple(List)} serialises the
+ * container into the {@code [groupingKey, enrichedData]} tuple format consumed by
+ * {@link nfneuro.plugin.channel.BidsHandler} before flattening.</p>
  *
- * @reference Channel data structure from:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L98-L117
+ * <p>The flat output emitted by {@code Channel.fromBIDS()} is built from this
+ * structure by converting string paths to {@code java.nio.file.Path} objects and
+ * placing suffix data maps at the top level alongside a {@code meta} map of
+ * entity values.</p>
  */
 @CompileStatic
 class BidsChannelData {
@@ -18,6 +23,9 @@ class BidsChannelData {
     String bidsParentDir
     Map<String, String> entities
 
+    /**
+     * Construct an empty {@code BidsChannelData} container.
+     */
     BidsChannelData() {
         this.data = [:]
         this.filePaths = []

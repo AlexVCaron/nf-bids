@@ -4,12 +4,13 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 /**
- * Error handling utilities for BIDS processing
- * 
- * Provides context-aware error handling with detailed messages
- * 
- * @reference Error handling: 
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/utils/error_handling.nf
+ * Context-aware error-handling utilities for nf-bids processing.
+ *
+ * <p>Provides {@link #tryWithContext} (re-throw with context), {@link #safeExecute}
+ * (return a default on failure), and {@link #validateWithContext} (assert with
+ * context-labelled exception).  Also contains three typed exception sub-classes:
+ * {@link BidsProcessingException}, {@link BidsValidationException}, and
+ * {@link BidsConfigurationException}.</p>
  */
 @Slf4j
 @CompileStatic

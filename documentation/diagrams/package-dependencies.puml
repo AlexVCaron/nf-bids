@@ -1,0 +1,30 @@
+@startuml package-dependencies
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 11
+skinparam RectangleBorderColor #4472C4
+skinparam ArrowColor #444444
+skinparam ArrowFontSize 9
+skinparam ArrowFontColor #444444
+skinparam TitleFontSize 14
+skinparam nodesep 30
+skinparam ranksep 50
+
+title nf-bids — High-Level Architecture
+
+rectangle "**Workflow**\nChannel.fromBIDS()\n+ closure operators" as workflow #EEF3FF
+rectangle "**Extension Layer**\nBidsExtension\nBidsChannelFactory" as extension #E8F4E8
+rectangle "**Runtime Pipeline**\nBidsHandler orchestration" as runtime #E8F4E8
+rectangle "**Parsing Layer**\nBidsParser + libBIDS.sh wrapper" as parsing #FFF8E8
+rectangle "**Config + Grouping**\nConfig analysis + set handlers" as grouping #FFF0E8
+rectangle "**Output Channels**\nFlat map emission\n(+ optional joins/groups)" as output #F8E8FF
+
+workflow --> extension : calls API
+extension --> runtime : configures + ignites
+runtime --> parsing : parse dataset
+runtime --> grouping : shape by config
+grouping --> output : emit channel items
+workflow ..> output : consume in pipeline
+
+@enduml

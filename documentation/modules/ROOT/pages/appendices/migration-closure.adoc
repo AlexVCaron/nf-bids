@@ -1,0 +1,222 @@
+= Closure Operators Migration Guide
+:navtitle: Closure Operators Migration Guide
+
+[.lead]
+This guide shows how to migrate from Nextflow's index-based `groupTuple`, `join`, and
+`combine` operators to the closure-based `groupTupleBy`, `joinBy`, and `combineBy`
+operators provided by nf-bids.
+
+== Quick reference
+
+[cols="1,1,2"]
+|===
+| Index-based | Closure-based | Key benefit
+
+| `groupTuple(by: 0)`
+| `groupTupleBy { it.field }`
+| Semantic grouping; works with maps
+
+| `join(by: [0])`
+| `joinBy(right) { it.field }`
+| No tuple restructuring needed
+
+| `combine(right, by: 0)`
+| `combineBy(right) { it.field }`
+| Self-documenting, semantic fields
+|===
+
+== Installation
+
+.`nextflow.config`
+[source,groovy]
+----
+plugins { id 'nf-bids@0.1.0-beta.10' }
+----
+
+.Workflow script
+[source,groovy]
+----
+include { groupTupleBy } from 'plugin/nf-bids'
+include { joinBy }       from 'plugin/nf-bids'
+include { combineBy }    from 'plugin/nf-bids'
+----
+
+== groupTuple → groupTupleBy
+
+=== Single-field grouping
+
+[source,groovy]
+----
+// Before: requires tuple, opaque index
+channel.of(['sub-01', 'file1.nii'], ['sub-01', 'file2.nii'])
+       .groupTuple(by: 0)
+// → ['sub-01', ['file1.nii', 'file2.nii']]
+
+// After: map, semantic field
+channel.of([subject: 'sub-01', file: 'file1.nii'],
+           [subject: 'sub-01', file: 'file2.nii'])
+       .groupTupleBy { it.subject }
+// → ['sub-01', [[subject:'sub-01', file:'file1.nii'],
+//               [subject:'sub-01', file:'file2.nii']]]
+----
+
+NOTE: `groupTupleBy` keeps the full item in the list; `groupTuple` decomposes it.
+Downstream code must use `items.collect { it.file }` instead of `files[0]`.
+
+=== Composite key
+
+[source,groovy]
+----
+// Before
+channel.map { [it.subject + '_' + it.session, it] }
+       .groupTuple(by: 0)
+
+// After
+channel.groupTupleBy { [it.subject, it.session] }
+// Closure returns List → wrapped in CompositeKey for correct equality
+----
+
+=== Sorting within groups
+
+[source,groovy]
+----
+// Before
+channel.groupTuple(by: 0, sort: { a, b -> a[1] <=> b[1] })
+
+// After  (closures receive full items, not decomposed elements)
+channel.groupTupleBy({ it.subject }, [sort: { a, b -> a.run <=> b.run }])
+----
+
+=== Size-based streaming
+
+[source,groovy]
+----
+// Before
+channel.groupTuple(by: 0, size: 2, remainder: false)
+
+// After
+channel.groupTupleBy({ it.type }, [size: 2, remainder: false])
+----
+
+== join → joinBy
+
+=== Simple join
+
+[source,groovy]
+----
+// Before: must restructure both channels first
+left  = left_ch.map  { [it.id, it] }
+right = right_ch.map { [it.id, it] }
+left.join(right).view { key, l, r -> ... }
+
+// After: no restructuring
+left_ch.joinBy(right_ch) { it.id }
+       .view { key, l, r -> ... }
+----
+
+NOTE: Both `join` and `joinBy` emit `[key, leftItem, rightItem]`.  The closure-based
+version includes the key — do not destructure as `{ l, r -> }`.
+
+=== Different key fields
+
+[source,groovy]
+----
+// Before
+scans.map { [it.scan_id, it] }
+     .join(metadata.map { [it.participant_id, it] })
+
+// After
+scans.joinBy(metadata, { it.scan_id }, { it.participant_id })
+----
+
+=== Outer join
+
+[source,groovy]
+----
+// Before
+left.map { [it.id, it] }
+    .join(right.map { [it.id, it] }, remainder: true)
+
+// After
+left.joinBy(right, { it.id }, [remainder: true])
+----
+
+== combine → combineBy
+
+=== Cartesian product with key
+
+[source,groovy]
+----
+// Built-in: combine with positional key
+subjects.combine(sessions, by: 0)
+
+// Closure-based: same semantics, semantic key
+subjects.combineBy(sessions, { it.subject })
+// Both emit [key, leftItem, rightItem]
+----
+
+=== Filtered combinations
+
+[source,groovy]
+----
+// Before
+scans.combine(protocols)
+     .filter { scanId, scanMod, protoName, protoMod -> scanMod == protoMod }
+
+// After
+scans.combineBy(protocols, { it.modality })
+     .filter { key, scan, proto -> scan.modality == proto.modality }
+----
+
+== Common pitfalls
+
+=== joinBy output includes the key
+
+[source,groovy]
+----
+// ❌ WRONG — joinBy emits [key, left, right], not [left, right]
+left.joinBy(right) { it.id }.view { l, r -> println l }
+
+// ✅ CORRECT
+left.joinBy(right) { it.id }.view { key, l, r -> println l }
+----
+
+=== Items are preserved as maps
+
+[source,groovy]
+----
+// groupTuple decomposes the tuple:
+channel.of(['A', 1, 'x']).groupTuple(by: 0)
+// → ['A', [1], ['x']]   ← separate lists per element
+
+// groupTupleBy preserves items:
+channel.of([group: 'A', val: 1]).groupTupleBy { it.group }
+// → ['A', [[group:'A', val:1]]]   ← items as-is in a single list
+// Access: items.collect { it.val }
+----
+
+=== Null keys are silently dropped
+
+[source,groovy]
+----
+// Items where the closure returns null are skipped with a trace log
+.groupTupleBy { it.session }          // null session → item dropped
+
+// Provide a default to keep all items
+.groupTupleBy { it.session ?: 'no-session' }
+----
+
+== When to stay on index-based operators
+
+Closure-based operators add a small overhead (~10–30 ms for typical BIDS datasets).
+Prefer the built-in operators when:
+
+* Items are simple fixed-position tuples with no semantic fields.
+* Maximum throughput is required and the dataset exceeds 100 k items.
+* Integrating with existing code that already produces the right tuple shape.
+
+== Related pages
+
+* xref:concepts/channel-operators.adoc[Closure-Based Channel Operators — full reference]
+* xref:appendices/migration-bids.adoc[BIDS Migration Guide]
+* xref:guides/installation.adoc[Installation Guide]

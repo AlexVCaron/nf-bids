@@ -25,6 +25,28 @@ import nfneuro.plugin.util.SuffixMapper
 import nfneuro.plugin.config.BidsConfigAnalyzer
 import nfneuro.plugin.config.BidsConfigLoader
 
+/**
+ * Fluent builder that orchestrates the full BIDS-to-channel pipeline.
+ *
+ * <p>Typical usage (via {@link BidsChannelFactory}):</p>
+ * <pre>
+ * new BidsHandler()
+ *     .withConfig(configPath)
+ *     .withBidsDir(bidsDir)
+ *     .withOpts(options)
+ *     .withParser(new BidsParser(session))
+ *     .ignite(session)
+ * </pre>
+ *
+ * <p>Internally the handler:</p>
+ * <ol>
+ *   <li>Loads and validates the YAML configuration via {@link nfneuro.plugin.config.BidsConfigLoader}.</li>
+ *   <li>Parses the BIDS directory into {@link nfneuro.plugin.model.BidsFile} objects via {@link nfneuro.plugin.parser.BidsParser}.</li>
+ *   <li>Routes files to the correct {@link nfneuro.plugin.grouping.BaseSetHandler} sub-class
+ *       (plain / named / sequential / mixed) depending on the configuration analysis.</li>
+ *   <li>Applies cross-modal broadcasting and emits a flat {@code [meta, data…]} map per group.</li>
+ * </ol>
+ */
 @Slf4j
 @CompileStatic
 class BidsHandler {
@@ -38,32 +60,72 @@ class BidsHandler {
     private Map<String, Map<String, String>> suffixMapping
     private BidsParser parser
 
+    /**
+     * Load and analyze the YAML configuration file.
+     *
+     * @param configPath path to a {@code bids2nf.yaml} configuration file, or {@code null} to use defaults
+     * @return {@code this} for method chaining
+     */
     BidsHandler withConfig(String configPath) {
         // Load and analyze configuration
         loadConfiguration(configPath)
         return this
     }
 
+    /**
+     * Set the path to the BIDS dataset directory.
+     *
+     * @param bidsDir absolute path to the root of the BIDS dataset
+     * @return {@code this} for method chaining
+     */
     BidsHandler withBidsDir(String bidsDir) {
         this.bidsDir = bidsDir
         return this
     }
 
+    /**
+     * Supply the runtime options map (e.g. {@code libbids_sh}, {@code flatten_output}).
+     *
+     * @param options map of additional options forwarded from {@code Channel.fromBIDS()}
+     * @return {@code this} for method chaining
+     */
     BidsHandler withOpts(Map options) {
         this.options = options
         return this
     }
 
+    /**
+     * Override the output channel (used internally by {@link #ignite}).
+     *
+     * @param target the Dataflow write channel to bind results into
+     * @return {@code this} for method chaining
+     */
     BidsHandler withTarget(DataflowWriteChannel target) {
         this.target = target
         return this
     }
 
+    /**
+     * Inject the {@link nfneuro.plugin.parser.BidsParser} to use for dataset parsing.
+     *
+     * @param parser pre-constructed parser instance
+     * @return {@code this} for method chaining
+     */
     BidsHandler withParser(BidsParser parser) {
         this.parser = parser
         return this
     }
 
+    /**
+     * Create the output channel and schedule asynchronous execution.
+     *
+     * <p>In DSL2 mode the work is deferred via {@code session.addIgniter}; in DSL1 it
+     * runs immediately.  Either way the returned channel is ready to be consumed by
+     * downstream operators before parsing has completed.</p>
+     *
+     * @param session the active Nextflow session
+     * @return the {@code DataflowWriteChannel} that will receive BIDS data items
+     */
     DataflowWriteChannel ignite(Session session) {
         DataflowWriteChannel target = this.withTarget(CH.create()).target
 
@@ -77,6 +139,13 @@ class BidsHandler {
         return target
     }
 
+    /**
+     * Execute the BIDS parsing pipeline, optionally in a background thread.
+     *
+     * @param async {@code true} to run asynchronously via {@link java.util.concurrent.CompletableFuture} (default);
+     *              {@code false} to block the calling thread
+     * @return {@code this} for method chaining
+     */
     BidsHandler perform(boolean async = true) {
         if (async) {
             this.executeAsync()

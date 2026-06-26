@@ -1,0 +1,219 @@
+= Release Guide
+:navtitle: Release Guide
+
+[.lead]
+This guide describes the complete, ordered sequence for cutting an nf-bids
+release: from version-bump through publication.
+Each step states the evidence it provides and the failure that blocks proceeding.
+
+Complete all layers of the xref:guides/testing.adoc[Testing Guide] before
+starting a release.
+
+== Overview
+
+The release sequence is:
+
+. <<step-version-bump,Version Bump>>
+. <<step-changelog,Changelog Update>>
+. <<step-test-pass,Test and Validation Pass>>
+. <<step-docs-pass,Documentation Build Pass>>
+. <<step-tag,Git Tag>>
+. <<step-publish,Plugin Publication>>
+. <<step-docs-publish,Documentation Publication (Automated)>>
+
+== Step 1 — Version Bump [[step-version-bump]]
+
+Two files must be updated *atomically* (in the same commit) to keep the
+plugin artifact version and the documentation site version in sync.
+
+=== `build.gradle`
+
+Locate the `version` declaration at the top of `build.gradle`:
+
+[source,groovy]
+----
+version = '0.1.0-beta.10'   // <-- change this
+----
+
+=== `documentation/antora.yml`
+
+Update the `version`, `display_version`, and the `plugin-version` attribute:
+
+[source,yaml]
+----
+version: '0.1.0-beta.11'         # <-- new version
+display_version: '0.1.0-beta.11'
+asciidoc:
+  attributes:
+    plugin-version: '0.1.0-beta.11'
+    nextflow-min-version: '24.10.0'
+    libbids-sh-version: 'v1.0'
+----
+
+*Evidence:* Running `./gradlew properties | grep ^version` should print the
+new version string.
+*Failure mode:* If `build.gradle` and `antora.yml` are out of sync, the
+published plugin and the published documentation will advertise different
+version numbers — confusing users.
+
+== Step 2 — Changelog Update [[step-changelog]]
+
+Add a section for the new version at the top of `CHANGELOG.md`, following
+the existing format:
+
+[source,markdown]
+----
+## [0.1.0-beta.11] - YYYY-MM-DD
+
+### Added
+- ...
+
+### Changed
+- ...
+
+### Fixed
+- ...
+----
+
+Move all `[Unreleased]` entries into the new section.
+
+*Evidence:* The changelog section clearly documents every user-visible change
+so that adopters can assess the upgrade impact.
+*Failure mode:* Releasing without a changelog entry leaves adopters with no
+migration context.
+
+== Step 3 — Test and Validation Pass [[step-test-pass]]
+
+Run the full test suite.  Every layer must pass before proceeding.
+
+[source,bash]
+----
+# Layer 1: unit tests
+./gradlew test
+
+# Layer 2: integration / validation
+nf-test test validation/
+
+# Layer 3: edge cases
+nf-test test validation/edge_cases/edge_cases.nf.test
+----
+
+See the xref:guides/testing.adoc[Testing Guide] for details on what each
+layer verifies.
+
+*Evidence:* Zero test failures across all layers.
+*Failure mode:* Any failing test must be fixed before creating a tag.
+Shipping a broken release destroys user trust and may require an emergency
+patch release.
+
+== Step 4 — Documentation Build Pass [[step-docs-pass]]
+
+[source,bash]
+----
+./gradlew docs
+# or equivalently:
+make docs
+----
+
+This generates the API reference, renders PlantUML diagrams, and builds the
+full Antora site.
+Browse `documentation/build/site/` locally (using `make docs-serve`) and
+confirm:
+
+* The new version number appears in the site header.
+* All xref cross-links resolve without Antora warnings.
+* Diagrams render correctly.
+* The GroovyDoc API reference reflects any new public methods.
+
+*Evidence:* A clean `./gradlew docs` run with no errors and the new version
+visible in the site.
+*Failure mode:* Broken xrefs, missing diagrams, or malformed AsciiDoc abort
+the build.
+Fix all Antora/PlantUML errors before proceeding.
+
+== Step 5 — Git Tag [[step-tag]]
+
+Commit the version-bump and changelog changes:
+
+[source,bash]
+----
+git add build.gradle documentation/antora.yml CHANGELOG.md
+git commit -m "chore: release {plugin-version}"
+----
+
+Create an annotated tag:
+
+[source,bash]
+----
+git tag -a v{plugin-version} -m "Release {plugin-version}"
+git push origin main --follow-tags
+----
+
+*Evidence:* The tag appears on the GitHub repository's
+https://github.com/nf-neuro/nf-bids/releases[Releases page].
+*Failure mode:* Pushing without `--follow-tags` leaves the tag only in the
+local repository.
+A missing tag means the automated publication step (below) is never triggered.
+
+== Step 6 — Plugin Publication [[step-publish]]
+
+[source,bash]
+----
+make release
+# equivalent to:
+./gradlew releasePlugin
+----
+
+The `releasePlugin` task is provided by the
+`io.nextflow.nextflow-plugin` Gradle plugin (version `1.0.0-beta.10`, see
+`build.gradle`).
+It packages the plugin and submits it to the
+https://registry.nextflow.io/plugins/nf-bids[Nextflow Plugin Registry].
+
+*Evidence:* The new version appears at
+https://registry.nextflow.io/plugins/nf-bids after the task completes.
+*Failure mode:* Authentication errors (missing registry credentials) cause
+the task to fail without publishing.
+Ensure your Nextflow plugin registry token is set in the environment or
+`gradle.properties` (see the `io.nextflow.nextflow-plugin` plugin documentation
+for the required property name).
+
+== Step 7 — Documentation Publication (Automated) [[step-docs-publish]]
+
+NOTE: The CI workflow `.github/workflows/docs.yml` is planned for a later
+implementation phase.
+Until it is added, documentation must be published manually (run
+`./gradlew docs` and push the `documentation/build/site/` artefact to the
+`gh-pages` branch, or upload to your hosting provider).
+
+*Intended automated flow:*  
+When a tag matching `v*` is pushed to `main`, the `docs.yml` workflow will:
+
+. Checkout the tagged commit with submodules.
+. Run `./gradlew docs` to produce `documentation/build/site/`.
+. Deploy the site to GitHub Pages (target:
+  https://nf-neuro.github.io/nf-bids).
+
+*Evidence (once implemented):* A green `docs` workflow run on the
+https://github.com/nf-neuro/nf-bids/actions[Actions page] and the updated
+site live at the published URL.
+*Failure mode:* A failing `./gradlew docs` step in CI indicates a
+documentation regression that was not caught locally.
+Always run `make docs` locally before pushing the release tag.
+
+== Release Checklist
+
+[source,text]
+----
+[ ] build.gradle version bumped
+[ ] documentation/antora.yml version / attributes bumped
+[ ] CHANGELOG.md updated with new section
+[ ] ./gradlew test — all unit tests green
+[ ] nf-test test validation/ — all integration tests green
+[ ] nf-test test validation/edge_cases/edge_cases.nf.test — edge cases green
+[ ] ./gradlew docs — site builds cleanly, version correct in header
+[ ] Commit: "chore: release vX.Y.Z"
+[ ] git tag -a vX.Y.Z pushed with --follow-tags
+[ ] make release (./gradlew releasePlugin) — version visible on registry
+[ ] docs.yml workflow triggered (or manual site deploy until CI is added)
+----

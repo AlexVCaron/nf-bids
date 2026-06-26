@@ -1,0 +1,71 @@
+// ---------------------------------------------------------------------------
+// Documentation build orchestration for the nf-bids Antora site.
+//
+// Tasks (group: "documentation"):
+//   renderDiagrams  - render PlantUML sources to SVG
+//   apiDocs         - generate GroovyDoc API reference from src/main/groovy
+//   buildDocsSite   - render diagrams + build the Antora site
+//   docs            - aggregate: API reference + full site
+//
+// The heavy lifting (Antora, PlantUML) runs through documentation/bin scripts
+// so that the exact same pipeline is used locally and in CI.
+// ---------------------------------------------------------------------------
+
+def docDir        = file("${rootDir}/documentation")
+def docBuildDir   = file("${docDir}/build")
+def groovydocOut  = file("${docBuildDir}/groovydoc")
+
+// Generate the API reference from Groovy docstrings.
+groovydoc {
+    destinationDir = groovydocOut
+    docTitle  = "nf-bids ${project.version} API"
+    windowTitle = "nf-bids ${project.version} API"
+    use = true
+    source = sourceSets.main.allGroovy
+}
+
+tasks.register('apiDocs') {
+    group = 'documentation'
+    description = 'Generate the GroovyDoc API reference from src/main/groovy.'
+    dependsOn 'groovydoc'
+}
+
+tasks.register('renderDiagrams', Exec) {
+    group = 'documentation'
+    description = 'Render PlantUML diagram sources to SVG.'
+    workingDir docDir
+    commandLine 'bash', 'bin/build-docs.sh', '--diagrams-only'
+}
+
+tasks.register('buildDocsSite', Exec) {
+    group = 'documentation'
+    description = 'Render diagrams and build the Antora documentation site.'
+    workingDir docDir
+    // Ensure the Antora toolchain is installed before building.
+    doFirst {
+        if (!file("${docDir}/node_modules/.bin/antora").exists()) {
+            exec {
+                workingDir docDir
+                commandLine 'npm', 'install', '--no-audit', '--no-fund'
+            }
+        }
+    }
+    commandLine 'bash', 'bin/build-docs.sh'
+}
+
+// Copy the generated GroovyDoc into the built site, under the component version
+// directory, so the API reference page can link to it with a relative path
+// (link:api/index.html) and it ships as part of the published GitHub Pages site.
+tasks.register('integrateApiDocs', Copy) {
+    group = 'documentation'
+    description = 'Place the GroovyDoc API reference inside the built Antora site.'
+    dependsOn 'apiDocs', 'buildDocsSite'
+    from groovydocOut
+    into file("${docBuildDir}/site/nf-bids/${project.version}/api")
+}
+
+tasks.register('docs') {
+    group = 'documentation'
+    description = 'Build the complete documentation set: API reference + Antora site.'
+    dependsOn 'integrateApiDocs'
+}

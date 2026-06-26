@@ -1,0 +1,41 @@
+@media screen and (min-width: 1280px) {
+  main.article {
+    max-width: none;
+  }
+
+  main.article > .content {
+    box-sizing: border-box;
+    margin: 0 auto;
+    max-width: min(1680px, calc(100vw - 19rem));
+    padding-right: 19rem;
+  }
+
+  main.article > .content > .doc {
+    max-width: 1080px;
+  }
+
+  main.article > .content > .toc.sidebar {
+    margin: 0;
+    max-height: calc(100vh - 5.25rem);
+    overflow-y: auto;
+    position: fixed;
+    right: 1.25rem;
+    top: 4.75rem;
+    width: 16.5rem;
+  }
+}
+
+.doc .imageblock .content {
+  overflow-x: auto;
+}
+
+.doc .imageblock img {
+  height: auto;
+  max-height: 70vh;
+  max-width: min(100%, 980px);
+  width: auto;
+}
+
+.doc .imageblock a.nf-bids-fullres-link img {
+  cursor: zoom-in;
+}

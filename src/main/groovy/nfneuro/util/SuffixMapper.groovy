@@ -5,18 +5,19 @@ import groovy.transform.CompileStatic
 import nfneuro.plugin.grouping.BaseSetHandler
 
 /**
- * Utility for mapping suffixes via suffix_maps_to configuration
+ * Resolves {@code suffix_maps_to} aliases in the {@code bids2nf.yaml} configuration.
  *
- * This handles special cases where a configuration name differs from the actual
- * BIDS suffix it processes. For example, dwi_fullreverse maps to "dwi" suffix.
+ * <p>When a configuration key (virtual suffix) differs from the actual BIDS file suffix
+ * it selects (e.g. {@code dwi_fullreverse} → actual suffix {@code "dwi"}), this class
+ * builds a lookup map used by the set handlers to match files to their configuration
+ * entry.</p>
  *
- * Example configurations:
- *   dwi_fullreverse:
- *     suffix_maps_to: "dwi"
- *     named_set: ...
- *
- * @reference Special case configurations in bids2nf.yaml:
- *            https://github.com/agahkarakuzu/bids2nf/blob/main/bids2nf.yaml#L290-L330
+ * <p>Example configuration:</p>
+ * <pre>
+ * dwi_fullreverse:
+ *   suffix_maps_to: "dwi"
+ *   named_set: ...
+ * </pre>
  */
 @CompileStatic
 class SuffixMapper {

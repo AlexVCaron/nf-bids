@@ -1,0 +1,99 @@
+= Building the nf-bids Documentation
+
+This directory contains the source for the nf-bids documentation site, built with
+https://antora.org[Antora] (site structure + versioning),
+https://asciidoctor.org[AsciiDoc] (authored content),
+https://docs.groovy-lang.org/latest/html/api/org/codehaus/groovy/tools/groovydoc/package-summary.html[GroovyDoc]
+(API reference generated from source docstrings), and
+https://plantuml.com[PlantUML] (diagrams).
+
+== Layout
+
+[cols="1,3"]
+|===
+| Path | Purpose
+
+| `antora.yml`            | Antora component descriptor (name, version, nav).
+| `antora-playbook.yml`   | Antora playbook used to build the site.
+| `modules/ROOT/pages/`   | Authored AsciiDoc pages.
+| `modules/ROOT/nav.adoc` | Site navigation tree.
+| `modules/ROOT/images/`  | Static and generated (`images/generated/`) images.
+| `diagrams/`             | PlantUML diagram sources (`*.puml`).
+| `bin/`                  | Build and tool-fetch scripts.
+| `lib/`                  | Downloaded build tools (PlantUML jar; not committed).
+| `build/site/`           | Generated site output (not committed).
+|===
+
+== Prerequisites
+
+* *Java 17+* and the Gradle wrapper (`./gradlew`) — already required to build the plugin.
+* *Node.js 18+* and *npm* — for Antora.
+* *Graphviz* (`dot` on `PATH`) — required by PlantUML for class/package diagrams.
+  Install via your OS package manager, e.g. `apt-get install graphviz`.
+* *PlantUML* — downloaded automatically into `lib/` by the build (see below).
+
+== Quick start
+
+From the repository root:
+
+[source,bash]
+----
+make docs          # build everything: API reference + diagrams + site
+make docs-serve    # serve the built site at http://localhost:5050
+----
+
+Or equivalently with Gradle:
+
+[source,bash]
+----
+./gradlew docs            # full build (apiDocs + buildDocsSite)
+./gradlew apiDocs         # only the GroovyDoc API reference
+./gradlew renderDiagrams  # only render PlantUML diagrams to SVG
+----
+
+Or directly with npm, from this `documentation/` directory:
+
+[source,bash]
+----
+npm install               # install Antora (first time only)
+npm run fetch-tools       # download the PlantUML jar into lib/
+npm run build             # render diagrams + build site + integrate GroovyDoc
+npm run serve             # preview at http://localhost:5050 (or next free port)
+----
+
+If port `5050` is already in use, `npm run serve` automatically picks the next free port.
+You can force a specific port with `DOCS_PORT`, for example:
+
+[source,bash]
+----
+DOCS_PORT=6060 npm run serve
+----
+
+The generated site is written to `documentation/build/site/`; open
+`build/site/index.html` in a browser.
+
+== How the build works
+
+`bin/build-docs.sh` performs two steps:
+
+. *Render diagrams* — every `diagrams/*.puml` file is rendered to SVG under
+  `modules/ROOT/images/generated/` using the PlantUML jar in `lib/` (downloaded
+  on demand by `bin/fetch-tools.sh`).
+. *Build the site* — Antora aggregates the AsciiDoc content and produces the
+  static HTML site.
+
+[NOTE]
+====
+Antora reads content through git. In a normal clone it builds directly from the
+working tree (including uncommitted edits). In a *linked git worktree* (where
+`.git` is a file rather than a directory) Antora's git layer cannot resolve
+`HEAD`, so `bin/build-docs.sh` transparently snapshots the component into a
+temporary git repository and builds from there. No action is required either way.
+====
+
+== Versioning
+
+The site version comes from `antora.yml` (`version:`), which tracks the plugin
+version in `build.gradle`. On a release, both are bumped together so the
+published documentation matches the released plugin and the bundled `libBIDS.sh`
+state.

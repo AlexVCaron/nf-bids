@@ -1,0 +1,46 @@
+@startuml sequence-frombids
+!theme plain
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 11
+skinparam sequenceArrowThickness 1.4
+skinparam sequenceParticipantBackgroundColor #EEF3FF
+skinparam sequenceParticipantBorderColor #4472C4
+skinparam sequenceParticipantFontStyle bold
+skinparam sequenceLifeLineBorderColor #999999
+skinparam noteBorderColor #888888
+skinparam noteBackgroundColor #FFFDE7
+skinparam TitleFontSize 13
+
+title Channel.fromBIDS() — Mid-Level Execution Sequence
+
+actor Workflow
+participant BidsExtension
+participant BidsChannelFactory
+participant BidsHandler
+participant BidsParser
+participant "libBIDS.sh" as LibBIDS
+participant "Set Handler" as SetHandler
+
+Workflow -> BidsExtension : Channel.fromBIDS(...)
+BidsExtension -> BidsChannelFactory : fromBIDS(...)
+BidsChannelFactory -> BidsHandler : configure + ignite
+BidsChannelFactory --> Workflow : return Dataflow channel
+
+== Async execution ==
+BidsHandler -> BidsParser : parseToDataset(...)
+BidsParser -> LibBIDS : parse dataset to CSV
+LibBIDS --> BidsParser : parsed rows
+BidsParser --> BidsHandler : BidsDataset
+
+BidsHandler -> SetHandler : process files by config
+SetHandler --> BidsHandler : grouped channel data
+BidsHandler --> Workflow : emit flat maps
+
+note right of BidsHandler
+The channel is returned immediately.
+Parsing + grouping run asynchronously
+when the Nextflow session ignites.
+end note
+
+@enduml

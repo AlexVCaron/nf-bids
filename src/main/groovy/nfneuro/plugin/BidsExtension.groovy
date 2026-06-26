@@ -29,12 +29,19 @@ import nfneuro.plugin.channel.operations.JoinByOp
 import nfneuro.plugin.channel.operations.CombineByOp
 
 /**
- * Nextflow BIDS plugin extension point.
+ * DSL extension point for the nf-bids Nextflow plugin.
  *
- * Provides BIDS dataset parsing via channel factories and
- * closure-based channel grouping operators.
+ * <p>Exposes the following additions to the Nextflow DSL:</p>
+ * <ul>
+ *   <li>{@link #fromBIDS} — {@code @Factory} that creates a channel from a BIDS dataset directory.</li>
+ *   <li>{@link #groupTupleBy} — {@code @Operator} that groups channel items by a closure-extracted key.</li>
+ *   <li>{@link #joinBy} — {@code @Operator} that inner-joins two channels by closure-extracted keys.</li>
+ *   <li>{@link #combineBy} — {@code @Operator} that produces the cartesian product within matched key groups.</li>
+ * </ul>
  *
- * @author Various contributors
+ * <p>All operators are backed by their respective {@code *Op} implementation classes in
+ * {@code nfneuro.plugin.channel.operations} and use {@link nfneuro.plugin.channel.operations.keys.KeyExtractor}
+ * to validate and invoke the caller-supplied key-extraction closures.</p>
  */
 @CompileStatic
 class BidsExtension extends PluginExtensionPoint {
@@ -202,7 +209,14 @@ class BidsExtension extends PluginExtensionPoint {
         return op.apply()
     }
 
-    // Overloads to support single-key extractor and optional opts map
+    /**
+     * Convenience overload — uses a single closure as both left and right key extractor.
+     *
+     * @param left  left input channel
+     * @param right right input channel
+     * @param keyExtractor closure applied to items from both channels to derive the join key
+     * @return channel emitting {@code [key, leftItem, rightItem]} tuples
+     */
     @Operator
     DataflowWriteChannel combineBy(
         DataflowReadChannel left,
@@ -212,6 +226,16 @@ class BidsExtension extends PluginExtensionPoint {
         return combineBy(left, right, keyExtractor, keyExtractor, [:])
     }
 
+    /**
+     * Convenience overload — uses a single closure as both left and right key extractor,
+     * with an explicit options map.
+     *
+     * @param left  left input channel
+     * @param right right input channel
+     * @param keyExtractor closure applied to items from both channels to derive the join key
+     * @param opts optional configuration map (reserved for future use: remainder, filter)
+     * @return channel emitting {@code [key, leftItem, rightItem]} tuples
+     */
     @Operator
     DataflowWriteChannel combineBy(
         DataflowReadChannel left,
@@ -222,6 +246,11 @@ class BidsExtension extends PluginExtensionPoint {
         return combineBy(left, right, keyExtractor, keyExtractor, opts)
     }
 
+    /**
+     * Called by the Nextflow plugin framework to inject the active session.
+     *
+     * @param session the current Nextflow session
+     */
     @Override
     protected void init(Session session) {
         this.session = session

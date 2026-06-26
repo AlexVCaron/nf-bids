@@ -1,0 +1,212 @@
+= Configuration Loading & Validation
+:navtitle: Configuration Loading & Validation
+
+[.lead]
+The YAML configuration file tells nf-bids _which_ BIDS suffixes to collect and _how_
+to group them.  This page documents `BidsConfigLoader`, `BidsConfigValidator`, and
+`BidsConfigAnalyzer`, then describes every config option in detail.
+
+== Loading — BidsConfigLoader
+
+[source,groovy]
+----
+package nfneuro.plugin.config
+
+@Slf4j
+@CompileStatic
+class BidsConfigLoader {
+    Map load(String configPath)     // load and validate from YAML file
+    Map loadDefaults()              // sensible defaults (no suffix configs)
+}
+----
+
+`load(configPath)` uses SnakeYAML to parse the file, then:
+
+. Rejects any config that contains a top-level key named `meta` (reserved by the flat
+  output format as the entity-metadata carrier).
+. Runs `BidsConfigValidator.validate(config)`.  If validation fails, the method throws
+  `IllegalArgumentException` with the full list of errors.
+. Logs any warnings (non-fatal issues) and the set of loaded keys.
+
+`loadDefaults()` returns a minimal map with `loop_over: [subject, session, run, task]`
+and is used when no config file is provided.  Validation is intentionally skipped
+because a defaults map contains no suffix configurations.
+
+== Validation — BidsConfigValidator
+
+`BidsConfigValidator.validate(Map config)` returns a `ValidationResult` with separate
+`errors` and `warnings` lists.
+
+=== Global keys
+
+`loop_over` is the only recognised global key.  Its value must be a `List`; anything
+else is an error.
+
+=== Per-suffix rules
+
+For every non-global key whose value is a `Map`:
+
+* Exactly one of `plain_set`, `named_set`, `sequential_set`, `mixed_set` must be
+  present.  Zero is an error; more than one is a warning (only the first is used).
+* `additional_extensions` must be a `List` if present.
+* `include_cross_modal` should be a `List` (warning if not).
+* `suffix_maps_to` must be a `String` if present.
+
+==== plain_set validation
+
+No required sub-fields; the `parts` sub-key is validated if present.
+
+==== named_set validation
+
+* At least one named group must be defined inside the `named_set` map.
+* Each group value must itself be a `Map` of entity patterns.
+* The `required` list (if present) must reference group names that exist in the
+  `named_set` definition.
+
+==== sequential_set validation
+
+* Must specify exactly one of `by_entity` (String) or `by_entities` (non-empty List).
+* `order` must be `"hierarchical"` or `"flat"` if present.
+* `order` is ignored (warning) when `by_entity` is used.
+
+==== mixed_set validation
+
+* Must declare `named_dimension` and `sequential_dimension`.
+* Each named group under `named_groups` must be a `Map`.
+* `required` follows the same rules as for `named_set`.
+
+== Analysis — BidsConfigAnalyzer
+
+After loading, `BidsConfigAnalyzer` scans the validated map to decide which handler
+classes are needed and to extract the `loop_over` entity list:
+
+[source,groovy]
+----
+Map analyzeConfiguration(Map config)
+// Returns: [hasNamedSets: bool, hasSequentialSets: bool,
+//           hasMixedSets: bool, hasPlainSets: bool]
+
+List<String> getLoopOverEntities(Map config)
+// Returns loop_over value, defaulting to [subject, session, run, task]
+
+Map getConfigurationSummary(Map config)
+// Returns counts and suffix lists for each set type
+----
+
+== Configuration file structure
+
+[source,yaml]
+----
+# Which BIDS entities define the outer grouping key (one item per channel emission)
+loop_over:
+  - subject
+  - session
+
+# Each top-level key (other than loop_over) names a "config key"
+# that becomes a top-level field in the flat output map.
+T1w:
+  plain_set: {}                     # no extra options needed for a simple plain set
+
+dwi_ap:
+  named_set:
+    ap: {direction: dir-AP}         # entity pattern for the AP direction
+    pa: {direction: dir-PA}
+  required: [ap, pa]               # both directions must exist or the group is dropped
+  additional_extensions: [.bval, .bvec]
+  suffix_maps_to: dwi              # the BIDS suffix is 'dwi', not 'dwi_ap'
+
+mese:
+  sequential_set:
+    by_entity: echo                 # vary over the 'echo' entity
+  additional_extensions: [.json]
+
+mpm:
+  mixed_set:
+    named_dimension: acquisition
+    sequential_dimension: echo
+    named_groups:
+      MTw: {acquisition: acq-MTw}
+      PDw: {acquisition: acq-PDw}
+      T1w: {acquisition: acq-T1w}
+  required: [MTw, PDw, T1w]
+----
+
+=== loop_over
+
+Defines the outer grouping.  Each unique combination of the listed BIDS entities
+produces one channel item.  Common values: `subject`, `session`, `run`, `task`.
+If omitted, defaults to `[subject, session, run, task]`.
+
+=== Set types
+
+[cols="1,3"]
+|===
+| Set type | When to use
+
+| `plain_set`
+| One file per suffix per grouping key, no discriminating entity (e.g. T1w, FLAIR).
+
+| `named_set`
+| Multiple named variants of the same suffix distinguished by an entity value
+  (e.g. DWI AP/PA encoded by `dir-AP` / `dir-PA`).
+
+| `sequential_set`
+| An ordered series that varies over a single entity (e.g. multi-echo MESE images).
+
+| `mixed_set`
+| Named groups each containing their own sequential series (e.g. MPM protocol).
+|===
+
+=== Global suffix options
+
+[cols="1,1,3"]
+|===
+| Option | Type | Description
+
+| `additional_extensions`
+| `List<String>`
+| Extra file extensions to collect alongside `.nii.gz` and `.json`
+  (e.g. `[.bval, .bvec]` for DWI).
+
+| `include_cross_modal`
+| `List<String>`
+| Suffixes whose data should be broadcast into this entry
+  (cross-modal broadcasting).
+
+| `exclude_entities`
+| `List<String>`
+| BIDS entity names to ignore when matching files (e.g. `[direction]`).
+
+| `suffix_maps_to`
+| `String`
+| When the config key differs from the BIDS suffix in the filename, use this
+  to declare the real suffix (e.g. config key `dwi_ap`, suffix `dwi`).
+
+| `required`
+| `List<String>`
+| Named-set and mixed-set only.  Groups that must be present; if any are missing
+  the entire item is dropped from the channel.
+|===
+
+=== Runtime options for Channel.fromBIDS
+
+[source,groovy]
+----
+Channel.fromBIDS(
+    params.bids_dir,
+    'config.yaml',
+    [
+        flatten_output: true,          // default; set false for legacy tuple format
+        libbids_sh: '/custom/path',    // override embedded libBIDS.sh location
+        validate: false,               // not yet implemented
+        validator_version: '...',      // not yet implemented
+        ignore_codes: '...'            // not yet implemented
+    ]
+)
+----
+
+== Related pages
+
+* xref:concepts/output-shaping.adoc[Output Shaping & Set Handling]
+* xref:concepts/bids-parsing.adoc[BIDS Parsing & Dataset Normalization]
+* xref:appendices/migration-bids.adoc[BIDS Migration Guide]

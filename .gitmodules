@@ -1,0 +1,3 @@
+[submodule "libBIDS.sh"]
+	path = libBIDS.sh
+	url = https://github.com/CoBrALab/libBIDS.sh.git

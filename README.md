@@ -14,6 +14,8 @@ A Nextflow plugin that provides:
 [![Tests](https://img.shields.io/badge/tests-100%2B%20passing-success)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)]()
 
+📖 **Full documentation:** https://nf-neuro.github.io/nf-bids
+
 ---
 
 ## ✨ What's New in 0.1.0-beta.10
@@ -206,22 +208,26 @@ subjects
 
 ## 📖 Documentation
 
-### For Users
+The full documentation is published at **https://nf-neuro.github.io/nf-bids** and covers:
 
-- **[Channel Operators Guide](docs/channel-operators.md)** - Complete reference for groupTupleBy, joinBy, combineBy
-- **[Performance Benchmark](docs/PERFORMANCE_BENCHMARK.md)** - ⚡ Performance comparison: closure-based vs built-in operators
-- **[Closure Migration Guide](docs/CLOSURE_MIGRATION_GUIDE.md)** - Migrate from index-based to closure-based operators
-- **[BIDS Migration Guide](docs/MIGRATION_GUIDE.md)** - Migrate from baseline bids2nf to plugin
-- **[Configuration Guide](docs/configuration.md)** - Configure BIDS parsing and grouping
-- **[Examples](docs/examples.md)** - Real-world usage examples
+| Topic | Site section |
+|-------|-------------|
+| Installation & quick start | [Installation Guide](https://nf-neuro.github.io/nf-bids/guides/installation.html) |
+| Architecture & data flow | [Architecture Overview](https://nf-neuro.github.io/nf-bids/architecture.html) |
+| Configuration YAML reference | [Configuration](https://nf-neuro.github.io/nf-bids/concepts/configuration.html) |
+| Output format (flat / legacy) | [Output Shaping](https://nf-neuro.github.io/nf-bids/concepts/output-shaping.html) |
+| Channel operators reference | [Channel Operators](https://nf-neuro.github.io/nf-bids/concepts/channel-operators.html) |
+| Migrate from bids2nf / older betas | [BIDS Migration Guide](https://nf-neuro.github.io/nf-bids/appendices/migration-bids.html) |
+| Migrate from index-based operators | [Closure Operators Migration](https://nf-neuro.github.io/nf-bids/appendices/migration-closure.html) |
+| API reference (GroovyDoc) | [API Reference](https://nf-neuro.github.io/nf-bids/api-reference.html) |
 
-### For Contributors
+For contributors:
 
-- **[Plugin Status](STATUS.md)** - Current status and validation results ✅
-- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the plugin
-- **[Development Setup](docs/development.md)** - Set up your development environment
-- **[Architecture Overview](docs/architecture.md)** - Understand the plugin architecture
-- **[Changelog](CHANGELOG.md)** - Development history and releases
+| Topic | Link |
+|-------|------|
+| Contributing guide | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Development setup | [docs/development.md](docs/development.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
 ---
 

@@ -1,0 +1,277 @@
+= Runtime Entry Path
+:navtitle: Runtime Entry Path
+
+[.lead]
+A step-by-step trace of what happens at runtime when a Nextflow workflow calls `Channel.fromBIDS()`.
+Every class name and method call cited here is verified against the actual source code.
+
+image::generated/sequence-frombids.svg[fromBIDS sequence]
+
+== Overview
+
+The execution path spans six layers:
+
+. *Plugin bootstrap* — pf4j loads `BidsPlugin`; Nextflow binds `BidsExtension` and `BidsFactory`.
+. *Channel factory* — `BidsExtension.fromBIDS()` delegates to `BidsChannelFactory`.
+. *Handler assembly* — `BidsChannelFactory` builds a `BidsHandler` using a fluent builder API.
+. *Async ignition* — `BidsHandler.ignite()` creates the output channel and schedules asynchronous execution.
+. *Parsing & grouping* — `BidsParser` → `LibBidsShWrapper` → `BidsCsvParser`, then the set handlers.
+. *Emission* — items flow through `validateAndEmitChannel()` onto the `DataflowWriteChannel`.
+
+== Step 1 — Plugin Bootstrap
+
+When Nextflow starts, pf4j scans the plugin JAR for the class declared in the plugin descriptor.
+For nf-bids that class is `nfneuro.plugin.BidsPlugin`, which extends `nextflow.plugin.BasePlugin` and provides no additional logic.
+
+In parallel, `BidsFactory` (implementing `TraceObserverFactory`) is discovered and its `create(Session)` method is called, registering a `BidsObserver` with the Nextflow trace system.
+`BidsObserver` prints a startup banner on `onFlowCreate` and a completion message on `onFlowComplete`; it carries no domain logic.
+
+Nextflow also discovers `BidsExtension` (extending `PluginExtensionPoint`) and calls its `init(Session)` method, storing the `Session` reference.
+This is the moment when `fromBIDS`, `groupTupleBy`, `joinBy`, and `combineBy` become available in workflow scripts.
+
+See xref:concepts/plugin-bootstrap.adoc[Plugin Bootstrap] for pf4j lifecycle details.
+
+== Step 2 — `BidsExtension.fromBIDS()`
+
+When a workflow script calls `Channel.fromBIDS(bidsDir, configPath, options)`, Nextflow routes the call to the `@Factory`-annotated `fromBIDS` method on `BidsExtension`:
+
+[source,groovy]
+----
+@Factory
+DataflowWriteChannel fromBIDS(
+    String bidsDir,
+    String configPath = null,
+    Map options = [:]
+) {
+    return new BidsChannelFactory(session).fromBIDS(bidsDir, configPath, options)
+        as DataflowWriteChannel
+}
+----
+
+`BidsExtension` immediately delegates to `BidsChannelFactory`, passing the captured `Session`.
+
+== Step 3 — `BidsChannelFactory.fromBIDS()` and Pre-flight Checks
+
+`BidsChannelFactory.fromBIDS()` performs three pre-flight validations before touching any BIDS data:
+
+. Confirms that `bidsDir` exists and is a directory.
+. If `configPath` is non-null, confirms the config file exists.
+. If `options.libbids_sh` is set, confirms that path also exists.
+
+Any failure throws an `IllegalArgumentException` with a descriptive message, aborting the pipeline before expensive I/O begins.
+
+NOTE: BIDS dataset validation via `BidsValidator` is commented out in this release.
+The code block exists but is guarded.
+`BidsValidator.validate()` is a stub that logs a warning and returns immediately — full integration is planned for v1.1.
+
+After pre-flight, `BidsChannelFactory` constructs a `BidsHandler` using a fluent builder:
+
+[source,groovy]
+----
+return new BidsHandler()
+    .withConfig(configPath)    // loads + analyzes config
+    .withBidsDir(bidsDir)
+    .withOpts(options)
+    .withParser(new BidsParser(session))
+    .ignite(session)
+----
+
+== Step 4 — `BidsHandler` Configuration Loading
+
+`withConfig(configPath)` calls `loadConfiguration(configPath)` which:
+
+. Constructs a `BidsConfigLoader` and calls `load(configPath)` → SnakeYAML parses the file, rejects the reserved key `meta`, then validates structure via `BidsConfigValidator`.
+. Calls `SuffixMapper.suffixMapping(config)` to build a `Map<setType, Map<configKey, actualSuffix>>` for heterogeneous configurations that use `suffix_maps_to`.
+. Constructs a `BidsConfigAnalyzer` and calls `analyzeConfiguration(config)` → returns a map of four boolean flags: `hasNamedSets`, `hasSequentialSets`, `hasMixedSets`, `hasPlainSets`.
+. Calls `getLoopOverEntities(config)` to extract the list of BIDS entities the channel will iterate over (e.g., `[subject, session]`).
+
+If `configPath` is `null`, a default empty configuration is used and all set-type flags are `false`.
+
+== Step 5 — `BidsHandler.ignite()` and Async Execution
+
+`ignite(Session)` creates the `DataflowWriteChannel` via `CH.create()`, then schedules execution:
+
+[source,groovy]
+----
+DataflowWriteChannel ignite(Session session) {
+    DataflowWriteChannel target = this.withTarget(CH.create()).target
+
+    if (NF.dsl2) {
+        session.addIgniter { -> this.perform(true) }
+    } else {
+        this.perform(true)
+    }
+
+    return target
+}
+----
+
+In DSL2 mode (the default since Nextflow 22.x), `addIgniter` defers execution until the workflow graph is fully assembled.
+`perform(true)` wraps `execute()` in a `CompletableFuture.runAsync` so that BIDS parsing runs on a background thread without blocking the Nextflow scheduler.
+Exceptions from the background thread are caught in `handlerException()`, which calls `Session.abort()` to propagate the error to Nextflow's error handling layer.
+
+== Step 6 — `BidsHandler.execute()` — Parsing Phase
+
+`execute()` calls `parser.parseToDataset(bidsDir, options.libbids_sh as String)`.
+
+=== `BidsParser.parseToDataset()`
+
+`BidsParser` is constructed with a `Session` reference and creates two collaborators:
+
+* `LibBidsShWrapper` — the bridge to the external bash parser.
+* `BidsCsvParser` — the CSV reader.
+
+`parseToDataset()` follows three steps:
+
+[source,groovy]
+----
+def csvFile = libBidsWrapper.parseBidsToCSV(bidsDir, libBidsShPath)
+def bidsFiles = csvParser.parse(csvFile)
+def dataset = new BidsDataset(bidsDir)
+bidsFiles.each { file -> dataset.addFile(file) }
+dataset.loadParticipants()
+----
+
+=== `LibBidsShWrapper.parseBidsToCSV()`
+
+This is the most complex step in the chain.
+The wrapper must locate the `libBIDS.sh` script, validate paths against a shell-metacharacter blocklist, and invoke the script safely.
+
+==== Script Discovery Order
+
+The wrapper follows a strict priority order (first match wins):
+
+[cols="1,3", options="header"]
+|===
+| Priority | Location
+
+| 1
+| Plugin installation directory: inspects the class URL to find `~/.nextflow/plugins/nf-bids-\{version}/lib/libBIDS.sh`
+
+| 2
+| `lib/libBIDS.sh` (relative to working directory)
+
+| 3
+| `libBIDS.sh/libBIDS.sh` (git submodule in current directory)
+
+| 4
+| `../libBIDS.sh/libBIDS.sh` (one level up)
+
+| 5
+| `../../libBIDS.sh/libBIDS.sh` (two levels up)
+
+| 6
+| `../../../libBIDS.sh/libBIDS.sh` (three levels up — covers the `validation/` subdirectory)
+
+| 7
+| `/usr/local/bin/libBIDS.sh` (system-wide install)
+
+| 8
+| `~/.local/bin/libBIDS.sh` (user-local install)
+
+| 9
+| `libBIDS.sh/libBIDS.sh` relative to `System.getProperty('user.dir')`
+|===
+
+If a caller passes `options.libbids_sh`, that explicit path skips discovery entirely and is validated directly.
+If no script is found after all probes, a `FileNotFoundException` is thrown with actionable suggestions (e.g., run `git submodule update --init`).
+
+See xref:dependencies/libbids-sh.adoc[The libBIDS.sh Dependency] for the full discussion of discovery and bundling.
+
+==== Path Validation and Execution
+
+Before running any command, both the script path and the BIDS directory path are validated against a shell-metacharacter blocklist (`;`, `&`, `|`, `$`, `` ` ``, `(`, `)`, `<`, `>`, `"`, `'`, `\`, newlines).
+This prevents command injection even if a malicious path is supplied.
+
+The command is built in array form to avoid shell string interpolation:
+
+[source,groovy]
+----
+['bash', '-c',
+ 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_csv "$2" > "$3"',
+ 'bash', scriptPath, bidsDir, outputFile.absolutePath]
+----
+
+The output CSV is written to a temporary file, which `BidsCsvParser` then reads.
+
+=== `BidsCsvParser.parse()`
+
+Reads the CSV header line (columns: `derivatives,data_type,subject,session,...,suffix,extension,path`) and converts each subsequent row into a `BidsFile` object.
+Each `BidsFile` holds the path, the BIDS suffix, and a list of `BidsEntity` key-value pairs.
+
+=== `BidsDataset` Assembly
+
+`BidsDataset` is constructed with the dataset path, which triggers loading of `dataset_description.json`.
+After files are added via `addFile()`, `loadParticipants()` reads `participants.tsv` if it exists.
+
+== Step 7 — `BidsHandler.execute()` — Grouping Phase
+
+After parsing, `execute()` calls two private methods:
+
+[source,groovy]
+----
+DataflowQueue results = processDatasets(
+    getBidsParentDir(), bidsFiles, config, configAnalysis, loopOverEntities)
+
+DataflowQueue finalResults = applyCrossModalBroadcasting(
+    results, config, loopOverEntities)
+----
+
+=== `processDatasets()` — Handler Routing
+
+This method reads the `configAnalysis` flags and instantiates the matching set handlers:
+
+[source,groovy]
+----
+if (analysis.hasNamedSets)      handlers << new NamedSetHandler()
+if (analysis.hasSequentialSets) handlers << new SequentialSetHandler()
+if (analysis.hasMixedSets)      handlers << new MixedSetHandler()
+if (analysis.hasPlainSets)      handlers << new PlainSetHandler()
+----
+
+Multiple handlers can be active simultaneously for a config file that mixes set types.
+Each handler's `process()` call receives the same `bidsFiles` list and `loopOverEntities`; handlers internally filter to their own suffixes.
+Results from all handlers are merged into a single `DataflowQueue`.
+
+Each handler groups `BidsFile` objects by the `loopOverEntities` key tuple, builds `BidsChannelData` accumulators, and emits `[groupingKey, BidsChannelData]` entries.
+
+=== `applyCrossModalBroadcasting()`
+
+Implements the demand-driven pattern where one set handler's output can be broadcast into the channel items of another.
+For example, a T1w anatomical image can be injected into every DWI subject entry when configured with `cross_modal_include`.
+
+== Step 8 — `validateAndEmitChannel()`
+
+Items from `finalResults` are consumed one at a time.
+If `options.flatten_output` is `true` (the default since beta.9), `flattenTupleToMap()` converts `[groupingKey, enrichedData]` into:
+
+[source,groovy]
+----
+[meta: [subject: 'sub-01', session: 'ses-01', ...],
+ T1w:  [nii: Path('/data/bids/.../sub-01_T1w.nii.gz'), json: Path(...)],
+ ...
+]
+----
+
+File paths are converted to `java.nio.file.Path` objects via `nextflow.file.FileHelper.asPath()`, which handles local files, S3 URIs, GCS URIs, and Azure Blob Storage URIs transparently.
+
+If `flatten_output` is `false`, the legacy `[groupingKey, enrichedData]` tuple is emitted directly.
+
+After all items are emitted, the channel is closed with `target << Channel.STOP`.
+If zero items were emitted, an `IllegalStateException` is thrown.
+
+== Operator Path — `groupTupleBy`, `joinBy`, `combineBy`
+
+These three operators follow a simpler path and are independent of the BIDS parsing pipeline.
+Each `@Operator` method on `BidsExtension` validates its closure arguments via `KeyExtractor.validateKeyExtractor()`, constructs the corresponding `*Op` object, and calls `apply()` which returns a new `DataflowWriteChannel`.
+
+The `*Op` classes use `DataflowHelper.subscribeImpl()` to consume the source channel reactively.
+`KeyExtractor.extractKey()` normalises list-valued keys to `CompositeKey` instances for correct hash-map equality semantics.
+
+== Related Pages
+
+* xref:source-model/index.adoc[Source Tree Map] — package table and responsibilities
+* xref:dependencies/libbids-sh.adoc[The libBIDS.sh Dependency] — discovery order and bundling
+* xref:concepts/bids-parsing.adoc[BIDS Parsing] — set-type semantics
+* xref:concepts/output-shaping.adoc[Output Shaping] — flat vs. legacy format
+* xref:concepts/channel-operators.adoc[Channel Operators] — operator API reference

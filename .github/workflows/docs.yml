@@ -1,0 +1,108 @@
+name: Documentation
+
+# Build the Antora documentation site (Antora + AsciiDoc + GroovyDoc + PlantUML)
+# and publish it to GitHub Pages.
+#
+# The build runs the EXACT same pipeline as a local `./gradlew docs`, only with
+# DOCS_STRICT=1 so that missing diagrams, broken xrefs, missing images, or a
+# missing API reference fail the workflow instead of shipping a broken site.
+#
+# Publish policy:
+#   - push to `main`            -> rebuild and deploy the live site
+#   - push of a `v*` release tag -> rebuild and deploy the release snapshot
+#   - pull_request              -> build + validate only (no deploy)
+#   - workflow_dispatch         -> manual rebuild/deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Least-privilege defaults; the build job needs only read access.
+permissions:
+  contents: read
+
+# Never run two deployments concurrently; let an in-progress run finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & validate docs site
+    runs-on: ubuntu-latest
+    # configure-pages (GET /repos/.../pages) needs the pages scope; the top-level
+    # `contents: read` otherwise sets every unlisted scope to `none`.
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Checkout (with libBIDS.sh submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: documentation/package-lock.json
+
+      - name: Install Graphviz (PlantUML class/package diagrams)
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Install Antora toolchain
+        working-directory: documentation
+        run: npm ci --no-audit --no-fund
+
+      - name: Configure GitHub Pages
+        # Only needed when we intend to deploy; provides the canonical base URL.
+        if: github.event_name != 'pull_request'
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build documentation site
+        env:
+          # Hard-fail on missing diagrams / broken links / missing API ref.
+          DOCS_STRICT: '1'
+          # Inject the real Pages URL on deploy builds; empty on PRs (Antora
+          # then keeps the playbook default, which is fine for validation).
+          DOCS_SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: ./gradlew --no-daemon docs
+
+      - name: Verify generated artifacts are present
+        run: bash documentation/bin/verify-site.sh
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: documentation/build/site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    # Never deploy from pull requests; only from main / tags / manual runs.
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
