@@ -195,9 +195,9 @@ Channel.fromBIDS(dir, config)
 
 === 0.1.0-beta.5 — combineBy redesign
 
-`combineBy` now always emits `[key, leftItem, rightItem]` — it no longer drops the key.
-Code that destructured the output as `{ left, right -> ... }` must become
-`{ key, left, right -> ... }`.
+`combineBy` now emits fused combined items and does not include the matching key in the
+output payload. Code that destructured output as `{ key, left, right -> ... }` must
+consume a single fused item, for example `{ fused -> ... }`.
 
 Also in beta.5: all file paths switched to `java.nio.file.Path`.  String paths from
 earlier versions no longer work directly as Nextflow process inputs.

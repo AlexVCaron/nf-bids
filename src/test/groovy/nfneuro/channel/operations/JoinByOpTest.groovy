@@ -35,6 +35,12 @@ import groovyx.gpars.dataflow.DataflowQueue
  */
 class JoinByOpTest extends Specification {
 
+    private static Object fuse(Object left, Object right) {
+        def method = JoinByOp.getDeclaredMethod('fuseItems', Object, Object)
+        method.accessible = true
+        return method.invoke(null, left, right)
+    }
+
     def 'should create operator instance'() {
         given:
         def left = Channel.of([id: 'A'])
@@ -157,6 +163,16 @@ class JoinByOpTest extends Specification {
         opWithRemainder.@opts.remainder == true
         opWithoutRemainder.@opts.remainder == false
         opDefault.@opts.remainder == null  // Default handled in checkCompletion
+    }
+
+    def 'should fuse maps by merging and dropping join key from output payload'() {
+        expect:
+        fuse([id: 'sub-01', age: 25], [id: 'sub-01', session: 'ses-01']) == [id: 'sub-01', age: 25, session: 'ses-01']
+    }
+
+    def 'should fuse lists by concatenation'() {
+        expect:
+        fuse(['sub-01', 'anat'], ['ses-01', 'run-1']) == ['sub-01', 'anat', 'ses-01', 'run-1']
     }
 
 }

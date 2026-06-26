@@ -57,7 +57,7 @@ and parameter descriptions.
 | Groups channel items by a closure-extracted key; emits `[key, [items]]` tuples.
 
 | `JoinByOp`
-| Inner-joins two channels by closure-extracted keys; emits `[key, leftItem, rightItem]` tuples.
+| Inner-joins two channels by closure-extracted keys; emits fused items (no key in payload).
 
 | `CombineByOp`
 | Produces the cartesian product of left × right items within each matching key group.
@@ -221,7 +221,7 @@ channel.joinBy(
 )
 ----
 Inner join by default; set `opts.remainder = true` for an outer join that
-emits unmatched items with `null` partner.  Emits `[key, leftItem, rightItem]`.
+emits unmatched items with `null` partner. Emits fused items (key omitted).
 
 | `combineBy`
 a|
@@ -240,7 +240,7 @@ channel.combineBy(
 ----
 Produces the full cartesian product of left × right items within each
 matched key group.  Unmatched keys are silently dropped (inner semantics).
-Emits `[key, leftItem, rightItem]`.
+Emits fused items (key omitted).
 |===
 
 See xref:concepts/channel-operators.adoc[Channel Operators] for worked examples

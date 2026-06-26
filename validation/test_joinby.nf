@@ -17,20 +17,20 @@ workflow {
     println "\nTest 1: Basic join with same key extractor\n"
     
     anatomical = channel.of(
-        [subject: 'sub-01', type: 'T1w', file: 't1.nii'],
-        [subject: 'sub-02', type: 'T1w', file: 't1.nii']
+        [subject: 'sub-01', anat_file: 't1.nii'],
+        [subject: 'sub-02', anat_file: 't1.nii']
     )
     
     functional = channel.of(
-        [subject: 'sub-01', type: 'bold', file: 'bold.nii'],
-        [subject: 'sub-02', type: 'bold', file: 'bold.nii']
+        [subject: 'sub-01', bold_file: 'bold.nii'],
+        [subject: 'sub-02', bold_file: 'bold.nii']
     )
     
     anatomical
         .joinBy(functional) { it.subject }
-        .map { key, left, right -> 
-            println "  Joined: ${key} -> T1w + bold"
-            [subject: key, t1: left.file, bold: right.file]
+        .map { fused ->
+            println "  Joined: ${fused.subject} -> T1w + bold"
+            [subject: fused.subject, t1: fused.anat_file, bold: fused.bold_file]
         }
         .collect()
     
@@ -48,49 +48,49 @@ workflow {
     
     subjects
         .joinBy(participants, { it.id }, { it.participant_id })
-        .map { key, left, right ->
-            println "  Joined: ${key} (${left.id} with ${right.participant_id})"
-            [id: key, data: left.data, info: right.info]
+        .map { fused ->
+            println "  Joined: id=${fused.id}, participant_id=${fused.participant_id}"
+            [id: fused.id, data: fused.data, info: fused.info]
         }
         .collect()
     
     println "\nTest 3: Join with nested field extraction\n"
     
     images = channel.of(
-        [meta: [sub: '01', ses: '01'], file: 'img.nii'],
-        [meta: [sub: '02', ses: '01'], file: 'img.nii']
+        [meta: [sub: '01', ses: '01'], image_file: 'img.nii'],
+        [meta: [sub: '02', ses: '01'], image_file: 'img.nii']
     )
     
     masks = channel.of(
-        [meta: [sub: '01', ses: '01'], file: 'mask.nii'],
-        [meta: [sub: '02', ses: '01'], file: 'mask.nii']
+        [meta: [sub: '01', ses: '01'], mask_file: 'mask.nii'],
+        [meta: [sub: '02', ses: '01'], mask_file: 'mask.nii']
     )
     
     images
         .joinBy(masks) { it.meta.sub }
-        .map { key, img, mask ->
-            println "  Joined: sub-${key} -> ${img.file} + ${mask.file}"
-            [subject: key, image: img.file, mask: mask.file]
+        .map { fused ->
+            println "  Joined: sub-${fused.meta.sub} -> ${fused.image_file} + ${fused.mask_file}"
+            [subject: fused.meta.sub, image: fused.image_file, mask: fused.mask_file]
         }
         .collect()
     
     println "\nTest 4: Join with composite key\n"
     
     runs1 = channel.of(
-        [subject: 'sub-01', session: 'ses-01', run: 1, type: 'anat'],
-        [subject: 'sub-01', session: 'ses-02', run: 1, type: 'anat']
+        [subject: 'sub-01', session: 'ses-01', run: 1, anat_type: 'anat'],
+        [subject: 'sub-01', session: 'ses-02', run: 1, anat_type: 'anat']
     )
     
     runs2 = channel.of(
-        [subject: 'sub-01', session: 'ses-01', run: 1, type: 'func'],
-        [subject: 'sub-01', session: 'ses-02', run: 1, type: 'func']
+        [subject: 'sub-01', session: 'ses-01', run: 1, func_type: 'func'],
+        [subject: 'sub-01', session: 'ses-02', run: 1, func_type: 'func']
     )
     
     runs1
         .joinBy(runs2) { [it.subject, it.session] }
-        .map { key, anat, func ->
-            println "  Joined: ${key} -> ${anat.type} + ${func.type}"
-            [subject: anat.subject, session: anat.session, anat: anat.type, func: func.type]
+        .map { fused ->
+            println "  Joined: [${fused.subject}, ${fused.session}] -> ${fused.anat_type} + ${fused.func_type}"
+            [subject: fused.subject, session: fused.session, anat: fused.anat_type, func: fused.func_type]
         }
         .collect()
     
@@ -110,9 +110,9 @@ workflow {
     
     left
         .joinBy(right, { it.id }, [remainder: false])
-        .map { key, l, r ->
-            println "  Matched: ${key} -> val=${l.val}, data=${r.data}"
-            [id: key, val: l.val, data: r.data]
+        .map { fused ->
+            println "  Matched: ${fused.id} -> val=${fused.val}, data=${fused.data}"
+            [id: fused.id, val: fused.val, data: fused.data]
         }
         .collect()
     
@@ -132,13 +132,13 @@ workflow {
     
     left2
         .joinBy(right2, { it.id }, [remainder: true])
-        .map { key, l, r ->
-            def leftId = l?.id ?: 'null'
-            def rightId = r?.id ?: 'null'
-            def val = l?.val ?: 'null'
-            def data = r?.data ?: 'null'
-            println "  Result: key=${key}, left=${leftId}, right=${rightId}, val=${val}, data=${data}"
-            [key: key, left_id: leftId, right_id: rightId, val: val, data: data]
+        .map { fused ->
+            def leftId = fused.containsKey('val') ? fused.id : 'null'
+            def rightId = fused.containsKey('data') ? fused.id : 'null'
+            def val = fused.containsKey('val') ? fused.val : 'null'
+            def data = fused.containsKey('data') ? fused.data : 'null'
+            println "  Result: id=${fused.id}, left=${leftId}, right=${rightId}, val=${val}, data=${data}"
+            [id: fused.id, left_id: leftId, right_id: rightId, val: val, data: data]
         }
         .collect()
     

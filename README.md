@@ -184,7 +184,7 @@ anatomical
 ```
 
 **`combineBy(rightChannel, leftKeyExtractor, [rightKeyExtractor], [options])`**  
-Combine channels by extracting keys from left/right items and emitting `[key, leftItem, rightItem]` tuples. Items are matched by key, with cartesian product within each key group.
+Combine channels by extracting keys from left/right items and emitting fused items (without the key). Items are matched by key, with cartesian product within each key group.
 
 ```groovy
 // Match subjects with their sessions by subject ID
@@ -195,13 +195,13 @@ sessions = Channel.of([id: 'sub-01', session: 'ses-01'],
 
 subjects
     .combineBy(sessions, { it.id })
-    .filter { key, subj, sess ->
+    .filter { fused ->
         // Custom filtering logic
-        subj.age >= 18
+        fused.age >= 18
     }
-// Produces: [sub-01, [id:sub-01, age:25], [id:sub-01, session:ses-01]]
-//           [sub-01, [id:sub-01, age:25], [id:sub-01, session:ses-02]]
-//           [sub-02, [id:sub-02, age:30], [id:sub-02, session:ses-01]]
+// Produces: [id:sub-01, age:25, session:ses-01]
+//           [id:sub-01, age:25, session:ses-02]
+//           [id:sub-02, age:30, session:ses-01]
 ```
 
 **See:** [Channel Operators Documentation](https://nf-neuro.github.io/nf-bids/concepts/channel-operators.html) for complete reference

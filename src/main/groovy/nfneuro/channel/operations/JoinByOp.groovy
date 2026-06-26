@@ -144,7 +144,7 @@ class JoinByOp {
             if (rightItems) {
                 // Emit cartesian product of left item with all matching right items
                 rightItems.each { rightItem ->
-                    target.bind([key, item, rightItem])
+                    target.bind(fuseItems(item, rightItem))
                 }
                 matchedKeys.add(key)
             }
@@ -175,7 +175,7 @@ class JoinByOp {
             if (leftItems) {
                 // Emit cartesian product of right item with all matching left items
                 leftItems.each { leftItem ->
-                    target.bind([key, leftItem, item])
+                    target.bind(fuseItems(leftItem, item))
                 }
                 matchedKeys.add(key)
             }
@@ -231,7 +231,7 @@ class JoinByOp {
         leftBuffer.each { key, items ->
             if (!matchedKeys.contains(key)) {
                 items.each { leftItem ->
-                    target.bind([key, leftItem, null])
+                    target.bind(fuseItems(leftItem, null))
                 }
             }
         }
@@ -240,10 +240,34 @@ class JoinByOp {
         rightBuffer.each { key, items ->
             if (!matchedKeys.contains(key)) {
                 items.each { rightItem ->
-                    target.bind([key, null, rightItem])
+                    target.bind(fuseItems(null, rightItem))
                 }
             }
         }
+    }
+
+    /**
+     * Fuse two matched items into a single emission payload.
+     * - Map + Map -> merged map (right-side values take precedence on key collisions)
+     * - List + List -> concatenated list
+     * - Otherwise -> 2-item list [left, right]
+     */
+    private static Object fuseItems(Object leftItem, Object rightItem) {
+        if (leftItem == null) {
+            return rightItem
+        }
+        if (rightItem == null) {
+            return leftItem
+        }
+        if (leftItem instanceof Map && rightItem instanceof Map) {
+            return new LinkedHashMap((Map)leftItem) + (Map)rightItem
+        }
+        if (leftItem instanceof List && rightItem instanceof List) {
+            List<Object> fused = new ArrayList<>((List)leftItem)
+            fused.addAll((List)rightItem)
+            return fused
+        }
+        return [leftItem, rightItem]
     }
 
 }

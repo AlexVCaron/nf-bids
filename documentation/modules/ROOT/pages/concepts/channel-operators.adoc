@@ -122,7 +122,7 @@ When a single `keyExtractor` is supplied it is applied to items from both channe
 
 === Output
 
-Emits `[key, leftItem, rightItem]` tuples for every matching pair.
+Emits fused joined items for every matching pair (the join key is not emitted).
 
 === Options
 
@@ -149,15 +149,14 @@ Emits `[key, leftItem, rightItem]` tuples for every matching pair.
 .Join anatomical and functional by subject
 [source,groovy]
 ----
-anatomical = Channel.of([subject: 'sub-01', file: 't1.nii'],
-                        [subject: 'sub-02', file: 't1.nii'])
-functional = Channel.of([subject: 'sub-01', file: 'bold.nii'],
-                        [subject: 'sub-02', file: 'bold.nii'])
+anatomical = Channel.of([subject: 'sub-01', t1: 't1.nii'],
+                        [subject: 'sub-02', t1: 't1.nii'])
+functional = Channel.of([subject: 'sub-01', bold: 'bold.nii'],
+                        [subject: 'sub-02', bold: 'bold.nii'])
 
 anatomical.joinBy(functional) { it.subject }
-// → ['sub-01', [subject:'sub-01', file:'t1.nii'],
-//              [subject:'sub-01', file:'bold.nii']]
-//   ['sub-02', ...]
+// → [subject:'sub-01', t1:'t1.nii', bold:'bold.nii']
+//   [subject:'sub-02', ...]
 ----
 
 .Different key fields on each channel
@@ -172,7 +171,7 @@ scans.joinBy(metadata,
 [source,groovy]
 ----
 left.joinBy(right, { it.id }, [remainder: true])
-// Unmatched items emitted as [key, item, null] or [key, null, item]
+// Unmatched items emit the available side as-is
 ----
 
 == combineBy
@@ -188,7 +187,7 @@ left.combineBy(DataflowReadChannel right, Closure leftKey, Closure rightKey, Map
 
 === Output
 
-Emits `[key, leftItem, rightItem]` tuples — the full _cartesian product_ of matching
+Emits fused combined items (without keys) — the full _cartesian product_ of matching
 items within each key group (inner join with product).
 
 === Examples
@@ -202,9 +201,9 @@ sessions = Channel.of([id: 'sub-01', session: 'ses-01'],
                       [id: 'sub-02', session: 'ses-01'])
 
 subjects.combineBy(sessions, { it.id })
-// → ['sub-01', [id:'sub-01', age:25], [id:'sub-01', session:'ses-01']]
-//   ['sub-01', [id:'sub-01', age:25], [id:'sub-01', session:'ses-02']]
-//   ['sub-02', [id:'sub-02', age:30], [id:'sub-02', session:'ses-01']]
+// → [id:'sub-01', age:25, session:'ses-01']
+//   [id:'sub-01', age:25, session:'ses-02']
+//   [id:'sub-02', age:30, session:'ses-01']
 ----
 
 .Filter after combining
@@ -212,7 +211,7 @@ subjects.combineBy(sessions, { it.id })
 ----
 subjects
     .combineBy(sessions, { it.id })
-    .filter { key, subj, sess -> subj.age >= 18 }
+    .filter { fused -> fused.age >= 18 }
 ----
 
 == CompositeKey and KeyExtractor
