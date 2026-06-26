@@ -357,7 +357,7 @@ class BidsHandler {
             return
         }
 
-        Map<String, String> normalizedMeta = normalizeEntityMap(meta as Map<String, Object>)
+        Map<String, String> normalizedMeta = normalizeEntityMap(meta)
         List<String> normalizedLoopEntities = (loopOverEntities ?: [])
             .collect { name -> BidsEntity.normalizeName(name) }
             .unique() as List<String>
@@ -367,7 +367,7 @@ class BidsHandler {
         List<Integer> bestPriority = []
 
         participantsMetadata.eachWithIndex { Map<String, String> row, int rowIndex ->
-            Map<String, String> normalizedRow = normalizeEntityMap(row as Map<String, Object>)
+            Map<String, String> normalizedRow = normalizeEntityMap(row)
             List<String> candidateKeys = normalizedLoopEntities.findAll { String entity ->
                 normalizedMeta.containsKey(entity) && normalizedRow.containsKey(entity)
             } as List<String>
@@ -411,7 +411,7 @@ class BidsHandler {
 
         // Deterministic order when ambiguous
         List<Map<String, Object>> sortedRows = matchedRows.sort { Map<String, Object> a, Map<String, Object> b ->
-            return ((a.rowIndex as Integer) <=> (b.rowIndex as Integer))
+            (a.rowIndex as Integer) <=> (b.rowIndex as Integer)
         }
 
         Map<String, String> mergedParticipantValues = [:]
@@ -456,10 +456,10 @@ class BidsHandler {
         }
     }
 
-    private Map<String, String> normalizeEntityMap(Map<String, Object> values) {
+    private Map<String, String> normalizeEntityMap(Map values) {
         Map<String, String> normalized = [:]
-        values.each { String rawKey, Object rawValue ->
-            String entityKey = normalizeEntityKey(rawKey)
+        values.each { rawKey, rawValue ->
+            String entityKey = normalizeEntityKey(rawKey?.toString())
             if (!entityKey) {
                 return
             }
@@ -533,7 +533,7 @@ class BidsHandler {
 
     private int comparePriority(List<Integer> left, List<Integer> right) {
         if (right == null || right.isEmpty()) {
-            return left && !left.isEmpty() ? 1 : 0
+            return (left && !left.isEmpty()) ? 1 : 0
         }
 
         int size = Math.max(left?.size() ?: 0, right.size())
