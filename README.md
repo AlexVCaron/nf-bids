@@ -154,6 +154,7 @@ Load and parse a BIDS dataset into a Nextflow channel.
 |`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|
 |`options.ignore_codes`|`path-like`|(Not implemented) [BIDS Validator](https://github.com/bids-standard/bids-validator) error codes to ignore.|
 |`options.flatten_output`|`boolean`|When `true` (default in 0.1.0-beta.9+), emit flattened maps with `meta` and top-level config keys; when `false`, emit legacy `[groupingKey, enrichedData]` tuples.|
+|`options.unpack_json_sidecar`|`boolean`|When `true` (default `false`), parse `.json` sidecars and emit their JSON object content as maps instead of file paths.|
 
 #### Closure-Based Channel Operators
 

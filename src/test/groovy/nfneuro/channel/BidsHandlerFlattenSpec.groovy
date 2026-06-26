@@ -173,4 +173,87 @@ class BidsHandlerFlattenSpec extends Specification {
         emitted.meta.task == 'rest'
     }
 
+    def 'should unpack json sidecar to map when option enabled in flattened output'() {
+        given:
+        def tempDir = File.createTempDir('nf-bids', 'json-unpack')
+        def jsonFile = new File(tempDir, 'anat/sub-01_T1w.json')
+        jsonFile.parentFile.mkdirs()
+        jsonFile.text = '{"RepetitionTime": 2.0, "TaskName": "rest"}'
+
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject']
+        handler.withTarget(CH.create())
+        handler.withOpts([unpack_json_sidecar: true])
+
+        def results = new DataflowQueue()
+        def groupingKey = ['sub-01']
+        def enrichedData = [
+            data: [
+                T1w: [
+                    nii : 'anat/sub-01_T1w.nii.gz',
+                    json: 'anat/sub-01_T1w.json'
+                ]
+            ],
+            bidsParentDir: tempDir.absolutePath
+        ]
+        results << [groupingKey, enrichedData]
+
+        when:
+        def method = handler.getClass().getDeclaredMethod('validateAndEmitChannel', DataflowQueue)
+        method.setAccessible(true)
+        method.invoke(handler, results)
+
+        then:
+        def emitted = handler.@target.val
+        emitted.T1w.nii instanceof java.nio.file.Path
+        emitted.T1w.json instanceof Map
+        emitted.T1w.json.RepetitionTime == 2.0
+        emitted.T1w.json.TaskName == 'rest'
+
+        cleanup:
+        tempDir.deleteDir()
+    }
+
+    def 'should unpack json sidecar to map when option enabled in legacy output'() {
+        given:
+        def tempDir = File.createTempDir('nf-bids', 'json-legacy')
+        def jsonFile = new File(tempDir, 'anat/sub-01_T1w.json')
+        jsonFile.parentFile.mkdirs()
+        jsonFile.text = '{"EchoTime": 0.003}'
+
+        def handler = new BidsHandler()
+        handler.loopOverEntities = ['subject']
+        handler.withTarget(CH.create())
+        handler.withOpts([flatten_output: false, unpack_json_sidecar: true])
+
+        def results = new DataflowQueue()
+        def groupingKey = ['sub-01']
+        def enrichedData = [
+            data: [
+                T1w: [
+                    nii : 'anat/sub-01_T1w.nii.gz',
+                    json: 'anat/sub-01_T1w.json'
+                ]
+            ],
+            bidsParentDir: tempDir.absolutePath,
+            subject: 'sub-01'
+        ]
+        results << [groupingKey, enrichedData]
+
+        when:
+        def method = handler.getClass().getDeclaredMethod('validateAndEmitChannel', DataflowQueue)
+        method.setAccessible(true)
+        method.invoke(handler, results)
+
+        then:
+        def emitted = handler.@target.val
+        emitted instanceof List
+        emitted[1].data.T1w.nii == 'anat/sub-01_T1w.nii.gz'
+        emitted[1].data.T1w.json instanceof Map
+        emitted[1].data.T1w.json.EchoTime == 0.003
+
+        cleanup:
+        tempDir.deleteDir()
+    }
+
 }
