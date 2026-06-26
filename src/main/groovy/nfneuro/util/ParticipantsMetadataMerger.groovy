@@ -69,7 +69,7 @@ class ParticipantsMetadataMerger {
         if (matchedRows.size() > 1) {
             BidsLogger.logProgress(
                 "nf-bids-handler",
-                "├─ Warning: multiple participants.tsv rows matched equally for meta ${meta}. Using deterministic merge order."
+                "├─ Warning: multiple participants.tsv rows matched equally for meta ${meta}. Using deterministic merge order by participants.tsv row index."
             )
         }
 
@@ -81,6 +81,7 @@ class ParticipantsMetadataMerger {
         sortedRows.each { Map<String, Object> match ->
             Map<String, String> row = match.row as Map<String, String>
             List<String> candidateKeys = match.candidateKeys as List<String>
+            int rowIndex = match.rowIndex as Integer
 
             row.each { String rawKey, String rawValue ->
                 String trimmedValue = rawValue?.trim()
@@ -96,7 +97,7 @@ class ParticipantsMetadataMerger {
                 if (mergedParticipantValues.containsKey(rawKey) && mergedParticipantValues[rawKey] != trimmedValue) {
                     BidsLogger.logProgress(
                         "nf-bids-handler",
-                        "├─ Warning: conflicting participants.tsv values for '${rawKey}' (${mergedParticipantValues[rawKey]} vs ${trimmedValue}); keeping first value."
+                        "├─ Warning: conflicting participants.tsv values for '${rawKey}' at row ${rowIndex} (${mergedParticipantValues[rawKey]} vs ${trimmedValue}); keeping first value."
                     )
                     return
                 }
@@ -108,7 +109,7 @@ class ParticipantsMetadataMerger {
             if (meta.containsKey(key) && meta[key] != value) {
                 BidsLogger.logProgress(
                     "nf-bids-handler",
-                    "├─ Warning: participants.tsv key '${key}' conflicts with existing meta value '${meta[key]}'; keeping existing value."
+                    "├─ Warning: participants.tsv key '${key}' value '${value}' conflicts with existing meta value '${meta[key]}'; keeping existing value."
                 )
                 return
             }
