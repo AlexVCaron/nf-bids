@@ -107,7 +107,7 @@ For full installation and first-run instructions see xref:guides/installation.ad
 | GroovyDoc reference generated from source docstrings.
 
 | xref:guides/installation.adoc[Guides]
-| Installation, testing, and release procedures.
+| Installation, workflow examples, contributor setup, testing, and release procedures.
 
 | *Appendices*
 |

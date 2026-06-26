@@ -1,0 +1,94 @@
+= Development Guide
+:navtitle: Development Guide
+
+[.lead]
+Contributor-oriented setup and day-to-day commands for working on nf-bids. This
+page replaces the legacy Markdown development notes from the retired `docs/`
+directory with pointers to the current Antora guides that reflect the
+repository's actual build, test, and documentation flow.
+
+== First-time setup
+
+Start with xref:guides/installation.adoc#path-b-local-development-installation-build-from-source[local development installation]
+for cloning, submodule initialisation, assembly, and local plugin installation.
+That guide also covers prerequisite versions for Java, Nextflow, Node.js, npm,
+and Graphviz.
+
+For documentation-specific tooling, see
+xref:maintenance/contributing-docs.adoc[Contributing to the Documentation].
+
+== Project map
+
+The source tree is documented in detail in
+xref:source-model/index.adoc[Source Tree Map]. The most important contributor
+areas are:
+
+[cols="1,3",options="header"]
+|===
+| Path | Role
+| `src/main/groovy/nfneuro/` | Plugin implementation: channel factory, config loading, parsing, grouping, operators, utilities
+| `src/test/groovy/nfneuro/` | Unit tests (Spock / JUnit)
+| `validation/` | Integration, regression, edge-case, and benchmark workflows
+| `documentation/` | Antora site source, build scripts, diagrams, and UI overrides
+| `libBIDS.sh/` | Vendored parser submodule used at runtime
+|===
+
+== Daily command set
+
+From the repository root:
+
+[source,bash]
+----
+./gradlew assemble      # compile and package the plugin
+./gradlew test          # run unit tests
+nf-test test validation/  # run integration / validation suites
+./gradlew install       # install into the local Nextflow plugin cache
+./gradlew docs          # build the Antora documentation site
+----
+
+Equivalent convenience targets exist in `Makefile` for `assemble`, `test`,
+`install`, `docs`, and `docs-serve`.
+
+== Testing workflow
+
+Use the xref:guides/testing.adoc[Testing Guide] as the authoritative reference.
+In practice, contributors usually work in this order:
+
+. Run `./gradlew test` for fast feedback on unit-level changes.
+. Run targeted `nf-test` suites while iterating on behaviour.
+. Run `nf-test test validation/` before merging behaviour changes.
+. Rebuild docs with `./gradlew docs` when public APIs, diagrams, or docs change.
+
+The testing guide also documents snapshot updates, edge-case workflows, and
+benchmark expectations.
+
+== Documentation responsibilities
+
+Any public API, runtime behaviour, release step, or validation change should be
+mirrored in the relevant Antora page during the same pull request.
+
+Use these pages as your documentation maintenance checklist:
+
+* xref:maintenance/contributing-docs.adoc[Contributing to the Documentation]
+* xref:maintenance/qa-checklist.adoc[Documentation QA Checklist]
+* xref:guides/release.adoc[Release Guide]
+
+== Debugging and inspection
+
+Useful places to inspect while iterating:
+
+* `build/reports/tests/test/index.html` — unit-test report output.
+* `.nf-test/` — nf-test work directory and logs.
+* `documentation/build/site/` — rendered Antora site after `./gradlew docs`.
+* `build/libs/` — assembled plugin JARs.
+
+When a documentation build fails, check both the Gradle task output and the
+helper scripts in `documentation/bin/`.
+
+== Related pages
+
+* xref:guides/installation.adoc[Installation Guide]
+* xref:guides/testing.adoc[Testing Guide]
+* xref:guides/release.adoc[Release Guide]
+* xref:source-model/index.adoc[Source Tree Map]
+* xref:maintenance/contributing-docs.adoc[Contributing to the Documentation]
