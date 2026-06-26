@@ -123,7 +123,7 @@ Channel.fromBIDS(
 .view()
 ```
 
-See [examples.md](docs/examples.md) for more usage patterns.
+See [Workflow Examples](https://nf-neuro.github.io/nf-bids/guides/examples.html) for more usage patterns.
 
 ---
 
