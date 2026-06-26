@@ -287,8 +287,8 @@ Channel.of([subject: 'sub-01', file: 'file1'], [subject: 'sub-01', file: 'file2'
   - 8 smoke tests + 7 integration tests + 9 edge case tests
   - Performance: **39% faster** than standard combine
 - ✅ Documentation
-  - Complete API docs: `docs/channel-operators.md` (1,322 lines)
-  - Migration guide: `docs/CLOSURE_MIGRATION_GUIDE.md` (850+ lines)
+  - Complete API docs: Antora channel-operator chapter (`documentation/modules/ROOT/pages/concepts/channel-operators.adoc`)
+  - Migration guide: Antora closure migration appendix (`documentation/modules/ROOT/pages/appendices/migration-closure.adoc`)
   - README examples
   - Performance benchmark report: `validation/benchmark/BENCHMARK_RESULTS.md`
 - ✅ Testing

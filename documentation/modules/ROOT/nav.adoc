@@ -23,6 +23,8 @@
 
 .Guides
 * xref:guides/installation.adoc[Installation]
+* xref:guides/examples.adoc[Workflow Examples]
+* xref:guides/development.adoc[Development]
 * xref:guides/testing.adoc[Testing]
 * xref:guides/release.adoc[Release]
 

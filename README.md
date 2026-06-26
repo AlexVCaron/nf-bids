@@ -25,7 +25,7 @@ A Nextflow plugin that provides:
 - 📦 **Type Safety**: All file paths are `java.nio.file.Path` objects, ready for process inputs
 - 🚀 **Better Performance**: Optimized suffix mapping with candidate matching
 
-**⚠️ Breaking Change:** The output format has changed. See [Migration Guide](docs/MIGRATION_GUIDE.md) for upgrade instructions.
+**⚠️ Breaking Change:** The output format has changed. See [Migration Guide](https://nf-neuro.github.io/nf-bids/appendices/migration-bids.html) for upgrade instructions.
 
 ---
 
@@ -148,7 +148,7 @@ Load and parse a BIDS dataset into a Nextflow channel.
 |Parameter|Type|Description|
 |-|-|-|
 |`bids_dir`|`path-like`|Directory containing a valid [BIDS](https://bids-specification.readthedocs.io/en/stable/) input dataset.|
-|`config`|`path-like`|Path to a `yaml` configuration file for entity parsing. See [configuration](docs/configuration.md).|
+|`config`|`path-like`|Path to a `yaml` configuration file for entity parsing. See [Configuration](https://nf-neuro.github.io/nf-bids/concepts/configuration.html).|
 |`options.libbids_sh`|`path-like`|(Optional) Path to an alternative [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh) parsing script.|
 |`options.validate`|`boolean`|(Not implemented) Run the [BIDS Validator](https://github.com/bids-standard/bids-validator) on the input dataset before parsing.|
 |`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|
@@ -203,7 +203,7 @@ subjects
 //           [sub-02, [id:sub-02, age:30], [id:sub-02, session:ses-01]]
 ```
 
-**See:** [Channel Operators Documentation](docs/channel-operators.md) for complete reference
+**See:** [Channel Operators Documentation](https://nf-neuro.github.io/nf-bids/concepts/channel-operators.html) for complete reference
 
 ---
 
@@ -227,7 +227,8 @@ For contributors:
 | Topic | Link |
 |-------|------|
 | Contributing guide | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Development setup | [docs/development.md](docs/development.md) |
+| Development setup | [Development Guide](https://nf-neuro.github.io/nf-bids/guides/development.html) |
+| Workflow examples | [Workflow Examples](https://nf-neuro.github.io/nf-bids/guides/examples.html) |
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 
 ---
@@ -246,7 +247,7 @@ For contributors:
 ✅ **Flexible Joins** - `joinBy(right, { it.key })` with any data structure  
 ✅ **Key-Based Combinations** - `combineBy(right, { it.id })` with cartesian products  
 ✅ **Composite Keys** - `groupTupleBy { "${it.subject}_${it.session}" }` without extra steps  
-✅ **Competitive Performance** - ~10-30ms overhead, sub-200ms for typical BIDS workflows ([benchmark](docs/PERFORMANCE_BENCHMARK.md))  
+✅ **Competitive Performance** - ~10-30ms overhead, sub-200ms for typical BIDS workflows ([benchmark](https://nf-neuro.github.io/nf-bids/appendices/performance.html))  
 
 ### Quality & Reliability
 ✅ **Type-Safe** - Full @CompileStatic support with proper type checking  
@@ -286,7 +287,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ### Need help?
 
-- Check the [documentation](docs/)
+- Check the [documentation site](https://nf-neuro.github.io/nf-bids)
 - Review [closed issues](https://github.com/nf-neuro/nf-bids/issues?q=is%3Aissue+is%3Aclosed)
 - Open a new issue with details
 

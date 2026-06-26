@@ -192,7 +192,7 @@ subjects.combineBy(
 - ✅ Feature: Cartesian product within matching key groups
 - ✅ Consistency: Aligns with Nextflow's `combine(by:)` operator
 
-**Migration Required:** All existing `combineBy` usage must be updated. See [docs/channel-operators.md](docs/channel-operators.md#combineby-migration-beta4-to-beta5) for migration guide.
+**Migration Required:** All existing `combineBy` usage must be updated. See the [Closure-Based Channel Operators](https://nf-neuro.github.io/nf-bids/concepts/channel-operators.html) chapter for the migration guide.
 
 ### Added
 - Key-based combination logic in `CombineByOp.groovy`
@@ -323,7 +323,7 @@ See version 0.2.0 above for detailed fixes.
 
 ## Migration from Baseline
 
-See [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) for instructions on migrating from the original bids2nf implementation.
+See the [BIDS Migration Guide](https://nf-neuro.github.io/nf-bids/appendices/migration-bids.html) for instructions on migrating from the original bids2nf implementation.
 
 ---
 

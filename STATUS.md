@@ -83,20 +83,19 @@ Code Coverage:         All handlers tested ✅
 
 ### User Documentation
 - [README.md](README.md) - Overview and quick start
-- [docs/installation.md](docs/installation.md) - Installation guide
-- [docs/configuration.md](docs/configuration.md) - Configuration reference
-- [docs/examples.md](docs/examples.md) - Usage examples
+- [Installation Guide](https://nf-neuro.github.io/nf-bids/guides/installation.html) - Installation guide
+- [Configuration](https://nf-neuro.github.io/nf-bids/concepts/configuration.html) - Configuration reference
+- [Workflow Examples](https://nf-neuro.github.io/nf-bids/guides/examples.html) - Usage examples
 
 ### Developer Documentation  
-- [docs/architecture.md](docs/architecture.md) - Plugin architecture
-- [docs/implementation.md](docs/implementation.md) - Implementation details
-- [docs/development.md](docs/development.md) - Development guide
-- [docs/testing.md](docs/testing.md) - Testing guide
-- [docs/api.md](docs/api.md) - API reference
+- [Architecture Overview](https://nf-neuro.github.io/nf-bids/architecture.html) - Plugin architecture
+- [Source Tree Map](https://nf-neuro.github.io/nf-bids/source-model/index.html) - Implementation layout
+- [Development Guide](https://nf-neuro.github.io/nf-bids/guides/development.html) - Development setup
+- [Testing Guide](https://nf-neuro.github.io/nf-bids/guides/testing.html) - Testing guide
+- [API Reference](https://nf-neuro.github.io/nf-bids/api-reference.html) - API reference
 
 ### Historical Records
 - [CHANGELOG.md](CHANGELOG.md) - Development history and fixes
-- [docs/TEST_SUITE.md](docs/TEST_SUITE.md) - Test documentation
 
 ---
 
