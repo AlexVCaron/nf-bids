@@ -36,6 +36,12 @@ import groovyx.gpars.dataflow.DataflowQueue
  */
 class CombineByOpTest extends Specification {
 
+    private static Object fuse(Object left, Object right) {
+        def method = CombineByOp.getDeclaredMethod('fuseItems', Object, Object)
+        method.accessible = true
+        return method.invoke(null, left, right)
+    }
+
     def 'should create operator instance with single key extractor'() {
         given:
         def left = Channel.of('A')
@@ -229,6 +235,16 @@ class CombineByOpTest extends Specification {
         op4.@leftKeyExtractor == leftExt
         op4.@rightKeyExtractor == leftExt
         op4.@opts.isEmpty()
+    }
+
+    def 'should fuse maps by merging and omitting key from output payload'() {
+        expect:
+        fuse([id: 'sub-01', age: 25], [id: 'sub-01', session: 'ses-01']) == [id: 'sub-01', age: 25, session: 'ses-01']
+    }
+
+    def 'should fuse lists by concatenation'() {
+        expect:
+        fuse(['sub-01', 'anat'], ['ses-01', 'run-1']) == ['sub-01', 'anat', 'ses-01', 'run-1']
     }
 
 }

@@ -33,7 +33,7 @@ import nfneuro.plugin.channel.operations.keys.KeyExtractor
  *
  * Key features:
  * - Uses closures for flexible key extraction from both channels
- * - Emits [key, leftItem, rightItem] tuples (includes the matching key)
+ * - Emits fused items (key is used internally for matching and not emitted)
  * - Produces full cartesian product for items with matching keys
  * - Drops unmatched keys (inner join semantics)
  *
@@ -48,7 +48,7 @@ import nfneuro.plugin.channel.operations.keys.KeyExtractor
  *     sessions,
  *     { it.subject }     // extract key from both left and right items
  * )
- * .view { key, subj, sess -> "Subject ${key}: ${subj} × ${sess}" }
+ * .view { fused -> "Combined item: ${fused}" }
  * </pre>
  *
  * @author Alex Valcourt Caron
@@ -158,7 +158,7 @@ class CombineByOp {
             if (rightItems) {
                 // Emit cartesian product: this left item × all right items with same key
                 rightItems.each { rightItem ->
-                    target.bind([key, item, rightItem])
+                    target.bind(fuseItems(item, rightItem))
                 }
             }
         }
@@ -188,7 +188,7 @@ class CombineByOp {
             if (leftItems) {
                 // Emit cartesian product: this right item × all left items with same key
                 leftItems.each { leftItem ->
-                    target.bind([key, leftItem, item])
+                    target.bind(fuseItems(leftItem, item))
                 }
             }
         }
@@ -238,6 +238,30 @@ class CombineByOp {
 
         // Signal completion
         target.bind(Channel.STOP)
+    }
+
+    /**
+     * Fuse two matched items into a single emission payload.
+     * - Map + Map -> merged map (right-side values take precedence on key collisions)
+     * - List + List -> concatenated list
+     * - Otherwise -> 2-item list [left, right]
+     */
+    private static Object fuseItems(Object leftItem, Object rightItem) {
+        if (leftItem == null) {
+            return rightItem
+        }
+        if (rightItem == null) {
+            return leftItem
+        }
+        if (leftItem instanceof Map && rightItem instanceof Map) {
+            return new LinkedHashMap((Map)leftItem) + (Map)rightItem
+        }
+        if (leftItem instanceof List && rightItem instanceof List) {
+            List<Object> fused = new ArrayList<>((List)leftItem)
+            fused.addAll((List)rightItem)
+            return fused
+        }
+        return [leftItem, rightItem]
     }
 
 }

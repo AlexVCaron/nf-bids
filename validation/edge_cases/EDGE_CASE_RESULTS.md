@@ -66,7 +66,7 @@
 1. **Synchronization Pattern**: Used `onNext` and `onComplete` callbacks instead of CountDownLatch
 2. **Thread.sleep()**: Added appropriate wait times for async processing to complete
 3. **Import Statements**: Ensured all test files include required operators from 'plugin/nf-bids'
-4. **Data Structure**: joinBy emits `[leftItem, rightItem]` not `[key, leftItem, rightItem]`
+4. **Data Structure**: joinBy emits fused payloads (no emitted key)
 5. **Dataset Sizes**: Reduced from 100k to 10k items for reasonable test times
 
 ### Test Execution Times

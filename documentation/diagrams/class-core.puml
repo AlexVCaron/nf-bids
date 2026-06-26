@@ -21,8 +21,8 @@ package "Entry points" as P_entry #EEF3FF {
   class BidsExtension {
     + fromBIDS(...)
     + groupTupleBy(...)
-    + joinBy(...)
-    + combineBy(...)
+    + joinBy(...): fused items
+    + combineBy(...): fused items
   }
 
   class BidsChannelFactory {

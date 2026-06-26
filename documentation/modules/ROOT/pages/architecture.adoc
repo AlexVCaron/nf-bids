@@ -149,9 +149,9 @@ Once the channel is emitted the user may pipe it through `groupTupleBy`, `joinBy
 `combineBy`.  All three are implemented as `@Operator` methods on `BidsExtension`:
 
 * `GroupTupleByOp` accumulates items by closure-extracted key and emits `[key, [items]]`.
-* `JoinByOp` buffers both channels, matches by key, and emits `[key, leftItem, rightItem]`.
-* `CombineByOp` produces the cartesian product within each key group, also as
-  `[key, leftItem, rightItem]`.
+* `JoinByOp` buffers both channels, matches by key, and emits fused joined items (key omitted).
+* `CombineByOp` produces the cartesian product within each key group as fused combined items
+  (key omitted).
 
 `KeyExtractor` validates closures (arity > 0) and wraps `List` return values in
 `CompositeKey` (an `@EqualsAndHashCode`-annotated class) for correct hash-map semantics.

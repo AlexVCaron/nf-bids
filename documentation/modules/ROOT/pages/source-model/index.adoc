@@ -104,10 +104,10 @@ Groups channel items by a closure-extracted key, accumulating items in a synchro
 
 `JoinByOp`::
 Performs an inner join between two channels using independent key-extractor closures for left and right sides.
-Supports `remainder` and duplicate-handling options.
+Supports `remainder` and duplicate-handling options, emitting fused join payloads without keys.
 
 `CombineByOp`::
-Emits the Cartesian product of left and right items within each key group.
+Emits the Cartesian product of left and right items within each key group as fused payloads (key omitted).
 `BidsExtension` provides three overloads to support a single shared extractor or separate left/right extractors.
 
 === `nfneuro.plugin.channel.operations.keys` — Key Infrastructure

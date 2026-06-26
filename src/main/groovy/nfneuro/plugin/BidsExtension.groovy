@@ -128,7 +128,7 @@ class BidsExtension extends PluginExtensionPoint {
      * @param leftKeyExtractor Closure extracting key from left channel items
      * @param rightKeyExtractor Optional closure for right items (defaults to leftKeyExtractor)
      * @param opts Optional configuration (remainder, failOnDuplicate, failOnMismatch)
-     * @return Channel emitting [key, leftItem, rightItem] tuples where keys match
+     * @return Channel emitting fused joined items where keys match
      *
      * @example
      * <pre>
@@ -136,7 +136,7 @@ class BidsExtension extends PluginExtensionPoint {
      * functional = Channel.of([subject: 'sub-01', file: 'bold.nii'])
      *
      * anatomical.joinBy(functional) { it.subject }
-     * // Emits: ['sub-01', [subject:'sub-01', file:'t1.nii'], [subject:'sub-01', file:'bold.nii']]
+     * // Emits: [subject:'sub-01', file:'bold.nii', type:'bold']
      * </pre>
      */
     @Operator
@@ -169,7 +169,7 @@ class BidsExtension extends PluginExtensionPoint {
      * @param leftKeyExtractor Closure that extracts the key from left items
      * @param rightKeyExtractor Closure that extracts the key from right items
      * @param opts Optional configuration (reserved for future: remainder)
-     * @return Channel emitting [key, leftItem, rightItem] tuples
+     * @return Channel emitting fused combined items
      *
      * @example
      * <pre>
@@ -188,8 +188,8 @@ class BidsExtension extends PluginExtensionPoint {
      *   sessions,
      *   { it.id }      // extract key from both left and right
      * )
-     * .view { key, subj, sess ->
-     *   "Subject ${key}: age=${subj.age}, session=${sess.session}"
+     * .view { fused ->
+     *   "Subject ${fused.id}: age=${fused.age}, session=${fused.session}"
      * }
      * </pre>
      */
@@ -215,7 +215,7 @@ class BidsExtension extends PluginExtensionPoint {
      * @param left  left input channel
      * @param right right input channel
      * @param keyExtractor closure applied to items from both channels to derive the join key
-     * @return channel emitting {@code [key, leftItem, rightItem]} tuples
+     * @return channel emitting fused combined items
      */
     @Operator
     DataflowWriteChannel combineBy(
@@ -234,7 +234,7 @@ class BidsExtension extends PluginExtensionPoint {
      * @param right right input channel
      * @param keyExtractor closure applied to items from both channels to derive the join key
      * @param opts optional configuration map (reserved for future use: remainder, filter)
-     * @return channel emitting {@code [key, leftItem, rightItem]} tuples
+     * @return channel emitting fused combined items
      */
     @Operator
     DataflowWriteChannel combineBy(

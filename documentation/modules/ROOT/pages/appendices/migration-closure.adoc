@@ -111,11 +111,11 @@ left.join(right).view { key, l, r -> ... }
 
 // After: no restructuring
 left_ch.joinBy(right_ch) { it.id }
-       .view { key, l, r -> ... }
+       .view { fused -> ... }
 ----
 
-NOTE: Both `join` and `joinBy` emit `[key, leftItem, rightItem]`.  The closure-based
-version includes the key — do not destructure as `{ l, r -> }`.
+NOTE: `joinBy` now emits fused items (without the key). Keep extraction logic in the
+closure and consume a single fused item downstream.
 
 === Different key fields
 
@@ -143,16 +143,16 @@ left.joinBy(right, { it.id }, [remainder: true])
 
 == combine → combineBy
 
-=== Cartesian product with key
+=== Cartesian product with fused outputs
 
 [source,groovy]
 ----
 // Built-in: combine with positional key
 subjects.combine(sessions, by: 0)
 
-// Closure-based: same semantics, semantic key
+// Closure-based: same matching semantics, fused output payload
 subjects.combineBy(sessions, { it.subject })
-// Both emit [key, leftItem, rightItem]
+// Emits fused combined items (key omitted)
 ----
 
 === Filtered combinations
@@ -165,20 +165,20 @@ scans.combine(protocols)
 
 // After
 scans.combineBy(protocols, { it.modality })
-     .filter { key, scan, proto -> scan.modality == proto.modality }
+     .filter { fused -> fused.modality != null }
 ----
 
 == Common pitfalls
 
-=== joinBy output includes the key
+=== joinBy output is a fused item
 
 [source,groovy]
 ----
-// ❌ WRONG — joinBy emits [key, left, right], not [left, right]
-left.joinBy(right) { it.id }.view { l, r -> println l }
+// ❌ WRONG — expecting three tuple values
+left.joinBy(right) { it.id }.view { key, l, r -> println l }
 
 // ✅ CORRECT
-left.joinBy(right) { it.id }.view { key, l, r -> println l }
+left.joinBy(right) { it.id }.view { fused -> println fused }
 ----
 
 === Items are preserved as maps
