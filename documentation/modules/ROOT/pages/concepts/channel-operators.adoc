@@ -63,8 +63,8 @@ Emits `[key, [items]]` tuples.
 | Emit a group as soon as it reaches this many items (streaming groups).
 
 | `sort`
-| `Boolean` or `Closure`
-| `true` for natural order; a two-argument closure for custom comparator.
+| `Boolean`, `Closure`, or `Comparator`
+| `true` for natural order; a closure such as `{ it.run }` or a comparator for custom ordering.
 
 | `remainder`
 | `Boolean`
@@ -97,7 +97,7 @@ channel.groupTupleBy { [it.subject, it.session] }
 .Sort items within each group
 [source,groovy]
 ----
-channel.groupTupleBy({ it.subject }, [sort: { a, b -> a.run <=> b.run }])
+channel.groupTupleBy({ it.subject }, [sort: { it.run }])
 ----
 
 .Streaming groups of 3
@@ -122,7 +122,8 @@ When a single `keyExtractor` is supplied it is applied to items from both channe
 
 === Output
 
-Emits fused joined items for every matching pair (the join key is not emitted).
+Emits one fused item for every matching pair. No separate join-key tuple is
+emitted.
 
 === Options
 
@@ -132,16 +133,8 @@ Emits fused joined items for every matching pair (the join key is not emitted).
 
 | `remainder`
 | `Boolean`
-| When `true`, emit unmatched items with `null` as the missing partner
+| When `true`, emit unmatched items with the available side preserved as-is
   (outer-join semantics).
-
-| `failOnDuplicate`
-| `Boolean`
-| Fail if the same key appears more than once in either channel.
-
-| `failOnMismatch`
-| `Boolean`
-| Fail if a key appears in one channel but not the other.
 |===
 
 === Examples
@@ -171,7 +164,8 @@ scans.joinBy(metadata,
 [source,groovy]
 ----
 left.joinBy(right, { it.id }, [remainder: true])
-// Unmatched items emit the available side as-is
+// Unmatched left items stay as [id:'C', val:3]
+// Unmatched right items stay as [id:'D', data:'z']
 ----
 
 == combineBy
@@ -187,8 +181,8 @@ left.combineBy(DataflowReadChannel right, Closure leftKey, Closure rightKey, Map
 
 === Output
 
-Emits fused combined items (without keys) — the full _cartesian product_ of matching
-items within each key group (inner join with product).
+Emits fused combined items — the full _cartesian product_ of matching items
+within each key group. No separate key tuple is emitted.
 
 === Examples
 

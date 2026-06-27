@@ -37,6 +37,10 @@ All examples below assume `Channel.fromBIDS()` emits flat maps shaped like:
 ]
 ----
 
+Sequential sets stay flat too, but their extension values are ordered lists of
+`Path` objects. For example, `item.bold.nii` is a `List<Path>`, not a list of
+per-echo maps.
+
 For the legacy tuple format, see xref:appendices/migration-bids.adoc[BIDS Migration Guide].
 
 == Basic examples
@@ -113,7 +117,7 @@ workflow {
     Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .filter { item -> item.meta.task == 'rest' }
         .map { item ->
-            def id = [item.meta.subject, item.meta.session].findAll { it != 'NA' }.join('_')
+            def id = [item.meta.subject, item.meta.session, item.meta.task].findAll { it != 'NA' }.join('_')
             [id, item.meta.subject, item.meta.session, item.bold.nii]
         }
         | multiEchoCombine
@@ -207,8 +211,8 @@ loop_over:
 
 bold:
   plain_set:
-    include_cross_modal:
-      - T1w
+  include_cross_modal:
+    - T1w
 ----
 
 .`main.nf`

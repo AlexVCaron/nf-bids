@@ -107,17 +107,18 @@ mese:
 [
     meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
     mese: [
-        [nii:  Path('...sub-01_echo-1_MESE.nii.gz'),
-         json: Path('...sub-01_echo-1_MESE.json')],
-        [nii:  Path('...sub-01_echo-2_MESE.nii.gz'),
-         json: Path('...sub-01_echo-2_MESE.json')]
+        nii:  [Path('...sub-01_echo-1_MESE.nii.gz'),
+               Path('...sub-01_echo-2_MESE.nii.gz')],
+        json: [Path('...sub-01_echo-1_MESE.json'),
+               Path('...sub-01_echo-2_MESE.json')]
     ]
 ]
-// Access: item.mese[0].nii, item.mese.size()
+// Access: item.mese.nii[0], item.mese.nii.size()
 ----
 
 Use `by_entities: [echo, run]` when multiple entities define the sequence order.
-Set `order: flat` (default) or `order: hierarchical` to control nesting.
+Set `order: flat` (default) or `order: hierarchical` to control nesting when
+using `by_entities`.
 
 === MixedSetHandler — `mixed_set`
 
@@ -163,8 +164,8 @@ mpm:
 Each channel item is a single `Map` with:
 
 * `meta` — entity values for the grouping key.
-* One entry per config key — a nested `Map` (plain/named/mixed) or a `List` of maps
-  (sequential).
+* One entry per config key — a nested `Map` whose values are single `Path` objects,
+  nested named groups, or ordered `List<Path>` values depending on the set type.
 
 All file paths are `java.nio.file.Path` objects with absolute paths, ready for
 Nextflow `path` process inputs and cloud storage URIs.
@@ -185,8 +186,8 @@ xref:appendices/migration-bids.adoc[BIDS Migration Guide].
 
 == Cross-modal broadcasting
 
-`include_cross_modal` copies data from one suffix group into another.  For example,
-adding a T1w into every DWI item:
+`include_cross_modal` copies data from one suffix group into the same emitted
+flat item as another suffix. For example, adding a T1w alongside every DWI item:
 
 [source,yaml]
 ----
@@ -195,8 +196,19 @@ dwi_ap:
   include_cross_modal: [T1w]
 ----
 
-The T1w sub-map is merged into each `dwi_ap` item, giving direct access to both in the
-same channel element.
+The resulting channel item exposes both keys at the top level:
+
+[source,groovy]
+----
+[
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    dwi_ap: [ap: [nii: Path('...')], pa: [nii: Path('...')]],
+    T1w:    [nii: Path('...sub-01_T1w.nii.gz')]
+]
+----
+
+In practice that means downstream code accesses `item.dwi_ap.ap.nii` and
+`item.T1w.nii` from the same channel element.
 
 == Related pages
 
