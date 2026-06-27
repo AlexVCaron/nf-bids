@@ -1,9 +1,0 @@
-{
-  "MagneticFieldStrength": 3,
-  "Manufacturer": "Siemens",
-  "ManufacturerModelName": "Skyra",
-  "PulseSequenceType": "IR",
-  "RepetitionTimeExcitation": 2.550,
-  "FlipAngle": 3,
-  "EchoTime": 0.014
-}

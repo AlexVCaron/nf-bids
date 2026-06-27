@@ -1,5 +1,0 @@
-dask[complete]
-zarr
-ome-zarr
-numcodecs
-gcsfs

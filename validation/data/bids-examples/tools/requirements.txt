@@ -1,3 +1,0 @@
-pybids  
-pandas
-tabulate
