@@ -117,7 +117,7 @@ workflow {
     Channel.fromBIDS(params.bids_dir, 'config.yaml')
         .filter { item -> item.meta.task == 'rest' }
         .map { item ->
-            def id = [item.meta.subject, item.meta.session, item.meta.task].findAll { it != 'NA' }.join('_')
+            def id = [item.meta.subject, item.meta.session].findAll { it != 'NA' }.join('_')
             [id, item.meta.subject, item.meta.session, item.bold.nii]
         }
         | multiEchoCombine
