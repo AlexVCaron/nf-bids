@@ -1,0 +1,11 @@
+{
+	"Name": "Vendor neutral sequence (VENUS) acquisition for mtsat.",
+    "BIDSVersion": "1.5.0",
+    "Authors": [
+        "Agah Karakuzu",
+        "Labonny Biswas",
+        "Julien Cohen-Adad",
+        "Nikola Stikov"
+    ],
+    "Description": "ISMRM/NIST phantom data acquired using qmrlab/mt_sat sequence v1.0.0 and vendor-native protocols on 1 GE (750) and 2 Siemens scanners (Skyra and Prisma) at 3T. The dataset also contains (non-image) derivatives for 3 healthy participants."
+}
