@@ -1,0 +1,96 @@
+name: Validation and Edge Cases
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: Validation suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v3
+        with:
+          version: '25.10.0'
+
+      - name: Install Nextflow fallback for act
+        if: ${{ github.actor == 'nektos/act' }}
+        run: |
+          export NXF_VER=25.10.0
+          mkdir -p "$HOME/.local/bin"
+          curl -s https://get.nextflow.io | bash
+          mv nextflow "$HOME/.local/bin/nextflow"
+          chmod +x "$HOME/.local/bin/nextflow"
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          command -v nextflow
+          "$HOME/.local/bin/nextflow" -version
+
+      - name: Verify Nextflow
+        if: ${{ github.actor != 'nektos/act' }}
+        run: |
+          nextflow -version
+
+      - name: Run validation suite
+        working-directory: test/validation
+        run: bash test_datasets.sh
+
+  edge_cases:
+    name: Edge case suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v3
+        with:
+          version: '25.10.0'
+
+      - name: Install Nextflow fallback for act
+        if: ${{ github.actor == 'nektos/act' }}
+        run: |
+          export NXF_VER=25.10.0
+          mkdir -p "$HOME/.local/bin"
+          curl -s https://get.nextflow.io | bash
+          mv nextflow "$HOME/.local/bin/nextflow"
+          chmod +x "$HOME/.local/bin/nextflow"
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          command -v nextflow
+          "$HOME/.local/bin/nextflow" -version
+
+      - name: Verify Nextflow
+        if: ${{ github.actor != 'nektos/act' }}
+        run: |
+          nextflow -version
+
+      - name: Run edge case suite
+        working-directory: test/edge_cases
+        run: bash run_all_tests.sh

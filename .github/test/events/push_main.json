@@ -1,0 +1,11 @@
+{
+  "ref": "refs/heads/main",
+  "repository": {
+    "name": "nf-bids",
+    "full_name": "nf-neuro/nf-bids",
+    "default_branch": "main"
+  },
+  "head_commit": {
+    "id": "local-test"
+  }
+}
