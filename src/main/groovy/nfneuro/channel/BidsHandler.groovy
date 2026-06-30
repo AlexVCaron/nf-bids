@@ -330,7 +330,11 @@ class BidsHandler {
                 if (unpackJsonSidecar && pathStr.endsWith('.json')) {
                     File jsonFile = result.toFile()
                     if (jsonFile.exists()) {
-                        return new JsonSlurper().parse(jsonFile) as Map
+                        try {
+                            return new JsonSlurper().parse(jsonFile) as Map
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to parse JSON sidecar '${result}': ${e.message}", e)
+                        }
                     }
                 }
 
