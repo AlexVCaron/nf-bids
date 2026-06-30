@@ -221,7 +221,7 @@ Individual edge-case workflows:
 | `test4_missing_fields.nf` | Items with absent optional keys
 | `test5_concurrent.nf`    | Concurrent operator execution (thread-safety)
 | `test6_join_many.nf`     | `joinBy` with a high-fan-out right channel
-| `test7_complex_filter.nf` | Chained operators with filter predicates
+| `test7_complex_filter.nf` | `combineBy` followed by downstream filter predicates
 | `test8_combineby_edge_cases.nf` | `combineBy` with no-match, duplicate, and empty keys
 |===
 

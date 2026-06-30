@@ -165,9 +165,9 @@ class BidsExtensionTest extends Specification {
         result != null
     }
 
-    def "combineBy accepts key extractors with more than 1 param (warns but ok)"() {
+    def "combineBy accepts separate left and right key extractors"() {
         when:
-        def result = extension.combineBy(channel1, channel2, { left, right, extra -> left.id == right.id }, { it.id })
+        def result = extension.combineBy(channel1, channel2, { it.subjectId }, { it.subject })
 
         then:
         noExceptionThrown()
