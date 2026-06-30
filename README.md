@@ -116,18 +116,22 @@ The flat output structure (default in 0.1.0-beta.9+) provides intuitive access t
 [
     meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
     mese: [
-        [  // Echo 1
-            nii: Path('/data/bids/sub-01/anat/sub-01_echo-1_MESE.nii.gz'),
-            json: Path('/data/bids/sub-01/anat/sub-01_echo-1_MESE.json')
+        nii: [
+            Path('/data/bids/sub-01/anat/sub-01_echo-1_MESE.nii.gz'),
+            Path('/data/bids/sub-01/anat/sub-01_echo-2_MESE.nii.gz')
         ],
-        [  // Echo 2
-            nii: Path('/data/bids/sub-01/anat/sub-01_echo-2_MESE.nii.gz'),
-            json: Path('/data/bids/sub-01/anat/sub-01_echo-2_MESE.json')
+        json: [
+            Path('/data/bids/sub-01/anat/sub-01_echo-1_MESE.json'),
+            Path('/data/bids/sub-01/anat/sub-01_echo-2_MESE.json')
         ]
     ]
 ]
-// Access: item.mese[0].nii, item.mese.size()
+// Access: item.mese.nii[0], item.mese.json.size()
 ```
+
+Sequential sets group by file type first, then preserve sequence order inside each
+list. With multi-entity `by_entities` plus `order: hierarchical`, each file-type
+entry becomes a nested list that preserves that hierarchy.
 
 **Key Features:**
 - ✅ All file paths are absolute `java.nio.file.Path` objects
