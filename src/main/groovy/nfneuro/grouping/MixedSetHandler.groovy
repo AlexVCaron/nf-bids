@@ -92,7 +92,7 @@ class MixedSetHandler extends BaseSetHandler {
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/subworkflows/emit_mixed_sets.nf#L56-L70
      */
     @Override
-    protected BidsChannelData processGroup(
+    protected List<BidsChannelData> processGroup(
             String datasetRoot,
             Map sets,
             Map allFiles,
@@ -137,7 +137,7 @@ class MixedSetHandler extends BaseSetHandler {
 
         BidsLogger.logProgress(logGroup(), "Mixed set emitted with ${sets.size()} suffixes")
 
-        return channelData
+        return [channelData]
     }
 
     /**

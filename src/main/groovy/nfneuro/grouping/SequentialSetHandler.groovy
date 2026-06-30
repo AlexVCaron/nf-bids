@@ -73,7 +73,7 @@ class SequentialSetHandler extends BaseSetHandler {
     }
 
     @Override
-    protected BidsChannelData processGroup(
+    protected List<BidsChannelData> processGroup(
             String datasetRoot,
             Map sets,
             Map allFiles,
@@ -128,7 +128,7 @@ class SequentialSetHandler extends BaseSetHandler {
 
         BidsLogger.logProgress(logGroup(), "Sequential set emitted with ${sets.size()} suffixes")
 
-        return channelData
+        return [channelData]
     }
 
     /**

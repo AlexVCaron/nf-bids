@@ -86,7 +86,7 @@ class NamedSetHandler extends BaseSetHandler {
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/grouping/entity_grouping_utils.nf#L20-L60
      */
     @Override
-    protected BidsChannelData processGroup(
+    protected List<BidsChannelData> processGroup(
             String datasetRoot,
             Map namedSets,
             Map allFiles,
@@ -136,12 +136,7 @@ class NamedSetHandler extends BaseSetHandler {
             }
         }
 
-        return channelData
-    }
-
-    @Override
-    protected Map getSetConfig(Map suffixConfig) {
-        return suffixConfig?.named_set as Map
+        return [channelData]
     }
 
     /**
@@ -212,6 +207,11 @@ class NamedSetHandler extends BaseSetHandler {
         }
 
         return null  // No matching group found
+    }
+
+    @Override
+    protected Map getSetConfig(Map suffixConfig) {
+        return suffixConfig?.named_set as Map
     }
 
 }

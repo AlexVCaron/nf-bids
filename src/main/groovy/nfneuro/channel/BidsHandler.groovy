@@ -557,14 +557,22 @@ class BidsHandler {
     }
 
     /**
-     * Unify results by grouping and merging data maps
+     * Unify results by performing an outer join across items that belong to the same
+     * loop-over group.
+     *
+     * <p>Items that share a loop-over {@code groupingKey} but carry <em>different</em>
+     * data-key sets (fingerprints) originate from different set handlers or configKey
+     * streams and must be combined.  Items that share both the {@code groupingKey}
+     * <em>and</em> their fingerprint are <em>alternatives</em> for the same slot (e.g.
+     * multiple runs of the same fmap suffix) and must be kept separate.</p>
+     *
+     * <p>The result is the cross-product across distinct fingerprint groups, so that
+     * every alternative in one stream is paired with every alternative in every other
+     * stream (outer join behaviour).</p>
      *
      * @param results Combined channel results
      * @param loopOverEntities Entities to group by
-     * @return Unified channel with merged data
-     *
-     * @reference Unification logic:
-     *            https://github.com/agahkarakuzu/bids2nf/blob/main/main.nf#L94-L117
+     * @return Unified channel with outer-joined data
      */
     private DataflowQueue unifyResults(DataflowQueue results, List<String> loopOverEntities) {
         // Group by grouping key
@@ -596,44 +604,84 @@ class BidsHandler {
             grouped[groupingKey] << enrichedData
         }
 
-        // Create unified queue with merged data
+        // Create unified queue using outer join (cross-product) across fingerprint groups
         DataflowQueue unifiedQueue = new DataflowQueue()
 
         grouped.each { groupingKey, dataList ->
             Map<String, String> entityValues = extractEntityValues(groupingKey, loopOverEntities)
 
-            // Merge all enriched data maps and file paths
-            Map<String, Object> mergedDataMap = [:]
-            List<String> allFilePaths = []
-
+            // Group items by their data-key fingerprint (set of suffix/configKey names).
+            // Items with the same fingerprint are alternatives for the same slot;
+            // items with different fingerprints come from independent streams and
+            // must be cross-product joined.
+            Map fingerprintGroups = new LinkedHashMap()
             dataList.each { enrichedData ->
-                Map enrichedMap = enrichedData as Map
-                Map dataMap = enrichedMap.data as Map
-                List<String> filePaths = enrichedMap.filePaths as List
+                def fingerprint = ((enrichedData as Map).data as Map).keySet()
+                if (!fingerprintGroups.containsKey(fingerprint)) {
+                    fingerprintGroups[fingerprint] = []
+                }
+                (fingerprintGroups[fingerprint] as List) << (enrichedData as Map)
+            }
 
-                dataMap.each { suffix, suffixData ->
-                    mergedDataMap[(String)suffix] = suffixData
+            BidsLogger.logProgress("nf-bids-handler",
+                "├─ Outer-joining ${fingerprintGroups.size()} fingerprint group(s) for key ${groupingKey}")
+
+            // Compute cross-product across the fingerprint streams
+            List combinations = computeOuterJoin(fingerprintGroups.values().toList())
+
+            combinations.each { combo ->
+                Map<String, Object> mergedDataMap = [:]
+                List<String> allFilePaths = []
+
+                (combo as List).each { enrichedData ->
+                    ((enrichedData as Map).data as Map).each { suffix, suffixData ->
+                        mergedDataMap[(String)suffix] = suffixData
+                    }
+                    allFilePaths.addAll((enrichedData as Map).filePaths as List<String>)
                 }
 
-                allFilePaths.addAll(filePaths as List<String>)
+                Map enrichedDataOut = [
+                    data: mergedDataMap,
+                    filePaths: allFilePaths.unique(),
+                    bidsParentDir: getBidsParentDir()
+                ]
+
+                // Add loop-over entity values
+                entityValues.each { entity, value ->
+                    enrichedDataOut[entity] = value
+                }
+
+                unifiedQueue << [groupingKey, enrichedDataOut]
             }
-
-            Map enrichedData = [
-                data: mergedDataMap,
-                filePaths: allFilePaths.unique(),
-                bidsParentDir: getBidsParentDir()
-            ]
-
-            // Add entity values
-            entityValues.each { entity, value ->
-                enrichedData[entity] = value
-            }
-
-            unifiedQueue << [groupingKey, enrichedData]
         }
 
         // Return unbound queue - will be consumed by applyCrossModalBroadcasting
         return unifiedQueue
+    }
+
+    /**
+     * Compute the cross-product (outer join) of a list of alternative streams.
+     *
+     * <p>Each element of {@code streams} is a list of alternative items for one
+     * "slot".  The result contains one entry for every combination that picks
+     * exactly one item from each slot.</p>
+     *
+     * @param streams List of alternative-item lists, one per fingerprint group
+     * @return All combinations, each being a list of one item per stream
+     */
+    private List computeOuterJoin(List streams) {
+        if (!streams) {
+            return [[]]
+        }
+        List first = streams[0] as List
+        List rest = computeOuterJoin(streams.subList(1, streams.size()))
+        List result = []
+        first.each { item ->
+            rest.each { combo ->
+                result << ([item] + (combo as List))
+            }
+        }
+        return result
     }
 
     /**
