@@ -165,7 +165,7 @@ scans.joinBy(metadata,
 .Outer join (include unmatched)
 [source,groovy]
 ----
-left.joinBy(right, { it.id }, null, [remainder: true])
+left.joinBy(right, { it.id }, [remainder: true])
 // Unmatched left items stay as [id:'C', val:3]
 // Unmatched right items stay as [id:'D', data:'z']
 ----

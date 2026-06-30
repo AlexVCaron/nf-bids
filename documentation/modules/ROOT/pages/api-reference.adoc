@@ -216,7 +216,7 @@ a|
 channel.joinBy(
     DataflowReadChannel right,
     Closure             keyExtractor,
-    Map                 opts = [:]    // remainder (outer join)
+    Map                 opts           // remainder (outer join)
 )
 
 channel.joinBy(
