@@ -4,11 +4,16 @@ package nfneuro.plugin.channel
 import groovyx.gpars.dataflow.DataflowQueue
 import nextflow.extension.CH
 import spock.lang.Specification
+import spock.lang.TempDir
+import java.nio.file.Path
 
 /**
  * Unit tests for the BidsHandler flattening transformer
  */
 class BidsHandlerFlattenSpec extends Specification {
+
+    @TempDir
+    Path tempDir
 
     def 'should flatten plain set paths to absolute Files and build meta'() {
         given:
@@ -319,6 +324,55 @@ class BidsHandlerFlattenSpec extends Specification {
         flat.meta.subject == 'sub-01'
         flat.meta.session == 'ses-01'
         !flat.meta.containsKey('age')
+    }
+
+    def 'should parse json sidecar into map when unpack_json_sidecar is true'() {
+        given:
+        // Create a real JSON sidecar file in the temp directory
+        def anatDir = tempDir.resolve('anat').toFile()
+        anatDir.mkdirs()
+        def jsonFile = new File(anatDir, 'sub-01_T1w.json')
+        jsonFile.text = '{"RepetitionTime": 2.0, "Manufacturer": "Siemens"}'
+
+        def handler = new BidsHandler()
+        handler.withOpts([unpack_json_sidecar: true])
+        handler.loopOverEntities = ['subject', 'session']
+
+        def groupingKey = ['sub-01', 'ses-01']
+        def enrichedData = [
+            data: [
+                T1w: [
+                    nii: 'anat/sub-01_T1w.nii.gz',
+                    json: 'anat/sub-01_T1w.json'
+                ]
+            ],
+            bidsParentDir: tempDir.toString()
+        ]
+
+        when:
+        def flat = invokeFlatten(handler, groupingKey, enrichedData)
+
+        then:
+        flat.T1w.nii instanceof java.nio.file.Path
+        flat.T1w.json instanceof Map
+        flat.T1w.json.RepetitionTime == 2.0
+        flat.T1w.json.Manufacturer == 'Siemens'
+    }
+
+    def 'should keep json sidecar as Path when unpack_json_sidecar is false'() {
+        given:
+        def handler = new BidsHandler()
+        handler.withOpts([unpack_json_sidecar: false])
+        handler.loopOverEntities = ['subject', 'session']
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01'], [
+            data: [T1w: [nii: 'anat/sub-01_T1w.nii.gz', json: 'anat/sub-01_T1w.json']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.T1w.json instanceof java.nio.file.Path
     }
 
     private static void setParticipants(BidsHandler handler, List<Map<String, String>> participants) {

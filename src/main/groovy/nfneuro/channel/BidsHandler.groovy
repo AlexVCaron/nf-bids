@@ -2,6 +2,7 @@ package nfneuro.plugin.channel
 
 import java.util.concurrent.CompletableFuture
 
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import groovyx.gpars.dataflow.DataflowWriteChannel
@@ -302,13 +303,15 @@ class BidsHandler {
          * @param val Value to convert (String path, Path, List, Map, or other)
          * @return Converted value with Path objects for file paths
          */
+        boolean unpackJsonSidecar = options?.get('unpack_json_sidecar') as boolean
+
         Closure convertValue
         convertValue = { Object val ->
             if (val == null) return null
             if (val instanceof Path) return val  // Already a Path, return as-is
             if (val instanceof String) {
                 String pathStr = val
-                
+
                 // Use FileHelper.asPath for robust path handling
                 // Handles local files, URIs (s3://, gs://, az://), absolute and relative paths
                 Path result
@@ -317,12 +320,20 @@ class BidsHandler {
                     result = FileHelper.asPath(pathStr)
                 } else {
                     // Relative path - resolve against bidsParentDir
-                    String fullPath = bidsParentDir 
-                        ? Paths.get(bidsParentDir, pathStr).toString() 
+                    String fullPath = bidsParentDir
+                        ? Paths.get(bidsParentDir, pathStr).toString()
                         : pathStr
                     result = FileHelper.asPath(fullPath)
                 }
-                
+
+                // When unpack_json_sidecar is enabled, parse .json files into maps
+                if (unpackJsonSidecar && pathStr.endsWith('.json')) {
+                    File jsonFile = result.toFile()
+                    if (jsonFile.exists()) {
+                        return new JsonSlurper().parse(jsonFile) as Map
+                    }
+                }
+
                 return result  // Returns java.nio.file.Path
             }
             if (val instanceof List) {
