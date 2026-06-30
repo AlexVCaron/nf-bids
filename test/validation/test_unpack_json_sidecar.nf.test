@@ -24,37 +24,32 @@ nextflow_workflow {
             def t1w = item.T1w
             assert t1w instanceof Map
 
-            // With unpack_json_sidecar: true, the json value must be a Map, not a Path
+            // With unpack_json_sidecar: true, the json value must be a Map, not a path string
             assert t1w.json instanceof Map : "Expected T1w.json to be a parsed Map, but was: ${t1w.json?.getClass()}"
 
             // Spot-check known sidecar fields
             assert t1w.json.RepetitionTime == 2.3
             assert t1w.json.MagneticFieldStrength == 3
 
-            // Other file extensions are still emitted as Paths
-            assert t1w.nii instanceof java.nio.file.Path
+            // Non-JSON file fields must NOT be parsed Maps.
+            // nf-test serializes java.nio.file.Path to String in the assertion context
+            // (see test_flattened_output.nf.test for the same pattern).
+            assert !(t1w.nii instanceof Map) :
+                "Expected T1w.nii to be a file path string, not a parsed Map"
+            assert t1w.nii.toString().endsWith('.nii.gz') :
+                "Expected T1w.nii path to end with .nii.gz, got: ${t1w.nii}"
 
-            def assertPathLeaves = { value, String context ->
-                if (value == null) return
-                if (value instanceof Map) {
-                    value.each { k, v ->
-                        if (k == 'json') return
-                        assertPathLeaves(v, "${context}.${k}")
-                    }
-                    return
-                }
-                if (value instanceof List) {
-                    value.eachWithIndex { v, idx -> assertPathLeaves(v, "${context}[${idx}]") }
-                    return
-                }
-
-                assert value instanceof java.nio.file.Path :
-                    "Expected ${context} to be a java.nio.file.Path (or subclass), but was: ${value?.getClass()}"
-            }
-
+            // Verify no non-json leaf value across all suffixes was incorrectly parsed as a Map
             item.each { suffix, data ->
                 if (suffix == 'meta') return
-                assertPathLeaves(data, suffix as String)
+                if (!(data instanceof Map)) return
+                data.each { ext, fileValue ->
+                    if (ext == 'json') return
+                    assert !(fileValue instanceof Map) :
+                        "Expected ${suffix}.${ext} to be a file path, not a parsed Map. Got: ${fileValue?.getClass()}"
+                    assert fileValue != null :
+                        "Expected ${suffix}.${ext} to be non-null"
+                }
             }
         }
     }
