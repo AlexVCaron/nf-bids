@@ -34,8 +34,7 @@ nextflow_workflow {
             // Other file extensions are still emitted as Paths
             assert t1w.nii instanceof java.nio.file.Path
 
-            def assertPathLeaves
-            assertPathLeaves = { value, String context ->
+            def assertPathLeaves = { value, String context ->
                 if (value == null) return
                 if (value instanceof Map) {
                     value.each { k, v ->
