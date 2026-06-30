@@ -1,0 +1,7 @@
+loop_over: [subject, session]
+
+T1w:
+  plain_set: {}
+
+epi:
+  plain_set: {}

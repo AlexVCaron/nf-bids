@@ -1,0 +1,5 @@
+{
+  "PhaseEncodingDirection": "j-",
+  "TotalReadoutTime": 0.05,
+  "IntendedFor": "ses-01/dwi/sub-02_ses-01_run-01_dwi.nii.gz"
+}

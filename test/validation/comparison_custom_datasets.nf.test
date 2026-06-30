@@ -229,6 +229,74 @@ nextflow_workflow {
         }
     }
 
+    test("ds-t1w-fmap-multiruns - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1w-fmap-multiruns"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_t1w_fmap_multiruns.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+
+            // Outer-join assertion: sub-01 has 1 T1w × 3 epi runs → 3 channel items
+            def sub01Items = results.collect().findAll { item ->
+                ((item as List)[1] as Map).subject == 'sub-01'
+            }
+            assert sub01Items.size() == 3 : "Expected 3 outer-join items for sub-01 (1 T1w × 3 epi runs), got ${sub01Items.size()}"
+            sub01Items.each { item ->
+                def data = ((item as List)[1] as Map).data as Map
+                assert data.containsKey('T1w') : "Each outer-join item must contain T1w"
+                assert data.containsKey('epi') : "Each outer-join item must contain epi"
+            }
+            def epiPaths = sub01Items.collect { item ->
+                def data = ((item as List)[1] as Map).data as Map
+                (data.epi as Map).nii
+            }
+            assert epiPaths.toSet().size() == 3 : "All 3 outer-join items must have distinct epi paths"
+
+            // Backward-compat assertion: sub-02 has 1 T1w × 1 epi run → 1 channel item
+            def sub02Items = results.collect().findAll { item ->
+                ((item as List)[1] as Map).subject == 'sub-02'
+            }
+            assert sub02Items.size() == 1 : "Expected 1 item for sub-02 (single epi run), got ${sub02Items.size()}"
+
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
     test("ds-mtsat - Plugin output") {
         when {
             params {
