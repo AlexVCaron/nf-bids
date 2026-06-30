@@ -107,6 +107,15 @@ class BidsExtensionTest extends Specification {
         result != null
     }
 
+    def "joinBy accepts shared extractor with options"() {
+        when:
+        def result = extension.joinBy(channel1, channel2, { it.id }, [remainder: true])
+
+        then:
+        noExceptionThrown()
+        result != null
+    }
+
     def "joinBy accepts different extractors for left and right"() {
         when:
         def result = extension.joinBy(channel1, channel2, { it.subjectId }, { it.subject })

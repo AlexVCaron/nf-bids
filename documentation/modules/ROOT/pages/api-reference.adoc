@@ -215,6 +215,12 @@ a|
 ----
 channel.joinBy(
     DataflowReadChannel right,
+    Closure             keyExtractor,
+    Map                 opts = [:]    // remainder (outer join)
+)
+
+channel.joinBy(
+    DataflowReadChannel right,
     Closure             leftKeyExtractor,
     Closure             rightKeyExtractor = null,  // defaults to leftKeyExtractor
     Map                 opts              = [:]    // remainder (outer join)

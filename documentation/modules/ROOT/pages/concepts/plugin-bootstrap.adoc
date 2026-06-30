@@ -96,12 +96,24 @@ DataflowWriteChannel joinBy(
 )
 ----
 
+`joinBy` is also registered with a convenience overload for the common shared-extractor
+case with options:
+
+[source,groovy]
+----
+@Operator
+DataflowWriteChannel joinBy(
+    DataflowReadChannel left,
+    DataflowReadChannel right,
+    Closure keyExtractor,
+    Map opts
+)
+----
+
 When `rightKeyExtractor` is `null` the left extractor is reused, making single-closure
-usage (`channel.joinBy(other) { it.field }`) the common case.
-Both closures are key extractors: each one is called with one item from its
-respective channel and must return the key used for matching.
-If you need options with the shared-extractor form, pass `null` for
-`rightKeyExtractor`, for example `channel.joinBy(other, { it.id }, null, [remainder: true])`.
+usage (`channel.joinBy(other) { it.field }`) the common case. Both closures are key
+extractors: each one is called with one item from its respective channel and must
+return the key used for matching.
 
 === @Operator — combineBy (overloaded)
 
