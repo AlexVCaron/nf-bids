@@ -115,12 +115,13 @@ channel.groupTupleBy({ it.batch }, [size: 3, remainder: false])
 left.joinBy(DataflowReadChannel right, Closure keyExtractor)
 left.joinBy(DataflowReadChannel right, Closure leftKey, Closure rightKey)
 left.joinBy(DataflowReadChannel right, Closure leftKey, Closure rightKey, Map opts)
-left.joinBy(DataflowReadChannel right, Closure leftKey, Map opts)
 ----
 
 When a single `keyExtractor` is supplied it is applied to items from both channels.
 Each join closure is a _key extractor_: nf-bids calls it with one item from its
 respective channel and matches the returned keys.
+To reuse the same extractor while also passing options, call
+`left.joinBy(right, { it.id }, null, [remainder: true])`.
 
 === Output
 
@@ -165,7 +166,7 @@ scans.joinBy(metadata,
 .Outer join (include unmatched)
 [source,groovy]
 ----
-left.joinBy(right, { it.id }, [remainder: true])
+left.joinBy(right, { it.id }, null, [remainder: true])
 // Unmatched left items stay as [id:'C', val:3]
 // Unmatched right items stay as [id:'D', data:'z']
 ----

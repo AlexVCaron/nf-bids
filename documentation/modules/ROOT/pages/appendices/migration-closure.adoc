@@ -138,7 +138,7 @@ left.map { [it.id, it] }
     .join(right.map { [it.id, it] }, remainder: true)
 
 // After
-left.joinBy(right, { it.id }, [remainder: true])
+left.joinBy(right, { it.id }, null, [remainder: true])
 ----
 
 == combine → combineBy

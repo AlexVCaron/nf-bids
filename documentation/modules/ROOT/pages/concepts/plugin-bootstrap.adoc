@@ -100,6 +100,8 @@ When `rightKeyExtractor` is `null` the left extractor is reused, making single-c
 usage (`channel.joinBy(other) { it.field }`) the common case.
 Both closures are key extractors: each one is called with one item from its
 respective channel and must return the key used for matching.
+If you need options with the shared-extractor form, pass `null` for
+`rightKeyExtractor`, for example `channel.joinBy(other, { it.id }, null, [remainder: true])`.
 
 === @Operator — combineBy (overloaded)
 
