@@ -98,10 +98,10 @@ class PlainSetHandlerSpec extends Specification {
             (channelData.getSuffixData('epi') as Map).nii
         }
         epiPaths as Set == [
-            'anat/sub-01_ses-01_run-01_epi.nii.gz',
-            'anat/sub-01_ses-01_run-02_epi.nii.gz',
-            'anat/sub-01_ses-01_run-03_epi.nii.gz'
-        ] as Set || epiPaths.any { it != null }
+            'fmap/sub-01_ses-01_run-01_epi.nii.gz',
+            'fmap/sub-01_ses-01_run-02_epi.nii.gz',
+            'fmap/sub-01_ses-01_run-03_epi.nii.gz'
+        ] as Set
     }
 
     def 'processGroup with single T1w emits exactly one BidsChannelData'() {
