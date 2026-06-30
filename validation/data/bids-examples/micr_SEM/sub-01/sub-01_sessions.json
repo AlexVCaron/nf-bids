@@ -1,8 +1,0 @@
-{
-    "session_id": {
-        "Description": "Session ID"
-    },
-    "acq_time": {
-        "Description": "Time when the sample have been acquired"
-    }
-}

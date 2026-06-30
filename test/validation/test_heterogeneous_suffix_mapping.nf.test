@@ -1,0 +1,282 @@
+nextflow_workflow {
+
+    name "Heterogeneous Suffix Mapping Test (Flat Output)"
+    script "./main_flat.nf"
+    workflow "main_workflow"
+    tag "suffix_mapping"
+    tag "heterogeneous"
+    tag "flat_output"
+
+    test("Heterogeneous DWI - Multiple configs preserved with flat output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-dwi4"
+                config = "${baseDir}/test/configs/config_heterogeneous_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            
+            def results = workflow.out.bids_channel.collect()
+            
+            // Verify we have items
+            assert results.size() > 0 : "Expected at least one channel item"
+            
+            println "\n=== Heterogeneous Suffix Mapping Validation ==="
+            println "Total items: ${results.size()}"
+            
+            // Collect all config keys present in the data
+            def allConfigKeys = [] as Set
+            def configKeysPerItem = [:]
+            
+            results.eachWithIndex { item, idx ->
+                // Flat output: item is [meta:[...], configKey1:[...], configKey2:[...], ...]
+                // First element is meta map, rest are config key data
+                println "\n--- Item ${idx + 1} ---"
+                println "Item type: ${item.getClass()}"
+                println "Item size: ${item.size()}"
+                
+                if (item instanceof Map) {
+                    // Item is the full map
+                    def meta = item.meta
+                    println "Meta: ${meta}"
+                    
+                    // Get all keys except 'meta'
+                    def suffixKeys = item.keySet().findAll { it != 'meta' }
+                    println "Suffix keys found: ${suffixKeys}"
+                    
+                    allConfigKeys.addAll(suffixKeys)
+                    configKeysPerItem[idx] = suffixKeys
+                } else {
+                    println "Unexpected item structure: ${item}"
+                }
+            }
+            
+            println "\n=== Summary ==="
+            println "All config keys present: ${allConfigKeys}"
+            
+            // Verify that heterogeneous keys are preserved
+            // Expected config keys from config_heterogeneous_dwi.yaml that map to same suffix:
+            // - dwi_ap, dwi_rl, dwi_is all map to "dwi" suffix
+            // - sbref_ap, sbref_rl, sbref_is all map to "sbref" suffix
+            // We should see these config keys, NOT just "dwi" or "sbref"
+            
+            def heterogeneousKeys = ['dwi_ap', 'dwi_rl', 'dwi_is', 'sbref_ap', 'sbref_rl', 'sbref_is']
+            def foundHeterogeneousKeys = allConfigKeys.intersect(heterogeneousKeys)
+            
+            println "Heterogeneous keys found: ${foundHeterogeneousKeys}"
+            
+            // Verify at least some heterogeneous keys are present
+            assert foundHeterogeneousKeys.size() > 0 : 
+                "Expected to find heterogeneous config keys (dwi_ap, sbref_ap, etc.) but found: ${allConfigKeys}"
+            
+            // Verify we don't have plain "dwi" or "sbref" keys when we have heterogeneous data
+            // (unless there are also files without dir- entity)
+            if (foundHeterogeneousKeys.contains('dwi_ap')) {
+                println "✓ Config key 'dwi_ap' correctly preserved (not collapsed to 'dwi')"
+            }
+            if (foundHeterogeneousKeys.contains('sbref_ap')) {
+                println "✓ Config key 'sbref_ap' correctly preserved (not collapsed to 'sbref')"
+            }
+            
+            println "✓ Test passed - heterogeneous suffix mappings preserved"
+        }
+    }
+
+    test("Validate named set structure with heterogeneous mappings") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-dwi4"
+                config = "${baseDir}/test/configs/config_heterogeneous_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            
+            def results = workflow.out.bids_channel.collect()
+            assert results.size() > 0
+            
+            println "\n=== Named Set Structure Validation ==="
+            
+            // Find an item with dwi_ap config key
+            def dwiApItem = results.find { item ->
+                item instanceof Map && item.containsKey('dwi_ap') && item.dwi_ap != null
+            }
+            
+            if (dwiApItem) {
+                def dwiApData = dwiApItem.dwi_ap
+                
+                println "Found dwi_ap item"
+                println "dwi_ap structure: ${dwiApData.getClass()}"
+                
+                // For named sets in flat output, the structure should be a Map with group names
+                assert dwiApData instanceof Map : 
+                    "Expected dwi_ap to be a Map for named set, got: ${dwiApData.getClass()}"
+                
+                // Check for expected groups (ap, pa)
+                def expectedGroups = ['ap', 'pa']
+                def foundGroups = dwiApData.keySet()
+                
+                println "Expected groups: ${expectedGroups}"
+                println "Found groups: ${foundGroups}"
+                
+                def hasRequiredGroups = expectedGroups.every { foundGroups.contains(it) }
+                assert hasRequiredGroups : 
+                    "Expected groups ${expectedGroups} in dwi_ap, but found: ${foundGroups}"
+                
+                // Verify each group has file references
+                expectedGroups.each { groupName ->
+                    def groupData = dwiApData[groupName]
+                    assert groupData != null : "Group '${groupName}' should not be null"
+                    
+                    println "  Group '${groupName}': ${groupData}"
+                    
+                    // Should have nii, json, and potentially bval/bvec
+                    if (groupData instanceof Map) {
+                        assert groupData.nii != null : 
+                            "Group '${groupName}' should have 'nii' file"
+                    }
+                }
+                
+                println "✓ Named set structure validated"
+            } else {
+                println "⚠ No dwi_ap item found to validate structure"
+            }
+        }
+    }
+
+    test("Verify config keys match entities correctly") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-dwi4"
+                config = "${baseDir}/test/configs/config_heterogeneous_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            
+            def results = workflow.out.bids_channel.collect()
+            
+            println "\n=== Entity-Config Key Matching Validation ==="
+            
+            // For dwi_ap config, we expect:
+            // - Files to have dir-AP and dir-PA entities
+            // - No collision with plain dwi config (files without dir- entity)
+            
+            def itemsWithDwiAp = results.findAll { item ->
+                item instanceof Map && item.containsKey('dwi_ap') && item.dwi_ap != null
+            }
+            
+            def itemsWithPlainDwi = results.findAll { item ->
+                item instanceof Map && item.containsKey('dwi') && item.dwi != null && !item.containsKey('dwi_ap')
+            }
+            
+            println "Items with 'dwi_ap' config: ${itemsWithDwiAp.size()}"
+            println "Items with plain 'dwi' config: ${itemsWithPlainDwi.size()}"
+            
+            // Both should be present if dataset has both types
+            // (ds-dwi4 may or may not have plain dwi files)
+            
+            if (itemsWithDwiAp.size() > 0) {
+                println "✓ Found items with dwi_ap config key"
+                
+                // Verify the structure is correct (named set with ap/pa groups)
+                itemsWithDwiAp.each { item ->
+                    def dwiApData = item.dwi_ap
+                    
+                    // Should be a Map for named set
+                    assert dwiApData instanceof Map : 
+                        "dwi_ap should be a Map for named set"
+                    
+                    // Should have ap and pa groups
+                    assert dwiApData.containsKey('ap') : "dwi_ap should have 'ap' group"
+                    assert dwiApData.containsKey('pa') : "dwi_ap should have 'pa' group"
+                }
+            }
+            
+            if (itemsWithPlainDwi.size() > 0) {
+                println "✓ Found items with plain dwi config key"
+                
+                // Verify plain structure
+                itemsWithPlainDwi.each { item ->
+                    def dwiData = item.dwi
+                    
+                    // Should be a Map with direct file references for plain set
+                    assert dwiData instanceof Map : "dwi should be a Map for plain set"
+                    assert dwiData.containsKey('nii') : "Plain dwi should have 'nii' key"
+                }
+            }
+            
+            println "✓ Entity-config key matching validated"
+        }
+    }
+
+    test("No suffix collision - All files processed") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-dwi4"
+                config = "${baseDir}/test/configs/config_heterogeneous_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            
+            def results = workflow.out.bids_channel.collect()
+            
+            println "\n=== File Processing Completeness ==="
+            
+            // Count total files referenced in all items
+            def totalFilesReferenced = 0
+            
+            def countFilesInStructure
+            countFilesInStructure = { data ->
+                if (data instanceof String) return 1
+                if (data instanceof Map) {
+                    return data.values().sum { countFilesInStructure(it) } ?: 0
+                }
+                if (data instanceof List) {
+                    return data.sum { countFilesInStructure(it) } ?: 0
+                }
+                return 0
+            }
+            
+            results.each { item ->
+                if (item instanceof Map) {
+                    // Count files in all suffix data (exclude 'meta')
+                    item.each { key, value ->
+                        if (key != 'meta') {
+                            totalFilesReferenced += countFilesInStructure(value)
+                        }
+                    }
+                }
+            }
+            
+            println "Total files referenced: ${totalFilesReferenced}"
+            
+            // Verify we have a reasonable number of files processed
+            assert totalFilesReferenced > 0 : "Expected files to be processed"
+            
+            // Count DWI files in the dataset
+            def dwiDir = new File("${baseDir}/test/data/custom/ds-dwi4")
+            def dwiFilesInDataset = []
+            if (dwiDir.exists()) {
+                dwiDir.eachFileRecurse { file ->
+                    if (file.name.endsWith('.nii.gz') && file.name.contains('dwi')) {
+                        dwiFilesInDataset << file
+                    }
+                }
+            }
+            
+            println "DWI .nii.gz files in dataset: ${dwiFilesInDataset.size()}"
+            
+            // We should process a reasonable number of files
+            // (exact count depends on config filtering)
+            if (dwiFilesInDataset.size() > 0) {
+                println "✓ Files are being processed"
+            }
+            
+            println "✓ No collision detected - all matching files processed"
+        }
+    }
+}

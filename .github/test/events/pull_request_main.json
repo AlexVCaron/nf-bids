@@ -1,0 +1,17 @@
+{
+  "pull_request": {
+    "number": 1,
+    "head": {
+      "ref": "feature/local-act-test"
+    },
+    "base": {
+      "ref": "main"
+    }
+  },
+  "repository": {
+    "name": "nf-bids",
+    "full_name": "nf-neuro/nf-bids",
+    "default_branch": "main"
+  },
+  "ref": "refs/pull/1/merge"
+}

@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 8: combineBy Boundary Conditions"
+    script "./test8_combineby_edge_cases.nf"
+    tag "test8"
+    tag "combineby"
+
+    test("combineBy handles boundary conditions") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

@@ -1,0 +1,136 @@
+name: Validation and Edge Cases
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: Validation suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v3
+        with:
+          version: '25.10.0'
+
+      - name: Set up nf-test
+        uses: nf-core/setup-nf-test@v2
+        with:
+          version: '0.9.5'
+
+      - name: Fix nf-test permissions
+        run: |
+          chmod +x "$HOME/.nf-test/nf-test" 2>/dev/null || true
+          chmod +x "$HOME/.nf-test/pdiff" 2>/dev/null || true
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Ensure nf-test is available in the job container
+        run: |
+          if [ -x "$HOME/.nf-test/nf-test" ] && [ -f "$HOME/.nf-test/nf-test.jar" ]; then
+            echo "nf-test already available in job container"
+            exit 0
+          fi
+
+          mkdir -p "$HOME/.nf-test"
+          curl -fsSL -o /tmp/nf-test.tar.gz "https://github.com/askimed/nf-test/releases/download/v0.9.5/nf-test-0.9.5.tar.gz"
+          tar -xzf /tmp/nf-test.tar.gz -C "$HOME/.nf-test"
+          chmod +x "$HOME/.nf-test/nf-test"
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Verify nf-test
+        run: |
+          command -v nf-test
+          nf-test version
+
+      - name: Install Python diff dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdiff-venv"
+          "$RUNNER_TEMP/pdiff-venv/bin/python" -m pip install --upgrade pip pdiff cryptography
+          echo "$RUNNER_TEMP/pdiff-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run validation suite
+        working-directory: test/validation
+        env:
+          NFT_DIFF: pdiff
+          NFT_DIFF_ARGS: --line-numbers --width 120 --expand-tabs=2
+        run: bash test_datasets.sh
+
+  edge_cases:
+    name: Edge case suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v3
+        with:
+          version: '25.10.0'
+
+      - name: Set up nf-test
+        uses: nf-core/setup-nf-test@v2
+        with:
+          version: '0.9.5'
+
+      - name: Fix nf-test permissions
+        run: |
+          chmod +x "$HOME/.nf-test/nf-test" 2>/dev/null || true
+          chmod +x "$HOME/.nf-test/pdiff" 2>/dev/null || true
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Ensure nf-test is available in the job container
+        run: |
+          if [ -x "$HOME/.nf-test/nf-test" ] && [ -f "$HOME/.nf-test/nf-test.jar" ]; then
+            echo "nf-test already available in job container"
+            exit 0
+          fi
+
+          mkdir -p "$HOME/.nf-test"
+          curl -fsSL -o /tmp/nf-test.tar.gz "https://github.com/askimed/nf-test/releases/download/v0.9.5/nf-test-0.9.5.tar.gz"
+          tar -xzf /tmp/nf-test.tar.gz -C "$HOME/.nf-test"
+          chmod +x "$HOME/.nf-test/nf-test"
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Verify nf-test
+        run: |
+          command -v nf-test
+          nf-test version
+
+      - name: Install Python diff dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdiff-venv"
+          "$RUNNER_TEMP/pdiff-venv/bin/python" -m pip install --upgrade pip pdiff cryptography
+          echo "$RUNNER_TEMP/pdiff-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run edge case suite
+        working-directory: test/edge_cases
+        env:
+          NFT_DIFF: pdiff
+          NFT_DIFF_ARGS: --line-numbers --width 120 --expand-tabs=2
+        run: bash run_all_tests.sh

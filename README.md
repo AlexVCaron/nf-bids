@@ -276,8 +276,8 @@ We welcome contributions! Here's how to get started:
 2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
 3. **Make your changes** and add tests
 4. **Run the test suite**: `./gradlew test`
-5. **Run the nf-test suite**: `nf-test test validation/`
-6. **Update snapshots** (optional) : `nf-test test validation/ --update-snapshot`
+5. **Run the nf-test suite**: `nf-test test test/validation/`
+6. **Update snapshots** (optional) : `nf-test test test/validation/ --update-snapshot`
 7. **Commit your changes**: `git commit -m 'Add amazing feature'`
 8. **Push to your branch**: `git push origin feature/amazing-feature`
 9. **Open a Pull Request**

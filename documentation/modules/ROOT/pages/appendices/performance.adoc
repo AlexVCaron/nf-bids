@@ -261,13 +261,13 @@ subjects.combineBy(runs, { it.subject })
 == Reproducing the Benchmarks
 
 See xref:guides/testing.adoc#layer-3-edge-cases-and-benchmarks[Testing Guide — Layer 3]
-for the commands to re-run each benchmark workflow in `validation/benchmark/`.
+for the commands to re-run each benchmark workflow in `test/benchmark/`.
 
 The benchmark workflows are:
 
-* `validation/benchmark/benchmark_grouptuple.nf`
-* `validation/benchmark/benchmark_join.nf`
-* `validation/benchmark/benchmark_combine.nf`
-* `validation/benchmark/benchmark_combineby_new.nf`
+* `test/benchmark/benchmark_grouptuple.nf`
+* `test/benchmark/benchmark_join.nf`
+* `test/benchmark/benchmark_combine.nf`
+* `test/benchmark/benchmark_combineby_new.nf`
 
-Saved reference results are in `validation/benchmark/BENCHMARK_RESULTS.md`.
+Saved reference results are in `test/benchmark/BENCHMARK_RESULTS.md`.

@@ -1,0 +1,12 @@
+nextflow_pipeline {
+
+    name "joinBy Integration"
+    script "./test_joinby.nf"
+
+    test("joinBy integration scenarios pass") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

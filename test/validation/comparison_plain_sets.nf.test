@@ -1,0 +1,141 @@
+nextflow_workflow {
+
+    name "Plugin Comparison: Plain Sets"
+    script "./main.nf"
+    workflow "main_workflow"
+
+    test("asl001 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/bids-examples/asl001"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_asl.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("asl002 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/bids-examples/asl002"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_asl.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("eeg_cbm - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/bids-examples/eeg_cbm"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_eeg.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+}

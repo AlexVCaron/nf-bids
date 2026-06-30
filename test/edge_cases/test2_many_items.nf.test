@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 2: Many Small Items"
+    script "./test2_many_items.nf"
+    tag "test2"
+    tag "grouptupleby"
+
+    test("groupTupleBy handles many small items") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

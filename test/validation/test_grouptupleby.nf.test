@@ -1,0 +1,12 @@
+nextflow_pipeline {
+
+    name "groupTupleBy Integration"
+    script "./test_grouptupleby.nf"
+
+    test("groupTupleBy integration scenarios pass") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

@@ -86,7 +86,7 @@ To run a single test class:
 
 == Layer 2 — Integration / Validation Tests (nf-test)
 
-Integration tests live under `validation/` and use
+Integration tests live under `test/validation/` and use
 https://www.nf-test.com[nf-test] to run the full plugin against real BIDS
 example datasets.
 
@@ -95,7 +95,7 @@ example datasets.
 [source,groovy]
 ----
 config {
-    testsDir "validation"
+    testsDir "test/validation"
     workDir  ".nf-test"
     configFile "nextflow.config"
     profile ""
@@ -108,7 +108,15 @@ From the repository root:
 
 [source,bash]
 ----
-nf-test test validation/
+nf-test test test/validation/
+----
+
+Preferred wrapper (ensures plugin/bootstrap consistency with CI):
+
+[source,bash]
+----
+cd test/validation
+bash test_datasets.sh
 ----
 
 === Test Suites
@@ -149,10 +157,18 @@ snapshot, then re-run the full suite to ensure no other test regressed:
 [source,bash]
 ----
 # Regenerate snapshot for a specific suite
-nf-test test validation/comparison_plain_sets.nf.test --update-snapshot
+nf-test test test/validation/comparison_plain_sets.nf.test --update-snapshot
 
 # Then run the full suite to check for regressions
-nf-test test validation/
+nf-test test test/validation/
+----
+
+Or regenerate through the project wrapper:
+
+[source,bash]
+----
+cd test/validation
+bash test_datasets.sh --update-snapshots
 ----
 
 NOTE: Never run `--update-snapshot` across the full suite unless you have
@@ -189,7 +205,7 @@ Passing it does *not* substitute for the nf-test suite.
 
 === Edge Case Tests
 
-Edge case tests are in `validation/edge_cases/` and target operator
+Edge case tests are in `test/edge_cases/` and target operator
 behaviour at the boundaries: large items, many items, missing fields,
 concurrent execution, and complex joins.
 
@@ -197,7 +213,7 @@ Run with nf-test:
 
 [source,bash]
 ----
-nf-test test validation/edge_cases/edge_cases.nf.test
+nf-test test test/edge_cases/
 ----
 
 Or run all edge-case workflows directly (useful for interactive inspection of
@@ -205,7 +221,7 @@ Or run all edge-case workflows directly (useful for interactive inspection of
 
 [source,bash]
 ----
-cd validation/edge_cases
+cd test/edge_cases
 ./run_all_tests.sh
 ----
 
@@ -231,12 +247,12 @@ A failure here should be fixed before releasing.
 
 === Performance Benchmarks
 
-Benchmark workflows live in `validation/benchmark/` and compare each
+Benchmark workflows live in `test/benchmark/` and compare each
 closure-based operator against its Nextflow built-in counterpart.
 
 [source,bash]
 ----
-cd validation/benchmark
+cd test/benchmark
 nextflow run benchmark_grouptuple.nf
 nextflow run benchmark_join.nf
 nextflow run benchmark_combine.nf
@@ -249,6 +265,39 @@ See xref:appendices/performance.adoc[Performance Benchmark] for the
 reference numbers and the analysis.
 Benchmark regressions (sustained increases >50 %) should be investigated
 before release.
+
+== Local CI Reproduction with act
+
+Run these commands from repository root to execute the same workflow jobs used
+in GitHub Actions.
+
+=== Validation job
+
+[source,bash]
+----
+# Optional when behaviour changed
+cd test/validation && bash test_datasets.sh --update-snapshots && cd ../..
+
+act pull_request -W .github/workflows/validation.yml -j validation
+----
+
+=== Edge-case job
+
+[source,bash]
+----
+act pull_request -W .github/workflows/validation.yml -j edge_cases
+----
+
+=== Benchmark job
+
+`benchmark.yml` is not triggered by `pull_request`; use `workflow_dispatch`:
+
+[source,bash]
+----
+act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark
+----
+
+Tip: append `| tee <log-file>.log` to retain full CI-like logs.
 
 == Layer 4 — Documentation Build Verification
 

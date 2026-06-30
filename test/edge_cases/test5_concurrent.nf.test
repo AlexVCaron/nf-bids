@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 5: Concurrent Execution"
+    script "./test5_concurrent.nf"
+    tag "test5"
+    tag "grouptupleby"
+
+    test("groupTupleBy handles concurrent execution") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

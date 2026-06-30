@@ -40,9 +40,12 @@ class PlainSetHandler extends BaseSetHandler {
     protected void packFileIntoSet(Map sets, Map allFiles, Map index, BidsFile file, Map ordering) {
         String configKey = index.configKey  // Use config key for sets
         String fileSuffix = index.fileSuffix  // Use file suffix for allFiles lookup
-        
+
         if (file.isPrimaryFile()) {
-            sets[configKey] = [files: [file: file], fileSuffix: fileSuffix]
+            BidsFile currentPrimary = sets[configKey]?.files?.file as BidsFile
+            if (!currentPrimary || normalizedPath(file) < normalizedPath(currentPrimary)) {
+                sets[configKey] = [files: [file: file], fileSuffix: fileSuffix]
+            }
         } else {
             if (!allFiles.containsKey(fileSuffix)) {
                 allFiles[fileSuffix] = []
@@ -66,10 +69,11 @@ class PlainSetHandler extends BaseSetHandler {
         // Create channel data structure
         BidsChannelData channelData = new BidsChannelData()
 
-        plainSets.each { configKey, setData ->
+        plainSets.keySet().toList().sort().each { configKey ->
+            def setData = plainSets[configKey]
             String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
             BidsLogger.logProgress(logGroup(), "Processing config key: ${configKey}, file suffix: ${fileSuffix}, setData: ${setData}")
-            
+
             // Extract the file from the setData structure
             BidsFile file = setData.files?.file as BidsFile
             if (!file) {
@@ -80,7 +84,9 @@ class PlainSetHandler extends BaseSetHandler {
             BidsLogger.logProgress(logGroup(), "Emitting plain set for config key: ${configKey}, file suffix: ${fileSuffix}, file: ${file.path}")
 
             // Get all related files for this file suffix
-            List<BidsFile> relatedFiles = allFiles.get(fileSuffix, [])
+            List<BidsFile> relatedFiles = (allFiles.get(fileSuffix, []) as List<BidsFile>)
+                .toList()
+                .sort { a, b -> normalizedPath(a) <=> normalizedPath(b) }
 
             // Get parts configuration using config key
             def suffixConfig = config.get(configKey) as Map
@@ -148,6 +154,10 @@ class PlainSetHandler extends BaseSetHandler {
         nestedMap[primaryFile.getType()] = primaryFile.relativeTo(datasetRoot)
 
         return nestedMap
+    }
+
+    private static String normalizedPath(BidsFile file) {
+        return file.path?.toString()?.replace('\\', '/') ?: ''
     }
 
 }
