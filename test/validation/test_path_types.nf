@@ -6,13 +6,16 @@
 
 include { fromBIDS } from "plugin/nf-bids"
 
-params.bids_dir = "${projectDir}/data/bids-examples/asl001"
-params.config = "${projectDir}/configs/config_asl.yaml"
+params.bids_dir = params.bids_dir ?: "${projectDir}/../data/bids-examples/asl001"
+params.config = params.config ?: "${projectDir}/../configs/config_asl.yaml"
+params.libbids_sh = params.libbids_sh ?: null
 
 workflow {
     log.info "=== Testing Path Object Types ==="
     
-    Channel.fromBIDS(params.bids_dir, params.config)
+    def options = params.libbids_sh ? [libbids_sh: params.libbids_sh] : [:]
+
+    Channel.fromBIDS(params.bids_dir, params.config, options)
         .take(1)
         .map { item ->
             log.info "\nChecking item structure:"

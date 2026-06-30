@@ -92,10 +92,13 @@ Run the full test suite.  Every layer must pass before proceeding.
 ./gradlew test
 
 # Layer 2: integration / validation
-nf-test test validation/
+cd test/validation && bash test_datasets.sh && cd ../..
 
 # Layer 3: edge cases
-nf-test test validation/edge_cases/edge_cases.nf.test
+cd test/edge_cases && bash run_all_tests.sh && cd ../..
+
+# Layer 3b: benchmark workflow
+act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark
 ----
 
 See the xref:guides/testing.adoc[Testing Guide] for details on what each
@@ -209,8 +212,9 @@ Always run `make docs` locally before pushing the release tag.
 [ ] documentation/antora.yml version / attributes bumped
 [ ] CHANGELOG.md updated with new section
 [ ] ./gradlew test — all unit tests green
-[ ] nf-test test validation/ — all integration tests green
-[ ] nf-test test validation/edge_cases/edge_cases.nf.test — edge cases green
+[ ] cd test/validation && bash test_datasets.sh && cd ../.. — all integration tests green
+[ ] cd test/edge_cases && bash run_all_tests.sh && cd ../.. — edge cases green
+[ ] act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark — benchmark workflow green
 [ ] ./gradlew docs — site builds cleanly, version correct in header
 [ ] Commit: "chore: release vX.Y.Z"
 [ ] git tag -a vX.Y.Z pushed with --follow-tags

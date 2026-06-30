@@ -4,6 +4,15 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+bootstrap_runtime() {
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  echo "[bootstrap] Installing nf-bids plugin locally..."
+  (cd "${repo_root}" && ./gradlew install >/dev/null)
+}
+
+bootstrap_runtime
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PLUGIN_VERSION="0.1.0-beta.10"
 PLUGINS_DIR="${NXF_PLUGINS_DIR:-$HOME/.nextflow/plugins}"

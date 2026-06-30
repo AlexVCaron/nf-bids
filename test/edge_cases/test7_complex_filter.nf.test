@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 7: combineBy Complex Filter"
+    script "./test7_complex_filter.nf"
+    tag "test7"
+    tag "combineby"
+
+    test("combineBy handles complex filters") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

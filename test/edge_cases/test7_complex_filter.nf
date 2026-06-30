@@ -10,7 +10,7 @@ include { combineBy } from 'plugin/nf-bids'
 
 workflow {
     println "╔════════════════════════════════════════════════════════════════╗"
-    println "║  Test 7: combineBy with Downstream Filter Predicates          ║"
+    println "║  Test 7: combineBy with Downstream Filter Predicates           ║"
     println "╚════════════════════════════════════════════════════════════════╝"
     
     def matchCount = 0
@@ -29,22 +29,16 @@ workflow {
     )
     
     scans
-        .combineBy(
-            analyses,
-            { it.modality },
-            { it.requires }
-        )
-        .filter { fused ->
-            // Filter after key-based combination
-            fused.subject == "sub-01" &&
-            fused.quality >= fused.minQuality
-        }
-        .map { _key, leftItem, rightItem ->
-            return leftItem + rightItem
+        .combineBy(analyses, { l -> l.modality }, { r -> r.requires })
+        .filter { fusion ->
+            // Complex predicate: subject match AND modality match AND quality threshold
+            fusion.subject == "sub-01" && 
+            fusion.modality == fusion.requires && 
+            fusion.quality >= fusion.minQuality
         }
         .subscribe(
             onNext: { fused ->
-                matchCount++
+                matchCount += 1
                 println "  Match: ${fused.subject} ${fused.modality} (q=${fused.quality}) -> ${fused.analysis}"
                 assert fused.modality == fused.requires
                 assert fused.quality >= fused.minQuality

@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 3: Nested Structures"
+    script "./test3_nested_structures.nf"
+    tag "test3"
+    tag "grouptupleby"
+
+    test("groupTupleBy handles complex nested structures") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+include { fromBIDS } from 'plugin/nf-bids'
+
 nextflow.enable.dsl=2
 
 params.bids_dir = params.bids_dir ?: "${projectDir}/../data/custom/ds-dwi4"

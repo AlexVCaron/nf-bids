@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 6: joinBy Many Items"
+    script "./test6_join_many.nf"
+    tag "test6"
+    tag "joinby"
+
+    test("joinBy handles many items") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

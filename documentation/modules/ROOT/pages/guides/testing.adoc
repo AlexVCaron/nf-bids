@@ -111,6 +111,14 @@ From the repository root:
 nf-test test test/validation/
 ----
 
+Preferred wrapper (ensures plugin/bootstrap consistency with CI):
+
+[source,bash]
+----
+cd test/validation
+bash test_datasets.sh
+----
+
 === Test Suites
 
 [cols="2,3"]
@@ -155,6 +163,14 @@ nf-test test test/validation/comparison_plain_sets.nf.test --update-snapshot
 nf-test test test/validation/
 ----
 
+Or regenerate through the project wrapper:
+
+[source,bash]
+----
+cd test/validation
+bash test_datasets.sh --update-snapshots
+----
+
 NOTE: Never run `--update-snapshot` across the full suite unless you have
 intentionally changed behaviour in *all* suites.  Doing so silently accepts
 regressions.
@@ -197,7 +213,7 @@ Run with nf-test:
 
 [source,bash]
 ----
-nf-test test test/edge_cases/edge_cases.nf.test
+nf-test test test/edge_cases/
 ----
 
 Or run all edge-case workflows directly (useful for interactive inspection of
@@ -249,6 +265,39 @@ See xref:appendices/performance.adoc[Performance Benchmark] for the
 reference numbers and the analysis.
 Benchmark regressions (sustained increases >50 %) should be investigated
 before release.
+
+== Local CI Reproduction with act
+
+Run these commands from repository root to execute the same workflow jobs used
+in GitHub Actions.
+
+=== Validation job
+
+[source,bash]
+----
+# Optional when behaviour changed
+cd test/validation && bash test_datasets.sh --update-snapshots && cd ../..
+
+act pull_request -W .github/workflows/validation.yml -j validation
+----
+
+=== Edge-case job
+
+[source,bash]
+----
+act pull_request -W .github/workflows/validation.yml -j edge_cases
+----
+
+=== Benchmark job
+
+`benchmark.yml` is not triggered by `pull_request`; use `workflow_dispatch`:
+
+[source,bash]
+----
+act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark
+----
+
+Tip: append `| tee <log-file>.log` to retain full CI-like logs.
 
 == Layer 4 — Documentation Build Verification
 

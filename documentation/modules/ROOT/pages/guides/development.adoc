@@ -28,7 +28,9 @@ areas are:
 | Path | Role
 | `src/main/groovy/nfneuro/` | Plugin implementation: channel factory, config loading, parsing, grouping, operators, utilities
 | `src/test/groovy/nfneuro/` | Unit tests (Spock / JUnit)
-| `validation/` | Integration, regression, edge-case, and benchmark workflows
+| `test/validation/` | Integration and regression suites (nf-test + snapshots)
+| `test/edge_cases/` | Edge-case suites and stress scenarios
+| `test/benchmark/` | Benchmark workflows and benchmark result generation
 | `documentation/` | Antora site source, build scripts, diagrams, and UI overrides
 | `libBIDS.sh/` | Vendored parser submodule used at runtime
 |===
@@ -41,7 +43,7 @@ From the repository root:
 ----
 ./gradlew assemble      # compile and package the plugin
 ./gradlew test          # run unit tests
-nf-test test validation/  # run integration / validation suites
+cd test/validation && bash test_datasets.sh && cd ../..  # run integration / validation suites
 ./gradlew install       # install into the local Nextflow plugin cache
 ./gradlew docs          # build the Antora documentation site
 ----
@@ -56,7 +58,7 @@ In practice, contributors usually work in this order:
 
 . Run `./gradlew test` for fast feedback on unit-level changes.
 . Run targeted `nf-test` suites while iterating on behaviour.
-. Run `nf-test test validation/` before merging behaviour changes.
+. Run `cd test/validation && bash test_datasets.sh && cd ../..` before merging behaviour changes.
 . Rebuild docs with `./gradlew docs` when public APIs, diagrams, or docs change.
 
 The testing guide also documents snapshot updates, edge-case workflows, and
@@ -92,3 +94,110 @@ helper scripts in `documentation/bin/`.
 * xref:guides/release.adoc[Release Guide]
 * xref:source-model/index.adoc[Source Tree Map]
 * xref:maintenance/contributing-docs.adoc[Contributing to the Documentation]
+
+== Running GitHub Actions Locally with act
+
+Use `act` to reproduce CI jobs locally before pushing. This is the fastest way
+to catch workflow-level issues (tool bootstrap, path handling, snapshot
+discrepancies) that do not always appear in direct local runs.
+
+=== Installation and prerequisites
+
+==== 1) Install Docker and verify daemon access
+
+`act` runs jobs in Docker containers.
+
+[source,bash]
+----
+docker version
+docker info
+----
+
+==== 2) Install act
+
+Linux (script from upstream):
+
+[source,bash]
+----
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+act --version
+----
+
+macOS (Homebrew):
+
+[source,bash]
+----
+brew install act
+act --version
+----
+
+==== 3) Verify jobs available in this repository
+
+From repository root:
+
+[source,bash]
+----
+act --list
+----
+
+==== 4) Optional but recommended local defaults
+
+Pin the default runner image in `.actrc` (if not already set) to keep results
+stable across runs.
+
+Example:
+
+[source,text]
+----
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+----
+
+=== Validation workflow (snapshot-aware)
+
+Before running CI validation locally, refresh snapshots when behaviour changed:
+
+[source,bash]
+----
+cd test/validation
+bash test_datasets.sh --update-snapshots
+cd ../..
+----
+
+Run the validation job exactly as CI does:
+
+[source,bash]
+----
+act pull_request -W .github/workflows/validation.yml -j validation
+----
+
+Tips:
+
+* The workflow sets `NFT_DIFF=pdiff`, so snapshot mismatches show unified diffs.
+* Save output for review with `| tee act-validation.log`.
+
+=== Edge-case workflow
+
+Run the edge-case CI job:
+
+[source,bash]
+----
+act pull_request -W .github/workflows/validation.yml -j edge_cases
+----
+
+This executes `test/edge_cases/run_all_tests.sh` inside the workflow job.
+
+=== Benchmark workflow
+
+The benchmark workflow triggers on `push` and `workflow_dispatch` (not
+`pull_request`). Use `workflow_dispatch` with `act`:
+
+[source,bash]
+----
+act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark
+----
+
+Tips:
+
+* Save output for review with `| tee act-benchmark.log`.
+* In local `act` mode, commit/push benchmark artifact steps are intentionally
+  skipped by workflow guards.

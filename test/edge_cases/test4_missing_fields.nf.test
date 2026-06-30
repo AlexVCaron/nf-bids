@@ -1,0 +1,14 @@
+nextflow_pipeline {
+
+    name "Edge Case 4: Missing Fields"
+    script "./test4_missing_fields.nf"
+    tag "test4"
+    tag "grouptupleby"
+
+    test("groupTupleBy handles missing fields gracefully") {
+        when {}
+        then {
+            assert workflow.success
+        }
+    }
+}

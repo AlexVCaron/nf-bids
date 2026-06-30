@@ -3,21 +3,47 @@ nextflow_workflow {
     name "Plugin Comparison: Mixed Sets"
     script "./main.nf"
     workflow "main_workflow"
-
     test("qmri_mpm - Plugin output") {
         when {
             params {
-                bids_dir = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/tests/data/bids-examples/qmri_mpm"
-                libbids_sh = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/libBIDS.sh/libBIDS.sh"
-                config = "/home/local/USHERBROOKE/vala2004/dev/bids2nf/plugins/nf-bids/validation/configs/config_mpm.yaml"
+                bids_dir = "${baseDir}/test/data/bids-examples/qmri_mpm"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_mpm.yaml"
             }
         }
         then {
             assert workflow.success
             assert workflow.out.bids_channel
             def results = workflow.out.bids_channel.collect()
-            def json = groovy.json.JsonOutput.toJson(results)
-            assert snapshot(new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(json))).match()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
         }
     }
 }

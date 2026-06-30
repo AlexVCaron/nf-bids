@@ -1,0 +1,18 @@
+nextflow_pipeline {
+
+    name "Process Path Input Validation"
+    script "./test_process_path_input.nf"
+
+    test("Path outputs stage correctly into process path inputs") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/bids-examples/asl001"
+                config = "${baseDir}/test/configs/config_asl.yaml"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+            }
+        }
+        then {
+            assert workflow.success
+        }
+    }
+}

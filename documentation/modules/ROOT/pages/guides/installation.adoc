@@ -239,3 +239,69 @@ to SVG before passing content to Antora.
 PlantUML is *downloaded automatically* into `documentation/lib/` by the build
 script (`documentation/bin/fetch-tools.sh`).
 No manual installation is required.
+
+=== Docker (Local CI Reproduction with act)
+
+*Why:* `act` executes GitHub Actions jobs in local Docker containers.
+Required only if you want to run `.github/workflows/*.yml` locally.
+
+[source,bash]
+----
+docker version
+docker info
+----
+
+Install Docker using your platform package manager or Docker Desktop.
+Confirm your user can access the daemon without `sudo`.
+
+=== act (Local GitHub Actions Runner)
+
+*Why:* Reproduces CI jobs locally for validation, edge-case, and benchmark
+workflows.
+
+Linux install:
+
+[source,bash]
+----
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+act --version
+----
+
+macOS install:
+
+[source,bash]
+----
+brew install act
+act --version
+----
+
+List available jobs:
+
+[source,bash]
+----
+act --list
+----
+
+Optional `.actrc` default runner image:
+
+[source,text]
+----
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+----
+
+Run per test type from repository root:
+
+[source,bash]
+----
+# Validation workflow job
+act pull_request -W .github/workflows/validation.yml -j validation
+
+# Edge-case workflow job
+act pull_request -W .github/workflows/validation.yml -j edge_cases
+
+# Benchmark workflow job (requires workflow_dispatch event)
+act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark
+----
+
+NOTE: The benchmark workflow is not wired to `pull_request`, so
+`act pull_request ... benchmark.yml` will not run the benchmark job.

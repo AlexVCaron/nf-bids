@@ -30,26 +30,46 @@ jobs:
         with:
           version: '25.10.0'
 
-      - name: Install Nextflow fallback for act
-        if: ${{ github.actor == 'nektos/act' }}
-        run: |
-          export NXF_VER=25.10.0
-          mkdir -p "$HOME/.local/bin"
-          curl -s https://get.nextflow.io | bash
-          mv nextflow "$HOME/.local/bin/nextflow"
-          chmod +x "$HOME/.local/bin/nextflow"
-          export PATH="$HOME/.local/bin:$PATH"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          command -v nextflow
-          "$HOME/.local/bin/nextflow" -version
+      - name: Set up nf-test
+        uses: nf-core/setup-nf-test@v2
+        with:
+          version: '0.9.5'
 
-      - name: Verify Nextflow
-        if: ${{ github.actor != 'nektos/act' }}
+      - name: Fix nf-test permissions
         run: |
-          nextflow -version
+          chmod +x "$HOME/.nf-test/nf-test" 2>/dev/null || true
+          chmod +x "$HOME/.nf-test/pdiff" 2>/dev/null || true
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Ensure nf-test is available in the job container
+        run: |
+          if [ -x "$HOME/.nf-test/nf-test" ] && [ -f "$HOME/.nf-test/nf-test.jar" ]; then
+            echo "nf-test already available in job container"
+            exit 0
+          fi
+
+          mkdir -p "$HOME/.nf-test"
+          curl -fsSL -o /tmp/nf-test.tar.gz "https://github.com/askimed/nf-test/releases/download/v0.9.5/nf-test-0.9.5.tar.gz"
+          tar -xzf /tmp/nf-test.tar.gz -C "$HOME/.nf-test"
+          chmod +x "$HOME/.nf-test/nf-test"
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Verify nf-test
+        run: |
+          command -v nf-test
+          nf-test version
+
+      - name: Install Python diff dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdiff-venv"
+          "$RUNNER_TEMP/pdiff-venv/bin/python" -m pip install --upgrade pip pdiff cryptography
+          echo "$RUNNER_TEMP/pdiff-venv/bin" >> "$GITHUB_PATH"
 
       - name: Run validation suite
         working-directory: test/validation
+        env:
+          NFT_DIFF: pdiff
+          NFT_DIFF_ARGS: --line-numbers --width 120 --expand-tabs=2
         run: bash test_datasets.sh
 
   edge_cases:
@@ -73,24 +93,44 @@ jobs:
         with:
           version: '25.10.0'
 
-      - name: Install Nextflow fallback for act
-        if: ${{ github.actor == 'nektos/act' }}
-        run: |
-          export NXF_VER=25.10.0
-          mkdir -p "$HOME/.local/bin"
-          curl -s https://get.nextflow.io | bash
-          mv nextflow "$HOME/.local/bin/nextflow"
-          chmod +x "$HOME/.local/bin/nextflow"
-          export PATH="$HOME/.local/bin:$PATH"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          command -v nextflow
-          "$HOME/.local/bin/nextflow" -version
+      - name: Set up nf-test
+        uses: nf-core/setup-nf-test@v2
+        with:
+          version: '0.9.5'
 
-      - name: Verify Nextflow
-        if: ${{ github.actor != 'nektos/act' }}
+      - name: Fix nf-test permissions
         run: |
-          nextflow -version
+          chmod +x "$HOME/.nf-test/nf-test" 2>/dev/null || true
+          chmod +x "$HOME/.nf-test/pdiff" 2>/dev/null || true
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Ensure nf-test is available in the job container
+        run: |
+          if [ -x "$HOME/.nf-test/nf-test" ] && [ -f "$HOME/.nf-test/nf-test.jar" ]; then
+            echo "nf-test already available in job container"
+            exit 0
+          fi
+
+          mkdir -p "$HOME/.nf-test"
+          curl -fsSL -o /tmp/nf-test.tar.gz "https://github.com/askimed/nf-test/releases/download/v0.9.5/nf-test-0.9.5.tar.gz"
+          tar -xzf /tmp/nf-test.tar.gz -C "$HOME/.nf-test"
+          chmod +x "$HOME/.nf-test/nf-test"
+          echo "$HOME/.nf-test" >> "$GITHUB_PATH"
+
+      - name: Verify nf-test
+        run: |
+          command -v nf-test
+          nf-test version
+
+      - name: Install Python diff dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pdiff-venv"
+          "$RUNNER_TEMP/pdiff-venv/bin/python" -m pip install --upgrade pip pdiff cryptography
+          echo "$RUNNER_TEMP/pdiff-venv/bin" >> "$GITHUB_PATH"
 
       - name: Run edge case suite
         working-directory: test/edge_cases
+        env:
+          NFT_DIFF: pdiff
+          NFT_DIFF_ARGS: --line-numbers --width 120 --expand-tabs=2
         run: bash run_all_tests.sh

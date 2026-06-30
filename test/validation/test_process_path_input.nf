@@ -7,8 +7,9 @@
 
 include { fromBIDS } from "plugin/nf-bids"
 
-params.bids_dir = "${projectDir}/data/bids-examples/asl001"
-params.config = "${projectDir}/configs/config_asl.yaml"
+params.bids_dir = params.bids_dir ?: "${projectDir}/../data/bids-examples/asl001"
+params.config = params.config ?: "${projectDir}/../configs/config_asl.yaml"
+params.libbids_sh = params.libbids_sh ?: null
 
 process verify_path_staging {
     debug true
@@ -45,7 +46,9 @@ workflow {
     ================================================
     """.stripIndent()
     
-    Channel.fromBIDS(params.bids_dir, params.config)
+    def options = params.libbids_sh ? [libbids_sh: params.libbids_sh] : [:]
+
+    Channel.fromBIDS(params.bids_dir, params.config, options)
         .filter { it.T1w }
         .map { item ->
             [

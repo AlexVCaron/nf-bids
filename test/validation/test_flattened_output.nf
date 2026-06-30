@@ -7,8 +7,8 @@
 
 include { fromBIDS } from "plugin/nf-bids"
 
-params.bids_dir = "${projectDir}/data/custom/ds-dwi2"
-params.config = "${projectDir}/configs/config_dwi.yaml"
+params.bids_dir = params.bids_dir ?: "${projectDir}/../data/custom/ds-dwi2"
+params.config = params.config ?: "${projectDir}/../configs/config_dwi.yaml"
 params.use_legacy = false
 params.libbids_sh = null
 

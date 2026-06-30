@@ -10,7 +10,7 @@ include { joinBy } from 'plugin/nf-bids'
 
 workflow {
     println "╔════════════════════════════════════════════════════════════════╗"
-    println "║  Test 6: joinBy with Many Items (5k each channel)             ║"
+    println "║  Test 6: joinBy with Many Items (5k each channel)              ║"
     println "╚════════════════════════════════════════════════════════════════╝"
     
     def startTime = System.currentTimeMillis()
@@ -32,19 +32,17 @@ workflow {
     Channel.fromList(leftItems)
         .joinBy(
             Channel.fromList(rightItems),
-            { it[0] },
-            { it[0] }
+            { l -> l[0] },
+            { r -> r[0] }
         )
         .subscribe(
             onNext: { joined ->
-                joinedCount++
+                joinedCount += 1
                 
                 // Verify join correctness
-                def key = joined[0]
-                def leftItem = joined[1]
-                def rightItem = joined[2]
-                assert key == leftItem[0]  // Key matches left
-                assert key == rightItem[0]  // Key matches right
+                def leftItem = joined[0..2]
+                def rightItem = joined[3..5]
+                assert leftItem[0] == rightItem[0]  // Key matches left and right
                 
                 if (joinedCount % 1000 == 0) {
                     println "  Joined ${joinedCount} pairs..."
