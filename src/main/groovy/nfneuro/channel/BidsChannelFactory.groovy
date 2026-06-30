@@ -53,6 +53,7 @@ class BidsChannelFactory {
      */
     @Factory
     DataflowWriteChannel fromBIDS(String bidsDir, String configPath = null, Map options = [:]) {
+        bidsDir = Paths.get(bidsDir).toAbsolutePath().normalize().toString()
         BidsLogger.logProgress("Starting BIDS dataset parsing: ${bidsDir}")
 
         // Pre-flight checks
