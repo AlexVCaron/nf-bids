@@ -15,8 +15,7 @@ nextflow_workflow {
             assert workflow.success
             assert workflow.out.test_results
 
-            def results = workflow.out.test_results
-            collect()
+            def results = workflow.out.test_results.collect()
             assert results.size() > 0
 
             def item = results.find { it.containsKey('T1w') }
@@ -34,6 +33,30 @@ nextflow_workflow {
 
             // Other file extensions are still emitted as Paths
             assert t1w.nii instanceof java.nio.file.Path
+
+            def assertPathLeaves
+            assertPathLeaves = { value, String context ->
+                if (value == null) return
+                if (value instanceof Map) {
+                    value.each { k, v ->
+                        if (k == 'json') return
+                        assertPathLeaves(v, "${context}.${k}")
+                    }
+                    return
+                }
+                if (value instanceof List) {
+                    value.eachWithIndex { v, idx -> assertPathLeaves(v, "${context}[${idx}]") }
+                    return
+                }
+
+                assert value instanceof java.nio.file.Path :
+                    "Expected ${context} to be a java.nio.file.Path (or subclass), but was: ${value?.getClass()}"
+            }
+
+            item.each { suffix, data ->
+                if (suffix == 'meta') return
+                assertPathLeaves(data, suffix as String)
+            }
         }
     }
 }

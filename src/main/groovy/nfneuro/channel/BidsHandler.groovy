@@ -309,8 +309,11 @@ class BidsHandler {
         convertValue = { Object val ->
             if (val == null) return null
             if (val instanceof Path) return val  // Already a Path, return as-is
-            if (val instanceof String) {
-                String pathStr = val
+            if (val instanceof File) {
+                return (val as File).toPath()
+            }
+            if (val instanceof CharSequence) {
+                String pathStr = val.toString()
 
                 // Use FileHelper.asPath for robust path handling
                 // Handles local files, URIs (s3://, gs://, az://), absolute and relative paths
