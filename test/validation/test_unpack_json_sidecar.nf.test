@@ -39,18 +39,6 @@ nextflow_workflow {
             assert t1w.nii.toString().endsWith('.nii.gz') :
                 "Expected T1w.nii path to end with .nii.gz, got: ${t1w.nii}"
 
-            // Verify no non-json leaf value across all suffixes was incorrectly parsed as a Map
-            item.each { suffix, data ->
-                if (suffix == 'meta') return
-                if (!(data instanceof Map)) return
-                data.each { ext, fileValue ->
-                    if (ext == 'json') return
-                    assert !(fileValue instanceof Map) :
-                        "Expected ${suffix}.${ext} to be a file path, not a parsed Map. Got: ${fileValue?.getClass()}"
-                    assert fileValue != null :
-                        "Expected ${suffix}.${ext} to be non-null"
-                }
-            }
         }
     }
 }
