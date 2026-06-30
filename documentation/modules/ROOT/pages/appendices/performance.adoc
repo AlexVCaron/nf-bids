@@ -107,7 +107,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output
 
 | `join(by: 0)` | ~52 ms | O(n+m) | 60 pairs
-| `joinBy({ it.id })` | ~65 ms | O(n+m) | 60 pairs
+| `left.joinBy(right, { it.id })` | ~65 ms | O(n+m) | 60 pairs
 | **Overhead** | **+13 ms (+25%)** | Same | ✅ Identical
 |===
 
@@ -118,7 +118,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output
 
 | `join(by: 0)` | ~580 ms | O(n+m) | 5 000 pairs
-| `joinBy({ it[0] })` | ~645 ms | O(n+m) | 5 000 pairs
+| `left.joinBy(right, { it[0] })` | ~645 ms | O(n+m) | 5 000 pairs
 | **Overhead** | **+65 ms (+11%)** | Same | ✅ Identical
 |===
 
@@ -147,7 +147,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output
 
 | `combine(by: 0)` | ~48 ms | O(n+m) | 60 pairs
-| `combineBy({ it.subject })` | ~57 ms | O(n+m) | 60 pairs
+| `left.combineBy(right, { it.subject })` | ~57 ms | O(n+m) | 60 pairs
 | **Overhead** | **+9 ms (+19%)** | Same | ✅ Identical
 |===
 
@@ -158,7 +158,7 @@ channel.of([subject: id, data: data])
 | Operator | Time (ms) | Memory | Output
 
 | `combine(by: 0)` | ~95 ms | O(n+m) | 2 000
-| `combineBy({ it.key })` | ~127 ms | O(n+m) | 2 000
+| `left.combineBy(right, { it.key })` | ~127 ms | O(n+m) | 2 000
 | **Overhead** | **+32 ms (+34%)** | Same | ✅ Identical
 |===
 

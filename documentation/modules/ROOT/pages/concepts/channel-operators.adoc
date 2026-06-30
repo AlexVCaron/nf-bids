@@ -119,6 +119,8 @@ left.joinBy(DataflowReadChannel right, Closure leftKey, Map opts)
 ----
 
 When a single `keyExtractor` is supplied it is applied to items from both channels.
+Each join closure is a _key extractor_: nf-bids calls it with one item from its
+respective channel and matches the returned keys.
 
 === Output
 
@@ -176,8 +178,12 @@ left.joinBy(right, { it.id }, [remainder: true])
 ----
 left.combineBy(DataflowReadChannel right, Closure keyExtractor)
 left.combineBy(DataflowReadChannel right, Closure keyExtractor, Map opts)
+left.combineBy(DataflowReadChannel right, Closure leftKey, Closure rightKey)
 left.combineBy(DataflowReadChannel right, Closure leftKey, Closure rightKey, Map opts)
 ----
+
+Like `joinBy`, the closures passed to `combineBy` are key extractors invoked with one
+item at a time from the left or right channel.
 
 === Output
 
