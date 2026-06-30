@@ -2,15 +2,15 @@
 nextflow.enable.dsl=2
 
 /*
- * Edge Case Test 7: combineBy with Complex Filters
- * Tests complex filter predicates with combineBy
+ * Edge Case Test 7: combineBy with Downstream Filters
+ * Tests combineBy key extraction followed by downstream filtering
  */
 
 include { combineBy } from 'plugin/nf-bids'
 
 workflow {
     println "╔════════════════════════════════════════════════════════════════╗"
-    println "║  Test 7: combineBy with Complex Filter Predicates             ║"
+    println "║  Test 7: combineBy with Downstream Filter Predicates          ║"
     println "╚════════════════════════════════════════════════════════════════╝"
     
     def matchCount = 0
@@ -29,21 +29,25 @@ workflow {
     )
     
     scans
-        .combineBy(analyses) { leftItem, rightItem ->
-            // Complex predicate: subject match AND modality match AND quality threshold
-            leftItem.subject == "sub-01" && 
-            leftItem.modality == rightItem.requires && 
-            leftItem.quality >= rightItem.minQuality
+        .combineBy(
+            analyses,
+            { it.modality },
+            { it.requires }
+        )
+        .filter { fused ->
+            // Filter after key-based combination
+            fused.subject == "sub-01" &&
+            fused.quality >= fused.minQuality
         }
         .subscribe(
-            onNext: { leftItem, rightItem ->
+            onNext: { fused ->
                 matchCount++
-                println "  Match: ${leftItem.subject} ${leftItem.modality} (q=${leftItem.quality}) -> ${rightItem.analysis}"
-                assert leftItem.modality == rightItem.requires
-                assert leftItem.quality >= rightItem.minQuality
+                println "  Match: ${fused.subject} ${fused.modality} (q=${fused.quality}) -> ${fused.analysis}"
+                assert fused.modality == fused.requires
+                assert fused.quality >= fused.minQuality
             },
             onComplete: {
-                println "\n✅ Test 7 PASSED: Complex filter predicates work correctly"
+                println "\n✅ Test 7 PASSED: combineBy + downstream filters work correctly"
                 println "   Matches found: ${matchCount}"
                 
                 // sub-01 T1w q=0.9 should match segmentation (req T1w, min 0.8) and registration (req T1w, min 0.6)

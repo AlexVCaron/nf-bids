@@ -215,13 +215,21 @@ a|
 ----
 channel.joinBy(
     DataflowReadChannel right,
+    Closure             keyExtractor,
+    Map                 opts           // remainder (outer join)
+)
+
+channel.joinBy(
+    DataflowReadChannel right,
     Closure             leftKeyExtractor,
     Closure             rightKeyExtractor = null,  // defaults to leftKeyExtractor
     Map                 opts              = [:]    // remainder (outer join)
 )
 ----
 Inner join by default; set `opts.remainder = true` for an outer join that
-emits unmatched items with `null` partner. Emits fused items (key omitted).
+emits unmatched items with `null` partner. The extractor closures are invoked with
+one item from each side independently and must return the association key. Emits
+fused items (key omitted).
 
 | `combineBy`
 a|
@@ -239,7 +247,8 @@ channel.combineBy(
 )
 ----
 Produces the full cartesian product of left × right items within each
-matched key group.  Unmatched keys are silently dropped (inner semantics).
+matched key group.  The key-extractor closures are invoked with one item at a time
+from their respective channels. Unmatched keys are silently dropped (inner semantics).
 Emits fused items (key omitted).
 |===
 

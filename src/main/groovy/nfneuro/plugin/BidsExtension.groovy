@@ -158,6 +158,26 @@ class BidsExtension extends PluginExtensionPoint {
     }
 
     /**
+     * Convenience overload — uses a single closure as both left and right key extractor,
+     * with an explicit options map.
+     *
+     * @param left left input channel
+     * @param right right input channel
+     * @param keyExtractor closure applied to items from both channels to derive the join key
+     * @param opts optional configuration map (remainder, failOnDuplicate, failOnMismatch)
+     * @return channel emitting fused joined items where keys match
+     */
+    @Operator
+    DataflowWriteChannel joinBy(
+        DataflowReadChannel left,
+        DataflowReadChannel right,
+        Closure keyExtractor,
+        Map opts
+    ) {
+        return joinBy(left, right, keyExtractor, keyExtractor, opts)
+    }
+
+    /**
      * Combine two channels by extracting and matching keys.
      *
      * Similar to Nextflow's combine(by:) operator but uses closures to extract

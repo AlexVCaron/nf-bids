@@ -84,7 +84,7 @@ channel.groupTupleBy { [it.subject, it.session] }
 channel.groupTuple(by: 0, sort: { a, b -> a[1] <=> b[1] })
 
 // After  (closures receive full items, not decomposed elements)
-channel.groupTupleBy({ it.subject }, [sort: { a, b -> a.run <=> b.run }])
+channel.groupTupleBy({ it.subject }, [sort: { it.run }])
 ----
 
 === Size-based streaming
