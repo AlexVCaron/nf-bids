@@ -1,0 +1,39 @@
+nextflow_workflow {
+
+    name "Unpack JSON Sidecar Option Test"
+    script "./test_unpack_json_sidecar.nf"
+    workflow "test_unpack_json_sidecar"
+
+    test("T1w - JSON sidecar emitted as parsed map when unpack_json_sidecar is true") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-dwi3"
+                config   = "${baseDir}/test/configs/config_dwi.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.test_results
+
+            def results = workflow.out.test_results
+            collect()
+            assert results.size() > 0
+
+            def item = results.find { it.containsKey('T1w') }
+            assert item != null : "Expected at least one item with a T1w suffix"
+
+            def t1w = item.T1w
+            assert t1w instanceof Map
+
+            // With unpack_json_sidecar: true, the json value must be a Map, not a Path
+            assert t1w.json instanceof Map : "Expected T1w.json to be a parsed Map, but was: ${t1w.json?.getClass()}"
+
+            // Spot-check known sidecar fields
+            assert t1w.json.RepetitionTime == 2.3
+            assert t1w.json.MagneticFieldStrength == 3
+
+            // Other file extensions are still emitted as Paths
+            assert t1w.nii instanceof java.nio.file.Path
+        }
+    }
+}
