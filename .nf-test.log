@@ -1,3 +1,3 @@
-Jun-30 19:14:41.428 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.5
-Jun-30 19:14:41.466 [main] INFO  com.askimed.nf.test.App - Arguments: [version]
-Jun-30 19:14:41.472 [main] INFO  com.askimed.nf.test.App - Nextflow Version: unknown
+Jun-30 20:15:16.791 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.5
+Jun-30 20:15:16.856 [main] INFO  com.askimed.nf.test.App - Arguments: [version]
+Jun-30 20:15:16.868 [main] INFO  com.askimed.nf.test.App - Nextflow Version: unknown
