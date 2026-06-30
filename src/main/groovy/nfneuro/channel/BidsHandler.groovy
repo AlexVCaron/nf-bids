@@ -2,6 +2,7 @@ package nfneuro.plugin.channel
 
 import java.util.concurrent.CompletableFuture
 
+import groovy.lang.GString
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -312,7 +313,7 @@ class BidsHandler {
             if (val instanceof File) {
                 return (val as File).toPath()
             }
-            if (val instanceof String) {
+            if (val instanceof String || val instanceof GString) {
                 String pathStr = val.toString()
 
                 // Use FileHelper.asPath for robust path handling
