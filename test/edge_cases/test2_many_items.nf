@@ -23,41 +23,41 @@ workflow {
         [groupKey, "data_${idx}", idx]
     }
     
-    def processedCount = 0
-    def groupsReceived = 0
+    def processedCount = new java.util.concurrent.atomic.AtomicInteger(0)
+    def groupsReceived = new java.util.concurrent.atomic.AtomicInteger(0)
     
     // Process and verify with proper synchronization
-    Channel.fromList(items)
-        .groupTupleBy { it[0] }
+    channel.fromList(items)
+        .groupTupleBy { item -> item[0] }
         .subscribe(
             onNext: { grouped ->
-                groupsReceived++
+                groupsReceived.incrementAndGet()
                 def key = grouped[0]
                 def groupItems = grouped[1]
-                processedCount += groupItems.size()
+                processedCount.addAndGet(groupItems.size())
                 
                 // Verify group integrity
-                assert groupItems.size() == 100, "Expected 100 items per group, got ${groupItems.size()} for ${key}"
+                assert groupItems.size() == 100 : "Expected 100 items per group, got ${groupItems.size()} for ${key}"
                 
                 // Verify all items have same key
                 groupItems.each { item ->
-                    assert item[0] == key, "Item ${item} doesn't match group key ${key}"
+                    assert item[0] == key : "Item ${item} doesn't match group key ${key}"
                 }
                 
-                if (groupsReceived % 20 == 0) {
-                    println "  Processed ${groupsReceived} groups..."
+                if (groupsReceived.get() % 20 == 0) {
+                    println "  Processed ${groupsReceived.get()} groups..."
                 }
             },
             onComplete: {
                 def duration = System.currentTimeMillis() - startTime
                 
                 println "\n✅ Test 2 PASSED: Many small items handled successfully"
-                println "   Items processed: ${processedCount}"
-                println "   Groups created: ${groupsReceived}"
+                println "   Items processed: ${processedCount.get()}"
+                println "   Groups created: ${groupsReceived.get()}"
                 println "   Duration: ${duration}ms"
                 
-                assert processedCount == itemCount
-                assert groupsReceived == groupCount
+                assert processedCount.get() == itemCount
+                assert groupsReceived.get() == groupCount
             }
         )
     

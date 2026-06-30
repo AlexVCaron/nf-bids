@@ -17,7 +17,9 @@ include { joinBy } from 'plugin/nf-bids'
 
 def generateLeftData(size) {
     def data = []
-    def subjects = (1..Math.min(size, 100)).collect { "sub-${String.format('%02d', it)}" }
+    def subjects = (1..Math.min(size, 100)).collect { subId ->
+        "sub-${String.format('%02d', subId)}"
+    }
     
     size.times { i ->
         def subj = subjects[i % subjects.size()]
@@ -29,7 +31,9 @@ def generateLeftData(size) {
 
 def generateRightData(size) {
     def data = []
-    def subjects = (1..Math.min(size, 100)).collect { "sub-${String.format('%02d', it)}" }
+    def subjects = (1..Math.min(size, 100)).collect { subId ->
+        "sub-${String.format('%02d', subId)}"
+    }
     
     size.times { i ->
         def subj = subjects[i % subjects.size()]
@@ -50,8 +54,8 @@ workflow test_small_join {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(100))
-    def right = Channel.from(generateRightData(100))
+    def left = channel.from(generateLeftData(100))
+    def right = channel.from(generateRightData(100))
     
     left
         .join(right, by: 0)
@@ -71,11 +75,11 @@ workflow test_small_joinby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(100))
-    def right = Channel.from(generateRightData(100))
+    def left = channel.from(generateLeftData(100))
+    def right = channel.from(generateRightData(100))
     
     left
-        .joinBy(right) { it[0] }
+        .joinBy(right) { it -> it[0] }
         .subscribe(
             onNext: { },
             onComplete: {
@@ -96,8 +100,8 @@ workflow test_medium_join {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(1000))
-    def right = Channel.from(generateRightData(1000))
+    def left = channel.from(generateLeftData(1000))
+    def right = channel.from(generateRightData(1000))
     
     left
         .join(right, by: 0)
@@ -117,11 +121,11 @@ workflow test_medium_joinby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(1000))
-    def right = Channel.from(generateRightData(1000))
+    def left = channel.from(generateLeftData(1000))
+    def right = channel.from(generateRightData(1000))
     
     left
-        .joinBy(right) { it[0] }
+        .joinBy(right) { it -> it[0] }
         .subscribe(
             onNext: { },
             onComplete: {
@@ -142,8 +146,8 @@ workflow test_large_join {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(10000))
-    def right = Channel.from(generateRightData(10000))
+    def left = channel.from(generateLeftData(10000))
+    def right = channel.from(generateRightData(10000))
     
     left
         .join(right, by: 0)
@@ -163,11 +167,11 @@ workflow test_large_joinby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(10000))
-    def right = Channel.from(generateRightData(10000))
+    def left = channel.from(generateLeftData(10000))
+    def right = channel.from(generateRightData(10000))
     
     left
-        .joinBy(right) { it[0] }
+        .joinBy(right) { it -> it[0] }
         .subscribe(
             onNext: { },
             onComplete: {
@@ -188,11 +192,11 @@ workflow test_semantic_joinby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(1000).collect { it[2] })  // Use map objects
-    def right = Channel.from(generateRightData(1000).collect { it[2] })  // Use map objects
+    def left = channel.from(generateLeftData(1000).collect { it -> it[2] })  // Use map objects
+    def right = channel.from(generateRightData(1000).collect { it -> it[2] })  // Use map objects
     
     left
-        .joinBy(right) { it.subject }
+        .joinBy(right) { it -> it.subject }
         .subscribe(
             onNext: { },
             onComplete: {
@@ -213,15 +217,15 @@ workflow test_different_extractors_joinby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateLeftData(1000).collect { 
+    def left = channel.from(generateLeftData(1000).collect { it ->
         [id: it[0], file: it[1], meta: it[2]] 
     })
-    def right = Channel.from(generateRightData(1000).collect { 
+    def right = channel.from(generateRightData(1000).collect { it ->
         [subject: it[0], file: it[1], meta: it[2]] 
     })
     
     left
-        .joinBy(right, { it.id }, { it.subject })
+        .joinBy(right, { it -> it.id }, { it -> it.subject })
         .subscribe(
             onNext: { },
             onComplete: {

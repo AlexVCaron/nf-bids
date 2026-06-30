@@ -20,7 +20,7 @@ workflow test_flattened_output {
             options.libbids_sh = params.libbids_sh
         }
         
-        def ch = Channel.fromBIDS(params.bids_dir, params.config, options)
+        def ch = channel.fromBIDS(params.bids_dir, params.config, options)
         
         // Simply pass through items for testing
         // Validation will be done in the nf-test assertions
@@ -28,7 +28,7 @@ workflow test_flattened_output {
             if (params.use_legacy) {
                 println "Legacy format item: [${item[0]}, enrichedData]"
             } else {
-                def suffixes = item.keySet().findAll { it != 'meta' }
+                def suffixes = item.keySet().findAll { it -> it != 'meta' }
                 println "Flattened format item: meta=${item.meta.keySet()}, suffixes=${suffixes}"
             }
             return item
@@ -44,7 +44,7 @@ workflow {
         if (params.use_legacy) {
             "Legacy: ${item[0]}"
         } else {
-            "Flattened: subject=${item.meta.subject}, suffixes=${item.keySet().findAll { it != 'meta' }}"
+            "Flattened: subject=${item.meta.subject}, suffixes=${item.keySet().findAll { it -> it != 'meta' }}"
         }
     }
 }

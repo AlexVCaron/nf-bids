@@ -48,8 +48,8 @@ workflow {
     
     def options = params.libbids_sh ? [libbids_sh: params.libbids_sh] : [:]
 
-    Channel.fromBIDS(params.bids_dir, params.config, options)
-        .filter { it.T1w }
+    channel.fromBIDS(params.bids_dir, params.config, options)
+        .filter { it -> it.T1w }
         .map { item ->
             [
                 item.meta,

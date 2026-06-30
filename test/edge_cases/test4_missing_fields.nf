@@ -13,7 +13,7 @@ workflow {
     println "║  Test 4: Handling Non-Existent Field Access                   ║"
     println "╚════════════════════════════════════════════════════════════════╝"
     
-    Channel.of(
+    channel.of(
         [subject: "sub-01", session: "ses-01", run: 1],
         [subject: "sub-01", session: "ses-02", run: 2],
         [subject: "sub-02", session: "ses-01"]  // Missing 'run' field

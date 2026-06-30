@@ -16,7 +16,7 @@ workflow {
     // Create items with large string data (1MB each)
     def largeString = "X" * 1024 * 1024  // 1MB string
     
-    Channel.of(
+    channel.of(
         ["subject01", largeString, "session1"],
         ["subject01", largeString, "session2"],
         ["subject02", largeString, "session1"],

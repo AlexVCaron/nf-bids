@@ -15,14 +15,14 @@ workflow {
     
     def matchCount = 0
     
-    def scans = Channel.of(
+    def scans = channel.of(
         [subject: "sub-01", modality: "T1w", quality: 0.9],
         [subject: "sub-02", modality: "T1w", quality: 0.7],
         [subject: "sub-03", modality: "T2w", quality: 0.95],
         [subject: "sub-04", modality: "T1w", quality: 0.85]
     )
     
-    def analyses = Channel.of(
+    def analyses = channel.of(
         [analysis: "segmentation", requires: "T1w", minQuality: 0.8],
         [analysis: "registration", requires: "T1w", minQuality: 0.6],
         [analysis: "denoising", requires: "T2w", minQuality: 0.9]

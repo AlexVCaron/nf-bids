@@ -20,7 +20,9 @@ def generateTestData(size) {
     
     // Generate realistic BIDS-like data
     // Mix of subjects, sessions, runs to create grouping scenarios
-    def subjects = (1..Math.min((int)(size/10), 100)).collect { "sub-${String.format('%02d', it)}" }
+    def subjects = (1..Math.min((int)(size/10), 100)).collect { subId ->
+        "sub-${String.format('%02d', subId)}"
+    }
     def sessions = ['ses-01', 'ses-02']
     
     size.times { i ->
@@ -45,7 +47,7 @@ workflow test_small_grouptuple {
     
     def startTime = System.currentTimeMillis()
     
-    Channel
+    channel
         .from(generateTestData(100))
         .groupTuple(by: 0)
         .map { key, sessions ->
@@ -67,9 +69,9 @@ workflow test_small_grouptupleby {
     
     def startTime = System.currentTimeMillis()
     
-    Channel
+    channel
         .from(generateTestData(100))
-        .groupTupleBy { it[0] }
+        .groupTupleBy { it -> it[0] }
         .map { key, items ->
             [key, items.size()]
         }
@@ -93,7 +95,7 @@ workflow test_medium_grouptuple {
     
     def startTime = System.currentTimeMillis()
     
-    Channel
+    channel
         .from(generateTestData(1000))
         .groupTuple(by: 0)
         .map { key, sessions ->
@@ -115,9 +117,9 @@ workflow test_medium_grouptupleby {
     
     def startTime = System.currentTimeMillis()
     
-    Channel
+    channel
         .from(generateTestData(1000))
-        .groupTupleBy { it[0] }
+        .groupTupleBy { it -> it[0] }
         .map { key, items ->
             [key, items.size()]
         }
@@ -141,7 +143,7 @@ workflow test_large_grouptuple {
     
     def startTime = System.currentTimeMillis()
     
-    Channel
+    channel
         .from(generateTestData(10000))
         .groupTuple(by: 0)
         .map { key, sessions ->
@@ -163,9 +165,9 @@ workflow test_large_grouptupleby {
     
     def startTime = System.currentTimeMillis()
     
-    Channel
+    channel
         .from(generateTestData(10000))
-        .groupTupleBy { it[0] }
+        .groupTupleBy { it -> it[0] }
         .map { key, items ->
             [key, items.size()]
         }
@@ -189,14 +191,16 @@ workflow test_semantic_grouptupleby {
     
     def startTime = System.currentTimeMillis()
     
-    def subjects = (1..100).collect { "sub-${String.format('%02d', it)}" }
+    def subjects = (1..100).collect { subId ->
+        "sub-${String.format('%02d', subId)}"
+    }
     def data = (1..1000).collect { i ->
         [subject: subjects[i % subjects.size()], session: "ses-0${(i % 2) + 1}", index: i]
     }
     
-    Channel
+    channel
         .from(data)
-        .groupTupleBy { it.subject }
+        .groupTupleBy { it -> it.subject }
         .map { key, items ->
             [key, items.size()]
         }

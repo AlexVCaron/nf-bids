@@ -13,7 +13,7 @@ workflow {
     println "║  Test 3: groupTupleBy with Complex Nested Structures          ║"
     println "╚════════════════════════════════════════════════════════════════╝"
     
-    Channel.of(
+    channel.of(
         [
             subject: "sub-01",
             session: "ses-01",

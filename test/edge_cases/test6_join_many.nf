@@ -29,9 +29,9 @@ workflow {
     
     def joinedCount = 0
     
-    Channel.fromList(leftItems)
+    channel.fromList(leftItems)
         .joinBy(
-            Channel.fromList(rightItems),
+            channel.fromList(rightItems),
             { l -> l[0] },
             { r -> r[0] }
         )

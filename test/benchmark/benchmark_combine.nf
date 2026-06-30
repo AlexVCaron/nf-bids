@@ -44,8 +44,8 @@ workflow test_small_combine {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateSimpleData(10, 'left'))
-    def right = Channel.from(generateSimpleData(10, 'right'))
+    def left = channel.from(generateSimpleData(10, 'left'))
+    def right = channel.from(generateSimpleData(10, 'right'))
     
     left
         .combine(right)
@@ -66,13 +66,13 @@ workflow test_small_combineby {
     def startTime = System.currentTimeMillis()
     
     // Generate data with 5 unique keys, 2 items per key on each side
-    def left = Channel.from(generateKeyedData(10, 'left', 5))
-    def right = Channel.from(generateKeyedData(10, 'right', 5))
+    def left = channel.from(generateKeyedData(10, 'left', 5))
+    def right = channel.from(generateKeyedData(10, 'right', 5))
     
     left
         .combineBy(
             right,
-            { it.key }  // extract key from both left and right (same extractor)
+            { it -> it.key }  // extract key from both left and right (same extractor)
         )
         .subscribe(
             onNext: { },
@@ -95,11 +95,11 @@ workflow test_medium_combineby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateKeyedData(60, 'left', 10))
-    def right = Channel.from(generateKeyedData(60, 'right', 10))
+    def left = channel.from(generateKeyedData(60, 'left', 10))
+    def right = channel.from(generateKeyedData(60, 'right', 10))
     
     left
-        .combineBy(right, { it.key })
+        .combineBy(right, { it -> it.key })
         .subscribe(
             onNext: { },
             onComplete: {
@@ -121,11 +121,11 @@ workflow test_large_combineby {
     
     def startTime = System.currentTimeMillis()
     
-    def left = Channel.from(generateKeyedData(200, 'left', 20))
-    def right = Channel.from(generateKeyedData(200, 'right', 20))
+    def left = channel.from(generateKeyedData(200, 'left', 20))
+    def right = channel.from(generateKeyedData(200, 'right', 20))
     
     left
-        .combineBy(right, { it.key })
+        .combineBy(right, { it -> it.key })
         .subscribe(
             onNext: { },
             onComplete: {
@@ -147,21 +147,21 @@ workflow test_bids_combineby {
     
     def startTime = System.currentTimeMillis()
     
-    def subjects = (1..30).collect { 
-        [subject: "sub-${String.format('%02d', it)}", age: 20 + it] 
+    def subjects = (1..30).collect { subId ->
+        [subject: "sub-${String.format('%02d', subId)}", age: 20 + subId] 
     }
     
-    def sessions = (1..30).collectMany { subjNum ->
+    def sessions = (1..30).collectMany { subId ->
         (1..2).collect { sessNum ->
-            [subject: "sub-${String.format('%02d', subjNum)}", session: "ses-${String.format('%02d', sessNum)}"]
+            [subject: "sub-${String.format('%02d', subId)}", session: "ses-${String.format('%02d', sessNum)}"]
         }
     }
     
-    def left = Channel.from(subjects)
-    def right = Channel.from(sessions)
+    def left = channel.from(subjects)
+    def right = channel.from(sessions)
     
     left
-        .combineBy(right, { it.subject })
+        .combineBy(right, { it -> it.subject })
         .subscribe(
             onNext: { },
             onComplete: {

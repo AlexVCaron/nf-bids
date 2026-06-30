@@ -19,15 +19,15 @@ workflow {
     println "\n=== Test 1: 20 items, 5 keys (2 left × 2 right per key) ==="
     def start1 = System.currentTimeMillis()
     
-    def left1 = Channel.from(
+    def left1 = channel.from(
         (0..19).collect { i -> [key: "k${i % 5}", value: "L${i}"] }
     )
-    def right1 = Channel.from(
+    def right1 = channel.from(
         (0..19).collect { i -> [key: "k${i % 5}", value: "R${i}"] }
     )
     
     left1
-        .combineBy(right1, { it.key })
+        .combineBy(right1, { it -> it.key })
         .count()
         .view { count ->
             def end1 = System.currentTimeMillis()
@@ -38,15 +38,15 @@ workflow {
     println "\n=== Test 2: 60 items, 10 keys (3 left × 3 right per key) ==="
     def start2 = System.currentTimeMillis()
     
-    def left2 = Channel.from(
+    def left2 = channel.from(
         (0..59).collect { i -> [key: "k${i % 10}", value: "L${i}"] }
     )
-    def right2 = Channel.from(
+    def right2 = channel.from(
         (0..59).collect { i -> [key: "k${i % 10}", value: "R${i}"] }
     )
     
     left2
-        .combineBy(right2, { it.key })
+        .combineBy(right2, { it -> it.key })
         .count()
         .view { count ->
             def end2 = System.currentTimeMillis()
@@ -57,12 +57,12 @@ workflow {
     println "\n=== Test 3: BIDS-like scenario (subjects × sessions) ==="
     def start3 = System.currentTimeMillis()
     
-    def subjects = Channel.from(
+    def subjects = channel.from(
         (1..20).collect { i ->
             [subject: "sub-${String.format('%02d', i)}", age: 20 + i]
         }
     )
-    def sessions = Channel.from(
+    def sessions = channel.from(
         (1..20).collect { i ->
             (1..2).collect { j ->
                 [subject: "sub-${String.format('%02d', i)}", session: "ses-${String.format('%02d', j)}"]
@@ -71,7 +71,7 @@ workflow {
     )
     
     subjects
-        .combineBy(sessions, { it.subject })
+        .combineBy(sessions, { it -> it.subject })
         .count()
         .view { count ->
             def end3 = System.currentTimeMillis()

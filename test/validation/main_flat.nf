@@ -13,7 +13,7 @@ workflow main_workflow {
         println "🧪 Testing Channel.fromBIDS with flat output..."
 
         def options = params.libbids_sh ? [libbids_sh: params.libbids_sh, flatten_output: true] : [flatten_output: true]
-        bids_channel = Channel.fromBIDS(params.bids_dir, params.config, options)
+        bids_channel = channel.fromBIDS(params.bids_dir, params.config, options)
         pipeline_status = channel.value('ok')
 
         bids_channel.count().subscribe { count ->

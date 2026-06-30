@@ -15,7 +15,7 @@ workflow {
     
     def options = params.libbids_sh ? [libbids_sh: params.libbids_sh] : [:]
 
-    Channel.fromBIDS(params.bids_dir, params.config, options)
+    channel.fromBIDS(params.bids_dir, params.config, options)
         .take(1)
         .map { item ->
             log.info "\nChecking item structure:"

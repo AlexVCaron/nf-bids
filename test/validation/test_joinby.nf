@@ -27,7 +27,7 @@ workflow {
     )
     
     anatomical
-        .joinBy(functional) { it.subject }
+        .joinBy(functional) { it -> it.subject }
         .map { fused ->
             println "  Joined: ${fused.subject} -> T1w + bold"
             [subject: fused.subject, t1: fused.anat_file, bold: fused.bold_file]
@@ -47,7 +47,7 @@ workflow {
     )
     
     subjects
-        .joinBy(participants, { it.id }, { it.participant_id })
+        .joinBy(participants, { it -> it.id }, { it -> it.participant_id })
         .map { fused ->
             println "  Joined: id=${fused.id}, participant_id=${fused.participant_id}"
             [id: fused.id, data: fused.data, info: fused.info]
@@ -67,7 +67,7 @@ workflow {
     )
     
     images
-        .joinBy(masks) { it.meta.sub }
+        .joinBy(masks) { it -> it.meta.sub }
         .map { fused ->
             println "  Joined: sub-${fused.meta.sub} -> ${fused.image_file} + ${fused.mask_file}"
             [subject: fused.meta.sub, image: fused.image_file, mask: fused.mask_file]
@@ -87,7 +87,7 @@ workflow {
     )
     
     runs1
-        .joinBy(runs2) { [it.subject, it.session] }
+        .joinBy(runs2) { it -> [it.subject, it.session] }
         .map { fused ->
             println "  Joined: [${fused.subject}, ${fused.session}] -> ${fused.anat_type} + ${fused.func_type}"
             [subject: fused.subject, session: fused.session, anat: fused.anat_type, func: fused.func_type]
@@ -109,7 +109,7 @@ workflow {
     )
     
     left
-        .joinBy(right, { it.id }, [remainder: false])
+        .joinBy(right, { it -> it.id }, [remainder: false])
         .map { fused ->
             println "  Matched: ${fused.id} -> val=${fused.val}, data=${fused.data}"
             [id: fused.id, val: fused.val, data: fused.data]
@@ -131,7 +131,7 @@ workflow {
     )
     
     left2
-        .joinBy(right2, { it.id }, [remainder: true])
+        .joinBy(right2, { it -> it.id }, [remainder: true])
         .map { fused ->
             def leftId = fused.containsKey('val') ? fused.id : 'null'
             def rightId = fused.containsKey('data') ? fused.id : 'null'

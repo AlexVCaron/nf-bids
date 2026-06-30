@@ -31,7 +31,7 @@ workflow {
         [id: 'B', data: 'z']
     )
     
-    left1.combineBy(right1, { it.id })
+    left1.combineBy(right1, { it -> it.id })
         .count()
         .view { count -> "✓ Test 1: ${count} combinations (expected: 2, nulls skipped)" }
     
@@ -39,14 +39,14 @@ workflow {
     
     // 50 left items × 50 right items for same key = 2500 combinations
     left2 = channel.from(
-        (1..50).collect { [key: 'HIGH', value: it] }
+        (1..50).collect { it -> [key: 'HIGH', value: it] }
     )
     
     right2 = channel.from(
-        (1..50).collect { [key: 'HIGH', data: it] }
+        (1..50).collect { it -> [key: 'HIGH', data: it] }
     )
     
-    left2.combineBy(right2, { it.key })
+    left2.combineBy(right2, { it -> it.key })
         .count()
         .view { count -> "✓ Test 2: ${count} combinations (expected: 2500)" }
     
@@ -54,14 +54,14 @@ workflow {
     
     // 1000 unique keys, 1 item each = 1000 combinations
     left3 = channel.from(
-        (1..1000).collect { [key: "k${it}", value: it] }
+        (1..1000).collect { it -> [key: "k${it}", value: it] }
     )
     
     right3 = channel.from(
-        (1..1000).collect { [key: "k${it}", data: it] }
+        (1..1000).collect { it -> [key: "k${it}", data: it] }
     )
     
-    left3.combineBy(right3, { it.key })
+    left3.combineBy(right3, { it -> it.key })
         .count()
         .view { count -> "✓ Test 3: ${count} combinations (expected: 1000)" }
     
@@ -79,7 +79,7 @@ workflow {
         [keyMap: [a: 3, b: 4], data: 'R']
     )
     
-    left4.combineBy(right4, { it.keyMap })
+    left4.combineBy(right4, { it -> it.keyMap })
         .count()
         .view { count -> "✓ Test 4: ${count} combinations (expected: 5 = 2×2 + 1×1)" }
     
@@ -97,7 +97,7 @@ workflow {
         [key: 'short', data: 'b']
     )
     
-    left5.combineBy(right5, { it.key })
+    left5.combineBy(right5, { it -> it.key })
         .count()
         .view { count -> "✓ Test 5: ${count} combinations (expected: 2)" }
     
@@ -106,14 +106,14 @@ workflow {
     // Left: 100 items with key 'A', 1 item with key 'B'
     // Right: 1 item with key 'A', 100 items with key 'B'
     left6 = channel.from(
-        (1..100).collect { [key: 'A', value: it] } + [[key: 'B', value: 999]]
+        (1..100).collect { it -> [key: 'A', value: it] } + [[key: 'B', value: 999]]
     )
     
     right6 = channel.from(
-        [[key: 'A', data: 1]] + (1..100).collect { [key: 'B', data: it] }
+        [[key: 'A', data: 1]] + (1..100).collect { it -> [key: 'B', data: it] }
     )
     
-    left6.combineBy(right6, { it.key })
+    left6.combineBy(right6, { it -> it.key })
         .count()
         .view { count -> "✓ Test 6: ${count} combinations (expected: 200 = 100×1 + 1×100)" }
     
@@ -122,7 +122,7 @@ workflow {
     left7 = channel.empty()
     right7 = channel.of([key: 'A', data: 1])
     
-    left7.combineBy(right7, { it.key })
+    left7.combineBy(right7, { it -> it.key })
         .count()
         .ifEmpty { 0 }
         .view { count -> "✓ Test 7: ${count} combinations (expected: 0)" }
@@ -132,7 +132,7 @@ workflow {
     left8 = channel.of([key: 'A', value: 1])
     right8 = channel.empty()
     
-    left8.combineBy(right8, { it.key })
+    left8.combineBy(right8, { it -> it.key })
         .count()
         .ifEmpty { 0 }
         .view { count -> "✓ Test 8: ${count} combinations (expected: 0)" }
@@ -150,7 +150,7 @@ workflow {
         [keyList: ['c', 'd'], data: 'y']
     )
     
-    left9.combineBy(right9, { it.keyList })
+    left9.combineBy(right9, { it -> it.keyList })
         .count()
         .view { count -> "✓ Test 9: ${count} combinations (expected: 3 = 2×1 + 1×1)" }
     

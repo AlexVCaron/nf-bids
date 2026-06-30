@@ -23,20 +23,18 @@ workflow {
         [groupKey, "data_${idx}", idx]
     }
     
-    def groupsReceived = [] as Set
-    def itemsProcessed = 0
+    def groupsReceived = java.util.Collections.synchronizedSet(new java.util.HashSet<String>())
+    def itemsProcessed = new java.util.concurrent.atomic.AtomicInteger(0)
     
-    Channel.fromList(items)
-        .groupTupleBy { it[0] }
+    channel.fromList(items)
+        .groupTupleBy { item -> item[0] }
         .subscribe(
             onNext: { grouped ->
                 def key = grouped[0]
                 def groupItems = grouped[1]
                 
-                synchronized (groupsReceived) {
-                    groupsReceived.add(key)
-                    itemsProcessed += groupItems.size()
-                }
+                groupsReceived.add(key)
+                itemsProcessed.addAndGet(groupItems.size())
                 
                 // Verify group integrity
                 assert groupItems.size() == 100  // 10k / 100 = 100 per group
@@ -51,12 +49,12 @@ workflow {
                 
                 println "\n✅ Test 5 PASSED: Concurrent execution handled successfully"
                 println "   Groups created: ${groupsReceived.size()}"
-                println "   Items processed: ${itemsProcessed}"
+                println "   Items processed: ${itemsProcessed.get()}"
                 println "   Duration: ${duration}ms"
                 println "   No race conditions detected"
                 
                 assert groupsReceived.size() == groupCount
-                assert itemsProcessed == itemCount
+                assert itemsProcessed.get() == itemCount
             }
         )
     

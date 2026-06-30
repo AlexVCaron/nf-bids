@@ -32,8 +32,8 @@ workflow {
     subjects
         .combineBy(
             sessions,
-            { it.id },      // extract key from left
-            { it.id }       // extract key from right
+            { it -> it.id },      // extract key from left
+            { it -> it.id }       // extract key from right
         )
         .map { fused ->
             println "  Subject=${fused.id}: age=${fused.age}, session=${fused.session}"
@@ -49,7 +49,7 @@ workflow {
         [subject: 'sub-02', scan: 'dwi']
     )
     
-    params = channel.of(
+    parameters = channel.of(
         [subject: 'sub-01', tr: 2000],
         [subject: 'sub-01', tr: 3000],
         [subject: 'sub-02', tr: 2500]
@@ -58,9 +58,9 @@ workflow {
     // Should produce 2×2=4 combinations for sub-01, 1×1=1 for sub-02
     scans
         .combineBy(
-            params,
-            { it.subject },
-            { it.subject }
+            parameters,
+            { it -> it.subject },
+            { it -> it.subject }
         )
         .map { fused ->
             println "  Subject=${fused.subject}: ${fused.scan} with TR=${fused.tr}ms"
@@ -84,8 +84,8 @@ workflow {
     images
         .combineBy(
             processing,
-            { it.subjectId },   // extract from 'subjectId' field
-            { it.subjId }       // extract from 'subjId' field
+            { it -> it.subjectId },   // extract from 'subjectId' field
+            { it -> it.subjId }       // extract from 'subjId' field
         )
         .map { fused ->
             println "  Subject(left=${fused.subjectId}, right=${fused.subjId}): ${fused.modality} + ${fused.method}"
@@ -111,8 +111,8 @@ workflow {
     left
         .combineBy(
             right,
-            { it.id },
-            { it.id }
+            { it -> it.id },
+            { it -> it.id }
         )
         .map { fused ->
             println "  Id=${fused.id}: left=${fused.left_value}, right=${fused.right_value}"
@@ -136,8 +136,8 @@ workflow {
     dwi
         .combineBy(
             anat,
-            { "${it.sub}_${it.ses}" },  // composite key
-            { "${it.sub}_${it.ses}" }
+            { it -> "${it.sub}_${it.ses}" },  // composite key
+            { it -> "${it.sub}_${it.ses}" }
         )
         .map { fused ->
             println "  Subject=${fused.sub}, Session=${fused.ses}: ${fused.dwi_type} + ${fused.anat_type}"
@@ -154,8 +154,8 @@ workflow {
     subjects_simple
         .combineBy(
             sessions_simple,
-            { it.subject.split('-')[1] },   // extract '01', '02', '03'
-            { it.session.split('-')[1] }
+            { it -> it.subject.split('-')[1] },   // extract '01', '02', '03'
+            { it -> it.session.split('-')[1] }
         )
         .map { fused ->
             println "  Pair: ${fused.subject} × ${fused.session}"
@@ -171,8 +171,8 @@ workflow {
     populated
         .combineBy(
             empty,
-            { it.id },
-            { it.id }
+            { it -> it.id },
+            { it -> it.id }
         )
         .map { fused ->
             println "  ERROR: This should never print"
@@ -196,8 +196,8 @@ workflow {
     experiments
         .combineBy(
             analyses,
-            { it.id },
-            { it.id }
+            { it -> it.id },
+            { it -> it.id }
         )
         .map { fused ->
             println "  Key=${fused.id}: ${fused.data} → ${fused.method}"
