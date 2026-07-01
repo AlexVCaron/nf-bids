@@ -258,12 +258,39 @@ class BidsHandler {
     }
 
     /**
-     * Flatten a channel tuple into nested map structure with `meta` and `data` keys.
-     *
-     * @param tuple A tuple of [groupingKey, enrichedData]
-     * @param entityValues Map of loop entity values (used to build meta)
-     * @return Map with keys [meta: {...}, data: {...}]
-     */
+    * Recursively deep-copy a data structure to prevent concurrent modification issues.
+    * Copies all Maps and Lists, leaving other types as-is (Path, String, Number, etc.).
+    *
+    * This is necessary because nf-test's convertPathsToStrings function recursively
+    * iterates over nested maps using collectEntries, which can cause ConcurrentModificationException
+    * if the maps are shared references that could be mutated.
+    *
+    * @param obj Object to deep-copy
+    * @return Deep-copied version of obj
+    */
+    private Object deepCopy(Object obj) {
+       if (obj == null) {
+           return null
+       }
+       if (obj instanceof Map) {
+           Map result = obj instanceof LinkedHashMap ? new LinkedHashMap() : [:]
+           (obj as Map).each { k, v -> result[k] = deepCopy(v) }
+           return result
+       }
+       if (obj instanceof List) {
+           return (obj as List).collect { deepCopy(it) }
+       }
+       // Return other types as-is (Path, String, Number, Boolean, etc.)
+       return obj
+    }
+
+    /**
+    * Flatten a channel tuple into nested map structure with `meta` and `data` keys.
+    *
+    * @param tuple A tuple of [groupingKey, enrichedData]
+    * @param entityValues Map of loop entity values (used to build meta)
+    * @return Map with keys [meta: {...}, data: {...}]
+    */
     private Map flattenTupleToMap(List tuple, Map<String, String> entityValues) {
         List groupingKey = tuple[0] as List
         Map enrichedData = tuple[1] as Map
@@ -364,7 +391,9 @@ class BidsHandler {
         flat.put('meta', meta)
         (dataCopy as Map<String, Object>).each { String k, Object v -> flat.put(k, v) }
 
-        return flat
+        // Deep-copy the entire structure to prevent concurrent modification issues when nf-test
+        // processes the output with convertPathsToStrings
+        return deepCopy(flat) as Map
     }
 
     /**
