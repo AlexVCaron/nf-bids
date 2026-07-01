@@ -1,0 +1,6 @@
+{
+    "Name": "DWI Test Dataset 3",
+    "DatasetType": "raw",
+    "BIDSVersion": "1.10.0",
+    "License": "CC0"
+}

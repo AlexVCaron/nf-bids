@@ -4,11 +4,16 @@ package nfneuro.plugin.channel
 import groovyx.gpars.dataflow.DataflowQueue
 import nextflow.extension.CH
 import spock.lang.Specification
+import spock.lang.TempDir
+import java.nio.file.Path
 
 /**
  * Unit tests for the BidsHandler flattening transformer
  */
 class BidsHandlerFlattenSpec extends Specification {
+
+    @TempDir
+    Path tempDir
 
     def 'should flatten plain set paths to absolute Files and build meta'() {
         given:
@@ -319,6 +324,176 @@ class BidsHandlerFlattenSpec extends Specification {
         flat.meta.subject == 'sub-01'
         flat.meta.session == 'ses-01'
         !flat.meta.containsKey('age')
+    }
+
+    def 'should parse json sidecar into map when unpack_json_sidecar is true'() {
+        given:
+        // Create a real JSON sidecar file in the temp directory
+        def anatDir = tempDir.resolve('anat').toFile()
+        anatDir.mkdirs()
+        def jsonFile = new File(anatDir, 'sub-01_T1w.json')
+        jsonFile.text = '{"RepetitionTime": 2.0, "Manufacturer": "Siemens"}'
+
+        def handler = new BidsHandler()
+        handler.withOpts([unpack_json_sidecar: true])
+        handler.loopOverEntities = ['subject', 'session']
+
+        def groupingKey = ['sub-01', 'ses-01']
+        def enrichedData = [
+            data: [
+                T1w: [
+                    nii: 'anat/sub-01_T1w.nii.gz',
+                    json: 'anat/sub-01_T1w.json'
+                ]
+            ],
+            bidsParentDir: tempDir.toString()
+        ]
+
+        when:
+        def flat = invokeFlatten(handler, groupingKey, enrichedData)
+
+        then:
+        flat.T1w.nii instanceof java.nio.file.Path
+        flat.T1w.json instanceof Map
+        flat.T1w.json.RepetitionTime == 2.0
+        flat.T1w.json.Manufacturer == 'Siemens'
+    }
+
+    def 'should keep json sidecar as Path when unpack_json_sidecar is false'() {
+        given:
+        def handler = new BidsHandler()
+        handler.withOpts([unpack_json_sidecar: false])
+        handler.loopOverEntities = ['subject', 'session']
+
+        when:
+        def flat = invokeFlatten(handler, ['sub-01', 'ses-01'], [
+            data: [T1w: [nii: 'anat/sub-01_T1w.nii.gz', json: 'anat/sub-01_T1w.json']],
+            bidsParentDir: '/data/bids'
+        ])
+
+        then:
+        flat.T1w.json instanceof java.nio.file.Path
+    }
+
+    def 'stress test: should consistently parse json sidecar into map across many iterations'() {
+        given:
+        // Create a real JSON sidecar file in the temp directory
+        def anatDir = tempDir.resolve('anat').toFile()
+        anatDir.mkdirs()
+        def jsonFile = new File(anatDir, 'sub-01_T1w.json')
+        jsonFile.text = '{"RepetitionTime": 2.3, "MagneticFieldStrength": 3}'
+
+        def handler = new BidsHandler()
+        handler.withOpts([unpack_json_sidecar: true])
+        handler.loopOverEntities = ['subject', 'session']
+
+        def groupingKey = ['sub-01', 'ses-01']
+        def enrichedData = [
+            data: [
+                T1w: [
+                    nii: 'anat/sub-01_T1w.nii.gz',
+                    json: 'anat/sub-01_T1w.json'
+                ]
+            ],
+            bidsParentDir: tempDir.toString()
+        ]
+
+        when:
+        // Run the flatten operation many times to trigger any race conditions
+        def results = (1..1000).collect { iteration ->
+            def flat = invokeFlatten(handler, groupingKey, enrichedData)
+            [iteration: iteration, flat: flat]
+        }
+
+        then:
+        // Verify all iterations produce consistent results
+        results.size() == 1000
+        results.every { result ->
+            result.flat != null &&
+            result.flat.T1w instanceof Map &&
+            result.flat.T1w.nii instanceof java.nio.file.Path &&
+            result.flat.T1w.json instanceof Map &&
+            result.flat.T1w.json.RepetitionTime == 2.3 &&
+            result.flat.T1w.json.MagneticFieldStrength == 3
+        }
+        // Verify no errors occurred
+        results.every { result -> result.flat != null }
+    }
+
+    def 'stress test parallel: should handle concurrent json sidecar parsing'() {
+        given:
+        // Create multiple JSON sidecar files
+        def anatDir = tempDir.resolve('anat').toFile()
+        anatDir.mkdirs()
+        (1..10).each { i ->
+            def jsonFile = new File(anatDir, "sub-0${i}_T1w.json")
+            jsonFile.text = "{\"RepetitionTime\": ${2.0 + i * 0.1}, \"Subject\": \"sub-0${i}\"}"
+        }
+
+        def executor = java.util.concurrent.Executors.newFixedThreadPool(4)
+        def futures = []
+
+        when:
+        // Submit parallel tasks - test with 10 subjects x 100 iterations = 1000 tasks
+        (1..10).each { subjectNum ->
+            (1..100).each { iteration ->
+                def future = executor.submit({
+                    try {
+                        def handler = new BidsHandler()
+                        handler.withOpts([unpack_json_sidecar: true])
+                        handler.loopOverEntities = ['subject', 'session']
+
+                        def groupingKey = ["sub-0${subjectNum}", 'ses-01']
+                        def enrichedData = [
+                            data: [
+                                T1w: [
+                                    nii: "anat/sub-0${subjectNum}_T1w.nii.gz",
+                                    json: "anat/sub-0${subjectNum}_T1w.json"
+                                ]
+                            ],
+                            bidsParentDir: tempDir.toString()
+                        ]
+
+                        def flat = invokeFlatten(handler, groupingKey, enrichedData)
+                        return flat
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed at subject=$subjectNum, iteration=$iteration", e)
+                    }
+                } as java.util.concurrent.Callable)
+                futures.add([subjectNum: subjectNum, iteration: iteration, future: future])
+            }
+        }
+
+        // Collect results
+        def results = []
+        def failureCount = 0
+        try {
+            futures.each { entry ->
+                try {
+                    def flat = entry.future.get()
+                    if (flat == null) {
+                        failureCount++
+                    }
+                    results.add([subjectNum: entry.subjectNum, iteration: entry.iteration, flat: flat])
+                } catch (Exception e) {
+                    failureCount++
+                }
+            }
+        } finally {
+            executor.shutdown()
+        }
+
+        then:
+        // Verify all parallel results are consistent
+        failureCount == 0
+        results.size() == 1000  // 10 subjects * 100 iterations
+        results.every { result ->
+            result.flat != null &&
+            result.flat.T1w instanceof Map &&
+            result.flat.T1w.nii instanceof java.nio.file.Path &&
+            result.flat.T1w.json instanceof Map &&
+            result.flat.T1w.json.Subject == "sub-0${result.subjectNum}"
+        }
     }
 
     private static void setParticipants(BidsHandler handler, List<Map<String, String>> participants) {

@@ -2,6 +2,8 @@ package nfneuro.plugin.channel
 
 import java.util.concurrent.CompletableFuture
 
+import groovy.lang.GString
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import groovyx.gpars.dataflow.DataflowWriteChannel
@@ -256,6 +258,33 @@ class BidsHandler {
     }
 
     /**
+     * Recursively deep-copy a data structure to prevent concurrent modification issues.
+     * Copies all Maps and Lists, leaving other types as-is (Path, String, Number, etc.).
+     *
+     * This is necessary because nf-test's convertPathsToStrings function recursively
+     * iterates over nested maps using collectEntries, which can cause ConcurrentModificationException
+     * if the maps are shared references that could be mutated.
+     *
+     * @param obj Object to deep-copy
+     * @return Deep-copied version of obj
+     */
+    private Object deepCopy(Object obj) {
+        if (obj == null) {
+            return null
+        }
+        if (obj instanceof Map) {
+            Map result = obj instanceof LinkedHashMap ? new LinkedHashMap() : [:]
+            (obj as Map).each { k, v -> result[k] = deepCopy(v) }
+            return result
+        }
+        if (obj instanceof List) {
+            return (obj as List).collect { deepCopy(it) }
+        }
+        // Return other types as-is (Path, String, Number, Boolean, etc.)
+        return obj
+    }
+
+    /**
      * Flatten a channel tuple into nested map structure with `meta` and `data` keys.
      *
      * @param tuple A tuple of [groupingKey, enrichedData]
@@ -302,13 +331,18 @@ class BidsHandler {
          * @param val Value to convert (String path, Path, List, Map, or other)
          * @return Converted value with Path objects for file paths
          */
+        boolean unpackJsonSidecar = options?.get('unpack_json_sidecar') as boolean
+
         Closure convertValue
         convertValue = { Object val ->
             if (val == null) return null
             if (val instanceof Path) return val  // Already a Path, return as-is
-            if (val instanceof String) {
-                String pathStr = val
-                
+            if (val instanceof File) {
+                return (val as File).toPath()
+            }
+            if (val instanceof String || val instanceof GString) {
+                String pathStr = val.toString()
+
                 // Use FileHelper.asPath for robust path handling
                 // Handles local files, URIs (s3://, gs://, az://), absolute and relative paths
                 Path result
@@ -317,12 +351,24 @@ class BidsHandler {
                     result = FileHelper.asPath(pathStr)
                 } else {
                     // Relative path - resolve against bidsParentDir
-                    String fullPath = bidsParentDir 
-                        ? Paths.get(bidsParentDir, pathStr).toString() 
+                    String fullPath = bidsParentDir
+                        ? Paths.get(bidsParentDir, pathStr).toString()
                         : pathStr
                     result = FileHelper.asPath(fullPath)
                 }
-                
+
+                // When unpack_json_sidecar is enabled, parse .json files into maps
+                if (unpackJsonSidecar && pathStr.endsWith('.json')) {
+                    File jsonFile = result.toFile()
+                    if (jsonFile.exists()) {
+                        try {
+                            return new JsonSlurper().parse(jsonFile) as Map
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to parse JSON sidecar '${result}': ${e.message}", e)
+                        }
+                    }
+                }
+
                 return result  // Returns java.nio.file.Path
             }
             if (val instanceof List) {
@@ -345,7 +391,9 @@ class BidsHandler {
         flat.put('meta', meta)
         (dataCopy as Map<String, Object>).each { String k, Object v -> flat.put(k, v) }
 
-        return flat
+        // Deep-copy the entire structure to prevent concurrent modification issues when nf-test
+        // processes the output with convertPathsToStrings
+        return deepCopy(flat) as Map
     }
 
     /**

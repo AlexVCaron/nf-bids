@@ -1,0 +1,12 @@
+{
+    "Manufacturer": "Siemens",
+    "MagneticFieldStrength": 3,
+    "RepetitionTime": 4.5,
+    "EchoTime": 0.085,
+    "FlipAngle": 90,
+    "PhaseEncodingDirection": "j-",
+    "TotalReadoutTime": 0.0275496,
+    "EffectiveEchoSpacing": 0.000289996,
+    "MRAcquisitionType": "2D",
+    "MultibandAccelerationFactor": 2
+}

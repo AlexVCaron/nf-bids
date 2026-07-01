@@ -185,6 +185,7 @@ EXTRA_SUITES=(
     "test/validation/test_grouptupleby.nf.test"
     "test/validation/test_joinby.nf.test"
     "test/validation/test_combineby.nf.test"
+    "test/validation/test_unpack_json_sidecar.nf.test"
 )
 
 if [[ "${LIST_ONLY}" == true ]]; then

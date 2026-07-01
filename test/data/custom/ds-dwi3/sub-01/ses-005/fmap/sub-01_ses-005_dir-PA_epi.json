@@ -1,0 +1,12 @@
+{
+    "Manufacturer": "Siemens",
+    "MagneticFieldStrength": 3,
+    "RepetitionTime": 3.2,
+    "EchoTime": 0.0495,
+    "FlipAngle": 90,
+    "PhaseEncodingDirection": "j",
+    "TotalReadoutTime": 0.0275496,
+    "EffectiveEchoSpacing": 0.000289996,
+    "MRAcquisitionType": "2D",
+    "IntendedFor": "ses-005/dwi/sub-01_ses-005_dir-AP_dwi.nii.gz"
+}
