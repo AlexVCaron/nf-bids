@@ -123,6 +123,32 @@ class PlainSetHandlerSpec extends Specification {
         results[0].hasSuffix('T1w')
     }
 
+    def 'processGroup emits one BidsChannelData per primary file when files differ by a non-run entity (e.g. dir)'() {
+        given:
+        def handler = new PlainSetHandler()
+        def datasetRoot = '/bids'
+
+        // Two EPIs that differ only by dir (direction), no run entity at all
+        def epiAP = makePrimary('/bids/fmap/sub-01_ses-01_dir-AP_epi.nii.gz', 'epi', [sub: '01', ses: '01', dir: 'AP'])
+        def epiPA = makePrimary('/bids/fmap/sub-01_ses-01_dir-PA_epi.nii.gz', 'epi', [sub: '01', ses: '01', dir: 'PA'])
+
+        def plainSets = [epi: [primaryFiles: [epiAP, epiPA], fileSuffix: 'epi']]
+        def config = [epi: [plain_set: [:]]]
+
+        when:
+        List<BidsChannelData> results = handler.processGroup(
+            datasetRoot, plainSets, [:], config, ['subject', 'session'], [:]
+        )
+
+        then: 'both direction variants are emitted, not just one'
+        results.size() == 2
+        def dirs = results.collect { (it.getSuffixData('epi') as Map).nii }
+        dirs as Set == [
+            'fmap/sub-01_ses-01_dir-AP_epi.nii.gz',
+            'fmap/sub-01_ses-01_dir-PA_epi.nii.gz'
+        ] as Set
+    }
+
     def 'processGroup with empty primaryFiles list returns no item for that configKey'() {
         given:
         def handler = new PlainSetHandler()

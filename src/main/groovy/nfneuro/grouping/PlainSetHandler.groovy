@@ -82,20 +82,6 @@ class PlainSetHandler extends BaseSetHandler {
                 return
             }
 
-            // Outer-join (one item per primary file) is only meaningful when files
-            // within the same loop-over group differ by the `run` entity — i.e. the
-            // user deliberately left `run` out of loop_over to receive one channel
-            // item per run.  For any other variation (direction, body-part, …) the
-            // old single-file behaviour is used: keep the lexicographically smallest
-            // path so that the result is deterministic.
-            Set<String> runValues = primaryFiles.collect { f ->
-                f.getEntityValue(BidsEntity.normalizeName('run')) ?: ''
-            }.toSet()
-
-            if (runValues.size() <= 1) {
-                primaryFiles = [primaryFiles.first()]
-            }
-
             // Get all related sidecar files for this suffix
             List<BidsFile> relatedFiles = (allFiles.get(fileSuffix, []) as List<BidsFile>)
                 .toList()
