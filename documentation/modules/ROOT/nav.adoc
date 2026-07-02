@@ -32,7 +32,6 @@
 * xref:appendices/migration-bids.adoc[BIDS Migration Guide]
 * xref:appendices/migration-closure.adoc[Closure Operators Migration]
 * xref:appendices/performance.adoc[Performance Benchmark]
-* xref:appendices/plain-set-outer-join-report.adoc[Plain-Set Outer-Join Report]
 
 .Maintenance
 * xref:maintenance/qa-checklist.adoc[Docs QA Checklist]
