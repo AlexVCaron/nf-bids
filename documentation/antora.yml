@@ -9,6 +9,6 @@ asciidoc:
   attributes:
     plugin-version: '0.1.0-beta.10'
     nextflow-min-version: '24.10.0'
-    libbids-sh-version: 'v1.0'
+    libbids-sh-version: 'v3.0'
     source-language: groovy@
     table-caption: false

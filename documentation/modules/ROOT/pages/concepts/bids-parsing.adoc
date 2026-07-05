@@ -12,9 +12,9 @@ image::generated/sequence-frombids.svg[fromBIDS sequence diagram]
 
 Parsing is a three-step pipeline:
 
-. `LibBidsShWrapper` runs the external `libBIDSsh_parse_bids_to_csv` shell function
-  and captures its CSV output.
-. `BidsCsvParser` converts the CSV rows into `BidsFile` objects.
+. `LibBidsShWrapper` runs the external `libBIDSsh_parse_bids_to_table` shell function
+  and captures its TSV output.
+. `BidsCsvParser` converts the TSV rows into `BidsFile` objects.
 . `BidsParser` assembles the `BidsFile` list into a `BidsDataset`, then loads
   `participants.tsv` metadata.
 
@@ -34,7 +34,7 @@ injection:
 
 [source,bash]
 ----
-bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_csv "$2" > "$3"' \
+bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"' \
     bash <scriptPath> <bidsDir> <outputCsv>
 ----
 
@@ -42,7 +42,7 @@ Paths are validated against a character-allow-list before use; semicolons, pipes
 backticks, and other metacharacters raise `IllegalArgumentException`.
 
 The wrapper exposes a `validateLibBidsScript(path)` convenience that confirms the file
-exists, is readable, and contains the expected `libBIDSsh_parse_bids_to_csv` function
+exists, is readable, and contains the expected `libBIDSsh_parse_bids_to_table` function
 symbol.
 
 === Error surface
@@ -67,8 +67,8 @@ class BidsParser {
 
 `parseToDataset` is the single public method.  It:
 
-. Calls `LibBidsShWrapper.parseBidsToCSV(bidsDir, libBidsShPath)` to obtain a temp CSV.
-. Passes the CSV file to `BidsCsvParser.parse()` to get a `List<BidsFile>`.
+. Calls `LibBidsShWrapper.parseBidsToTable(bidsDir, libBidsShPath)` to obtain a temp TSV.
+. Passes the TSV file to `BidsCsvParser.parse()` to get a `List<BidsFile>`.
 . Constructs a `BidsDataset(bidsDir)` and calls `dataset.addFile(file)` for each entry.
 . Calls `dataset.loadParticipants()` to populate `dataset.participants` from
   `participants.tsv`.
@@ -77,7 +77,7 @@ class BidsParser {
 
 === BidsFile
 
-`BidsFile` represents a single file entry as parsed from the libBIDS.sh CSV.  It
+`BidsFile` represents a single file entry as parsed from the libBIDS.sh TSV.  It
 carries:
 
 * `path` — relative path within the BIDS directory.

@@ -1,6 +1,8 @@
 {
   "sub": ["participant_id", "participant", "subject_id"],
+  "tpl": ["template_id"],
   "ses": ["session_id"],
+  "cohort": ["cohort_id"],
   "run": ["run_id"],
   "echo": ["echo_id"],
   "task": ["task_id"],
@@ -13,6 +15,8 @@
   "mt": ["mtransfer_id"],
   "proc": ["processing_id"],
   "hemi": ["hemisphere_id"],
+  "atlas": ["atlas_id"],
+  "scale": ["scale_id"],
   "seg": ["segmentation_id"],
   "res": ["resolution_id"],
   "den": ["density_id"],

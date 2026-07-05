@@ -14,8 +14,8 @@ import nfneuro.plugin.util.BidsLogger
  * Main BIDS dataset parser.
  *
  * <p>Orchestrates dataset parsing by delegating to {@link LibBidsShWrapper} to execute
- * the {@code libBIDSsh_parse_bids_to_csv} bash function, then converting the resulting
- * CSV into {@link nfneuro.plugin.model.BidsFile} objects via {@link nfneuro.plugin.util.BidsCsvParser},
+ * the {@code libBIDSsh_parse_bids_to_table} bash function, then converting the resulting
+ * TSV into {@link nfneuro.plugin.model.BidsFile} objects via {@link nfneuro.plugin.util.BidsCsvParser},
  * and finally assembling them into a {@link nfneuro.plugin.model.BidsDataset}.</p>
  */
 @Slf4j
@@ -53,10 +53,10 @@ class BidsParser {
         BidsLogger.logProgress("nf-bids-parser", "Parsing BIDS dataset: ${bidsDir}")
 
         // Execute libBIDS.sh wrapper
-        def csvFile = libBidsWrapper.parseBidsToCSV(bidsDir, libBidsShPath)
+        def tableFile = libBidsWrapper.parseBidsToTable(bidsDir, libBidsShPath)
 
-        // Parse CSV to BidsFile objects
-        def bidsFiles = csvParser.parse(csvFile)
+        // Parse TSV table to BidsFile objects
+        def bidsFiles = csvParser.parse(tableFile)
 
         // Create BidsDataset
         def dataset = new BidsDataset(bidsDir)

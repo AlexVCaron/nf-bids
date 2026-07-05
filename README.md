@@ -9,7 +9,7 @@ A Nextflow plugin that provides:
 
 [![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.10-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.1.0-beta.10)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
-[![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-schema&hyphen;guided-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v1.0)
+[![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-v3.0-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v3.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Tests](https://img.shields.io/badge/tests-100%2B%20passing-success)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)]()

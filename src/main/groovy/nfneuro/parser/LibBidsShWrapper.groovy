@@ -10,7 +10,7 @@ import nfneuro.plugin.util.BidsErrorHandler
  *
  * <p>Locates the {@code libBIDS.sh} script (embedded in the plugin distribution,
  * checked out as a git submodule, or provided explicitly by the caller), then
- * invokes {@code libBIDSsh_parse_bids_to_csv} to produce a CSV file that is
+ * invokes {@code libBIDSsh_parse_bids_to_table} to produce a TSV file that is
  * subsequently read by {@link nfneuro.plugin.util.BidsCsvParser}.</p>
  *
  * <p>All user-supplied paths are validated against a shell-metacharacter deny-list
@@ -78,18 +78,18 @@ class LibBidsShWrapper {
     }
 
     /**
-     * Parse BIDS directory to CSV using libBIDS.sh
+     * Parse BIDS directory to TSV table using libBIDS.sh
      *
-     * Executes the bash script and captures CSV output
+     * Executes the bash script and captures TSV output
      *
      * @param bidsDir Path to BIDS dataset
      * @param libBidsShPath Path to libBIDS.sh (optional, auto-detects if not provided)
-     * @return File containing parsed CSV data
+     * @return File containing parsed TSV data
      *
      * @reference libbids_sh_parse process implementation:
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
-    File parseBidsToCSV(String bidsDir, String libBidsShPath = null) {
+    File parseBidsToTable(String bidsDir, String libBidsShPath = null) {
         // Validate inputs early to prevent command injection
         if (libBidsShPath) {
             validateShellPath(libBidsShPath, "libBIDS.sh script")
@@ -123,12 +123,12 @@ class LibBidsShWrapper {
             throw new IllegalArgumentException("BIDS path is not a directory: ${bidsDir}")
         }
 
-        def outputFile = File.createTempFile("bids_parsed_", ".csv")
+        def outputFile = File.createTempFile("bids_parsed_", ".tsv")
         outputFile.deleteOnExit()  // Clean up temp file on exit
 
         BidsLogger.logProgress("libBIDS-wrapper", "Executing libBIDS.sh parser on: ${bidsDir}")
         BidsLogger.logProgress("libBIDS-wrapper", "Using libBIDS.sh at: ${scriptPath}")
-        BidsLogger.logProgress("libBIDS-wrapper", "Output CSV: ${outputFile.absolutePath}")
+        BidsLogger.logProgress("libBIDS-wrapper", "Output TSV: ${outputFile.absolutePath}")
 
         try {
             def command = buildParseCommand(scriptPath, bidsDir, outputFile)
@@ -234,7 +234,7 @@ class LibBidsShWrapper {
      *
      * @param scriptPath Path to libBIDS.sh (already validated)
      * @param bidsDir BIDS directory to parse (already validated)
-     * @param outputFile Output CSV file
+     * @param outputFile Output TSV file
      * @return Command list for ProcessBuilder
      *
      * @reference Bash command structure:
@@ -248,7 +248,7 @@ class LibBidsShWrapper {
         return [
             'bash',
             '-c',
-            'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_csv "$2" > "$3"',
+            'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"',
             'bash',  // $0
             scriptPath,  // $1
             bidsDir,  // $2
@@ -291,7 +291,7 @@ class LibBidsShWrapper {
 
     /**
      * Verify that a {@code libBIDS.sh} script exists, is readable, and contains the
-     * expected {@code libBIDSsh_parse_bids_to_csv} function signature.
+     * expected {@code libBIDSsh_parse_bids_to_table} function signature.
      *
      * @param scriptPath absolute path to the candidate {@code libBIDS.sh} file
      * @return {@code true} if the script is usable; {@code false} otherwise (errors are logged)
@@ -313,9 +313,9 @@ class LibBidsShWrapper {
 
         // Check if it looks like libBIDS.sh (contains expected functions)
         def content = script.text
-        if (!content.contains('libBIDSsh_parse_bids_to_csv')) {
+        if (!content.contains('libBIDSsh_parse_bids_to_table')) {
             BidsLogger.logProgress("libBIDS-wrapper",
-                "File does not appear to be libBIDS.sh (missing expected functions)")
+                "File does not appear to be compatible libBIDS.sh (requires libBIDS.sh >= v2.0)")
             return false
         }
 

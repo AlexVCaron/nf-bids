@@ -123,7 +123,7 @@ Without this class, two distinct `List` instances with identical contents would 
 === `nfneuro.plugin.parser` — BIDS Parsing
 
 `BidsParser`::
-Orchestrates the two-step parse: calls `LibBidsShWrapper.parseBidsToCSV()` to obtain a CSV file, then passes it to `BidsCsvParser` (in `util`).
+Orchestrates the two-step parse: calls `LibBidsShWrapper.parseBidsToTable()` to obtain a TSV file, then passes it to `BidsCsvParser` (in `util`).
 Returns a fully populated `BidsDataset`.
 
 `LibBidsShWrapper`::
@@ -181,7 +181,7 @@ Root container for a parsed dataset.
 Loads `dataset_description.json` and `participants.tsv` on construction.
 
 `BidsFile`::
-Represents one file entry from the libBIDS.sh CSV.
+Represents one file entry from the libBIDS.sh TSV.
 Carries the path, suffix, associated extensions (`.nii.gz`, `.json`, `.bval`, `.bvec`, etc.), and a list of `BidsEntity` objects.
 
 `BidsEntity`::
@@ -209,8 +209,8 @@ Static helpers for filtering `BidsFile` lists by entity values and checking enti
 Provides `tryWithContext()` for exception wrapping and `createDetailedError()` for multi-bullet diagnostic messages.
 
 `BidsCsvParser`::
-Parses the CSV produced by `libBIDSsh_parse_bids_to_csv`.
-The expected column order is `derivatives,data_type,subject,session,...,suffix,extension,path`.
+Parses the TSV produced by `libBIDSsh_parse_bids_to_table`.
+The expected column order is `derivatives,datatype,subject,template,session,cohort,sample,task,tracksys,acquisition,nucleus,volume,ceagent,tracer,stain,reconstruction,direction,run,modality,echo,flip,inversion,mtransfer,part,processing,hemisphere,space,split,recording,chunk,atlas,segmentation,scale,resolution,density,label,description,suffix,extension,path` (tab-separated).
 
 == Dependency Direction
 

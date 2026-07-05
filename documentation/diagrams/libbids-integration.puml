@@ -25,7 +25,7 @@ component "Runtime plugin install\n~/.nextflow/plugins/.../lib/libBIDS.sh" as in
 component "BidsParser" as parser
 component "LibBidsShWrapper" as wrapper
 component "libBIDS.sh process" as script #FFFDE7
-artifact "Parsed CSV" as csv #FFF0E8
+artifact "Parsed TSV" as csv #FFF0E8
 
 submodule --> jar : bundled at build time
 jar --> installed : extracted on install
@@ -35,7 +35,7 @@ wrapper --> installed : try embedded script
 wrapper ..> script : fallback search paths\n(if embedded missing)
 wrapper --> script : execute parser
 script --> csv : write rows
-wrapper --> parser : return CSV file
+wrapper --> parser : return TSV file
 
 note right of wrapper
 Discovery priority:

@@ -192,7 +192,7 @@ class BidsDataset {
             // This prevents ../../../etc/passwd type attacks
             if (!file.exists()) {
                 // For non-existent paths, just return the canonical path
-                // The actual existence check happens in parseBidsToCSV
+                // The actual existence check happens in parseBidsToTable
                 return canonicalPath
             }
 
