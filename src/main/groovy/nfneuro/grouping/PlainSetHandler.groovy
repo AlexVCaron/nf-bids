@@ -87,9 +87,11 @@ class PlainSetHandler extends BaseSetHandler {
                 .toList()
                 .sort { a, b -> normalizedPath(a) <=> normalizedPath(b) }
 
-            // Get parts configuration using config key
+            // Get parts and additional_extensions configuration using config key
             def suffixConfig = config.get(configKey) as Map
-            def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
+            Map setConfig = suffixConfig ? getSetConfig(suffixConfig) : null
+            def partsConfig = setConfig?.parts as List<String>
+            List<String> additionalExts = setConfig?.additional_extensions as List<String>
 
             // Emit one BidsChannelData per primary file (outer-join support)
             primaryFiles.each { file ->
@@ -98,7 +100,7 @@ class PlainSetHandler extends BaseSetHandler {
                 BidsChannelData channelData = new BidsChannelData()
 
                 // Build nested data map grouping files by extension type
-                Map nestedDataMap = nestedDataMap(datasetRoot, file, relatedFiles)
+                Map nestedDataMap = nestedDataMap(datasetRoot, file, relatedFiles, additionalExts)
 
                 // Apply parts grouping if configured
                 if (partsConfig) {
@@ -142,8 +144,19 @@ class PlainSetHandler extends BaseSetHandler {
     /**
      * Build a nested map structure grouping files by extension type
      * e.g., {nii: 'path/to/file.nii.gz', json: 'path/to/file.json', bval: '...', bvec: '...'}
+     *
+     * @param datasetRoot  Dataset root path used to relativize file paths
+     * @param primaryFile  The primary BIDS file for this item
+     * @param allFiles     All known sidecar files for the same BIDS suffix
+     * @param allowedExts  When non-null, only sidecar extension types listed here (plus {@code json})
+     *                     are included.  When null every sidecar type is included.
      */
-    private Map<String, String> nestedDataMap(String datasetRoot, BidsFile primaryFile, List<BidsFile> allFiles) {
+    private Map<String, String> nestedDataMap(
+            String datasetRoot,
+            BidsFile primaryFile,
+            List<BidsFile> allFiles,
+            List<String> allowedExts = null) {
+
         def baseName = primaryFile.getBasename()
         def nestedMap = [:]
 
@@ -153,7 +166,12 @@ class PlainSetHandler extends BaseSetHandler {
         allFiles.each { file ->
             BidsLogger.logProgress(logGroup(), "  ├─ Checking associated file: ${file.path}")
             if (file.getBasename() == baseName) {
-                nestedMap[file.getType()] = file.relativeTo(datasetRoot)
+                String extType = file.getExtensionType()
+                // When allowedExts is specified, only include json plus explicitly listed types.
+                // When allowedExts is null (option not set) include everything (backward-compat).
+                if (allowedExts == null || extType == 'json' || allowedExts.contains(extType)) {
+                    nestedMap[file.getType()] = file.relativeTo(datasetRoot)
+                }
             }
         }
 

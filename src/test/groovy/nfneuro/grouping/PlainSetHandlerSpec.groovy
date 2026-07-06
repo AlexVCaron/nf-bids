@@ -172,4 +172,92 @@ class PlainSetHandlerSpec extends Specification {
         results[0].hasSuffix('T1w')
     }
 
+    def 'processGroup without additional_extensions includes all sidecar types'() {
+        given:
+        def handler = new PlainSetHandler()
+        def datasetRoot = '/bids'
+
+        def dwi = makePrimary('/bids/dwi/sub-01_dwi.nii.gz', 'dwi', [sub: '01'])
+        def bval = makeSidecar('/bids/dwi/sub-01_dwi.bval', 'dwi', [sub: '01'])
+        def bvec = makeSidecar('/bids/dwi/sub-01_dwi.bvec', 'dwi', [sub: '01'])
+        def json = makeSidecar('/bids/dwi/sub-01_dwi.json', 'dwi', [sub: '01'])
+
+        def plainSets = [dwi: [primaryFiles: [dwi], fileSuffix: 'dwi']]
+        def allFiles = [dwi: [bval, bvec, json]]
+        // No additional_extensions specified
+        def config = [dwi: [plain_set: [:]]]
+
+        when:
+        List<BidsChannelData> results = handler.processGroup(
+            datasetRoot, plainSets, allFiles, config, ['subject'], [:]
+        )
+
+        then:
+        results.size() == 1
+        def data = results[0].getSuffixData('dwi') as Map
+        // Without restriction, all sidecar types are collected
+        data.containsKey('nii')
+        data.containsKey('json')
+        data.containsKey('bval')
+        data.containsKey('bvec')
+    }
+
+    def 'processGroup with additional_extensions restricts collected sidecar types'() {
+        given:
+        def handler = new PlainSetHandler()
+        def datasetRoot = '/bids'
+
+        def dwi = makePrimary('/bids/dwi/sub-01_dwi.nii.gz', 'dwi', [sub: '01'])
+        def bval = makeSidecar('/bids/dwi/sub-01_dwi.bval', 'dwi', [sub: '01'])
+        def bvec = makeSidecar('/bids/dwi/sub-01_dwi.bvec', 'dwi', [sub: '01'])
+        def json = makeSidecar('/bids/dwi/sub-01_dwi.json', 'dwi', [sub: '01'])
+        // Extra sidecar that should NOT be included
+        def txt  = makeSidecar('/bids/dwi/sub-01_dwi.txt', 'dwi', [sub: '01'])
+
+        def plainSets = [dwi: [primaryFiles: [dwi], fileSuffix: 'dwi']]
+        def allFiles = [dwi: [bval, bvec, json, txt]]
+        def config = [dwi: [plain_set: [additional_extensions: ['bval', 'bvec']]]]
+
+        when:
+        List<BidsChannelData> results = handler.processGroup(
+            datasetRoot, plainSets, allFiles, config, ['subject'], [:]
+        )
+
+        then:
+        results.size() == 1
+        def data = results[0].getSuffixData('dwi') as Map
+        data.containsKey('nii')
+        data.containsKey('json')    // json always included
+        data.containsKey('bval')
+        data.containsKey('bvec')
+        !data.containsKey('txt')    // excluded: not in additional_extensions
+    }
+
+    def 'processGroup with additional_extensions always includes json even if not listed'() {
+        given:
+        def handler = new PlainSetHandler()
+        def datasetRoot = '/bids'
+
+        def dwi = makePrimary('/bids/dwi/sub-01_dwi.nii.gz', 'dwi', [sub: '01'])
+        def bval = makeSidecar('/bids/dwi/sub-01_dwi.bval', 'dwi', [sub: '01'])
+        def json = makeSidecar('/bids/dwi/sub-01_dwi.json', 'dwi', [sub: '01'])
+
+        def plainSets = [dwi: [primaryFiles: [dwi], fileSuffix: 'dwi']]
+        def allFiles = [dwi: [bval, json]]
+        // additional_extensions lists 'bval' but not 'json'
+        def config = [dwi: [plain_set: [additional_extensions: ['bval']]]]
+
+        when:
+        List<BidsChannelData> results = handler.processGroup(
+            datasetRoot, plainSets, allFiles, config, ['subject'], [:]
+        )
+
+        then:
+        results.size() == 1
+        def data = results[0].getSuffixData('dwi') as Map
+        data.containsKey('nii')
+        data.containsKey('json')    // json always included even though not in the list
+        data.containsKey('bval')
+    }
+
 }
