@@ -42,10 +42,11 @@ class PlainSetHandler extends BaseSetHandler {
         String fileSuffix = index.fileSuffix  // Use file suffix for allFiles lookup
 
         if (file.isPrimaryFile()) {
-            BidsFile currentPrimary = sets[configKey]?.files?.file as BidsFile
-            if (!currentPrimary || normalizedPath(file) < normalizedPath(currentPrimary)) {
-                sets[configKey] = [files: [file: file], fileSuffix: fileSuffix]
+            // Collect all primary files to support outer-join across configKeys
+            if (!sets.containsKey(configKey)) {
+                sets[configKey] = [primaryFiles: [], fileSuffix: fileSuffix]
             }
+            (sets[configKey].primaryFiles as List) << file
         } else {
             if (!allFiles.containsKey(fileSuffix)) {
                 allFiles[fileSuffix] = []
@@ -55,7 +56,7 @@ class PlainSetHandler extends BaseSetHandler {
     }
 
     @Override
-    protected BidsChannelData processGroup(
+    protected List<BidsChannelData> processGroup(
             String datasetRoot,
             Map plainSets,
             Map allFiles,
@@ -66,66 +67,73 @@ class PlainSetHandler extends BaseSetHandler {
         BidsLogger.logProgress(logGroup(), "processGroup called with ${plainSets.size()} plain sets: ${plainSets.keySet()}")
         BidsLogger.logProgress(logGroup(), "allFiles has ${allFiles.size()} suffixes: ${allFiles.keySet()}")
 
-        // Create channel data structure
-        BidsChannelData channelData = new BidsChannelData()
+        List<BidsChannelData> result = []
 
         plainSets.keySet().toList().sort().each { configKey ->
             def setData = plainSets[configKey]
-            String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
-            BidsLogger.logProgress(logGroup(), "Processing config key: ${configKey}, file suffix: ${fileSuffix}, setData: ${setData}")
+            String fileSuffix = setData.fileSuffix ?: configKey
+            BidsLogger.logProgress(logGroup(), "Processing config key: ${configKey}, file suffix: ${fileSuffix}")
 
-            // Extract the file from the setData structure
-            BidsFile file = setData.files?.file as BidsFile
-            if (!file) {
-                BidsLogger.logProgress(logGroup(), "No primary file found for config key: ${configKey}, setData.files: ${setData.files}")
+            List<BidsFile> primaryFiles = ((setData.primaryFiles ?: []) as List<BidsFile>)
+                .sort { normalizedPath(it) }
+
+            if (primaryFiles.isEmpty()) {
+                BidsLogger.logProgress(logGroup(), "No primary files found for config key: ${configKey}")
                 return
             }
 
-            BidsLogger.logProgress(logGroup(), "Emitting plain set for config key: ${configKey}, file suffix: ${fileSuffix}, file: ${file.path}")
-
-            // Get all related files for this file suffix
+            // Get all related sidecar files for this suffix
             List<BidsFile> relatedFiles = (allFiles.get(fileSuffix, []) as List<BidsFile>)
                 .toList()
                 .sort { a, b -> normalizedPath(a) <=> normalizedPath(b) }
 
-            // Get parts configuration using config key
+            // Get parts and additional_extensions configuration using config key
             def suffixConfig = config.get(configKey) as Map
-            def partsConfig = suffixConfig ? getSetConfig(suffixConfig)?.parts as List<String> : null
+            Map setConfig = suffixConfig ? getSetConfig(suffixConfig) : null
+            def partsConfig = setConfig?.parts as List<String>
+            List<String> additionalExts = setConfig?.additional_extensions as List<String>
 
-            // Build nested data map grouping files by extension type
-            Map nestedDataMap = nestedDataMap(datasetRoot, file, relatedFiles)
+            // Emit one BidsChannelData per primary file (outer-join support)
+            primaryFiles.each { file ->
+                BidsLogger.logProgress(logGroup(), "Emitting plain set for config key: ${configKey}, file: ${file.path}")
 
-            // Apply parts grouping if configured
-            if (partsConfig) {
-                nestedDataMap = applyPartsGrouping(nestedDataMap, partsConfig, relatedFiles)
-            }
+                BidsChannelData channelData = new BidsChannelData()
 
-            channelData.addSuffixData(configKey, nestedDataMap)
+                // Build nested data map grouping files by extension type
+                Map nestedDataMap = nestedDataMap(datasetRoot, file, relatedFiles, additionalExts)
 
-            // Add all related files to filePaths list
-            relatedFiles.each { relatedFile ->
-                if (relatedFile.getBasename() == file.getBasename()) {
-                    channelData.addFilePath(relatedFile.relativeTo(datasetRoot))
+                // Apply parts grouping if configured
+                if (partsConfig) {
+                    nestedDataMap = applyPartsGrouping(nestedDataMap, partsConfig, relatedFiles, datasetRoot)
                 }
-            }
 
-            // Load file into channel
-            channelData.addFilePath(file.relativeTo(datasetRoot))
+                channelData.addSuffixData(configKey, nestedDataMap)
 
-            // Add all entities from the file
-            file.entities.each { entity ->
-                channelData.addEntity(entity.name, entity.value)
-            }
-
-            // Add loop-over entities to ensure grouping key is captured
-            loopOverEntities.each { entityName ->
-                if (!channelData.hasEntity(entityName)) {
-                    channelData.addEntity(entityName, file.getEntityValue(BidsEntity.normalizeName(entityName)))
+                // Add sidecar file paths for this primary file only
+                relatedFiles.each { relatedFile ->
+                    if (relatedFile.getBasename() == file.getBasename()) {
+                        channelData.addFilePath(relatedFile.relativeTo(datasetRoot))
+                    }
                 }
+                channelData.addFilePath(file.relativeTo(datasetRoot))
+
+                // Add all entities from this file
+                file.entities.each { entity ->
+                    channelData.addEntity(entity.name, entity.value)
+                }
+
+                // Ensure loop-over entities are captured
+                loopOverEntities.each { entityName ->
+                    if (!channelData.hasEntity(entityName)) {
+                        channelData.addEntity(entityName, file.getEntityValue(BidsEntity.normalizeName(entityName)))
+                    }
+                }
+
+                result << channelData
             }
         }
 
-        return channelData
+        return result
     }
 
     @Override
@@ -136,8 +144,19 @@ class PlainSetHandler extends BaseSetHandler {
     /**
      * Build a nested map structure grouping files by extension type
      * e.g., {nii: 'path/to/file.nii.gz', json: 'path/to/file.json', bval: '...', bvec: '...'}
+     *
+     * @param datasetRoot  Dataset root path used to relativize file paths
+     * @param primaryFile  The primary BIDS file for this item
+     * @param allFiles     All known sidecar files for the same BIDS suffix
+     * @param allowedExts  When non-null, only sidecar extension types listed here (plus {@code json})
+     *                     are included.  When null every sidecar type is included.
      */
-    private Map<String, String> nestedDataMap(String datasetRoot, BidsFile primaryFile, List<BidsFile> allFiles) {
+    private Map<String, String> nestedDataMap(
+            String datasetRoot,
+            BidsFile primaryFile,
+            List<BidsFile> allFiles,
+            List<String> allowedExts = null) {
+
         def baseName = primaryFile.getBasename()
         def nestedMap = [:]
 
@@ -147,7 +166,12 @@ class PlainSetHandler extends BaseSetHandler {
         allFiles.each { file ->
             BidsLogger.logProgress(logGroup(), "  ├─ Checking associated file: ${file.path}")
             if (file.getBasename() == baseName) {
-                nestedMap[file.getType()] = file.relativeTo(datasetRoot)
+                String extensionType = file.getExtensionType()
+                // When allowedExts is specified, only include json plus explicitly listed types.
+                // When allowedExts is null (option not set) include everything (backward-compat).
+                if (allowedExts == null || extensionType == 'json' || allowedExts.contains(extensionType)) {
+                    nestedMap[file.getType()] = file.relativeTo(datasetRoot)
+                }
             }
         }
 

@@ -137,6 +137,21 @@ class BidsConfigValidator {
 
         // Validate parts
         validateParts(suffix, config, "plain_set", result)
+
+        // Validate additional_extensions
+        if (config.additional_extensions != null && !(config.additional_extensions instanceof List)) {
+            result.errors << "Suffix '${suffix}' plain_set: additional_extensions must be a list"
+        }
+
+        // Validate include_cross_modal
+        if (config.include_cross_modal != null && !(config.include_cross_modal instanceof List)) {
+            result.warnings << "Suffix '${suffix}' plain_set: include_cross_modal should be a list of suffixes"
+        }
+
+        // Validate exclude_entities
+        if (config.exclude_entities != null && !(config.exclude_entities instanceof List)) {
+            result.errors << "Suffix '${suffix}' plain_set: exclude_entities must be a list"
+        }
     }
 
     /**

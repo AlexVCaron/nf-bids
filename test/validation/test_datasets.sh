@@ -152,6 +152,7 @@ declare -A DATASET_TO_SUITE=(
     [ds-dwi4]="test/validation/comparison_custom_datasets.nf.test"
     [ds-mrs_fmrs]="test/validation/comparison_custom_datasets.nf.test"
     [ds-mtsat]="test/validation/comparison_custom_datasets.nf.test"
+    [ds-t1w-fmap-multiruns]="test/validation/comparison_custom_datasets.nf.test"
     [asl001]="test/validation/comparison_plain_sets.nf.test"
     [asl002]="test/validation/comparison_plain_sets.nf.test"
     [eeg_cbm]="test/validation/comparison_plain_sets.nf.test"
@@ -190,7 +191,7 @@ EXTRA_SUITES=(
 
 if [[ "${LIST_ONLY}" == true ]]; then
     echo "Custom datasets:"
-    printf '  %s\n' ds-dwi ds-dwi2 ds-dwi3 ds-dwi4 ds-mrs_fmrs ds-mtsat
+    printf '  %s\n' ds-dwi ds-dwi2 ds-dwi3 ds-dwi4 ds-mrs_fmrs ds-mtsat ds-t1w-fmap-multiruns
     echo
     echo "BIDS examples datasets:"
     printf '  %s\n' asl001 asl002 eeg_cbm qmri_mtsat qmri_tb1tfl qmri_vfa qmri_irt1 qmri_megre qmri_mese qmri_mp2rage qmri_sa2rage qmri_mpm

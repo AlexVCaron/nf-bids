@@ -55,14 +55,14 @@ jobs:
       - name: Commit benchmark results
         if: ${{ github.actor != 'nektos/act' }}
         run: |
-          if git diff --quiet -- test/benchmark/BENCHMARK_RESULTS.md docs/PERFORMANCE_BENCHMARK.md documentation/modules/ROOT/pages/appendices/performance.adoc; then
+          if git diff --quiet -- test/benchmark/BENCHMARK_RESULTS.md documentation/modules/ROOT/pages/appendices/performance.adoc; then
             echo "No benchmark/doc changes to commit"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add test/benchmark/BENCHMARK_RESULTS.md docs/PERFORMANCE_BENCHMARK.md documentation/modules/ROOT/pages/appendices/performance.adoc
+          git add test/benchmark/BENCHMARK_RESULTS.md documentation/modules/ROOT/pages/appendices/performance.adoc
           git commit -m "Update benchmark results [skip ci]"
           git push
 

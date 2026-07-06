@@ -177,9 +177,10 @@ abstract class BaseSetHandler {
                     )
                 }
             }
-            .findAll { channelData -> channelData != null }
-            .inject(new DataflowQueue()) { queue, channelData ->
-                queue << channelData
+            .inject(new DataflowQueue()) { queue, result ->
+                if (result == null) return queue
+                List items = result instanceof List ? result as List : [result]
+                items.findAll { it != null }.each { queue << it }
                 return queue
             }
     }
@@ -240,7 +241,7 @@ abstract class BaseSetHandler {
      * @return BidsChannelData for the group or null if filtered out
      */
     /* groovylint-disable-next-line ParameterCount */
-    protected abstract BidsChannelData processGroup(
+    protected abstract List<BidsChannelData> processGroup(
         String datasetRoot,
         Map plainSets,
         Map allFiles,
