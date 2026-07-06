@@ -527,30 +527,29 @@ class BidsHandler {
         DataflowQueue broadcastedResults = new DataflowQueue()
 
         groupedData.each { loopingKey, groupEntries ->
-            boolean hasBroadcasted = false
             BidsLogger.logProgress("nf-bids-handler", "├─ Applying broadcasting for looping key: ${loopingKey} with ${groupEntries.size()} entries")
+            Map<String, Object> availableData = [:]
             crossModalData.findAll { key, value -> loopingKey.contains(key) }
                 .each { availableKey, available ->
-                    if (!hasBroadcasted) {
-                        BidsLogger.logProgress("nf-bids-handler", "├─ Applying cross-modal broadcasting for key: ${loopingKey} with available data: ${availableKey} | ${available.keySet().join(', ')}")
-                        groupEntries.each { entry ->
-                            List groupingKey = (entry as List)[0]
-                            Map enrichedData = (entry as List)[1] as Map
-                            BidsLogger.logProgress("nf-bids-handler", "├─ Enhancing entry for grouping key: ${groupingKey}")
-                            Map enhanced = applyIncludeCrossModal(
-                                enrichedData,
-                                available,
-                                config
-                            )
-
-                            if (shouldKeepChannel(enhanced, config)) {
-                                BidsLogger.logProgress("nf-bids-handler", "├─ Broadcasting enhanced data for key: ${groupingKey} with data: ${(enhanced.data as Map).keySet().join(', ')}")
-                                broadcastedResults << [groupingKey, enhanced]
-                                hasBroadcasted = true
-                            }
-                        }
-                    }
+                    BidsLogger.logProgress("nf-bids-handler", "├─ Applying cross-modal broadcasting for key: ${loopingKey} with available data: ${availableKey} | ${available.keySet().join(', ')}")
+                    availableData.putAll(available as Map<String, Object>)
                 }
+
+            groupEntries.each { entry ->
+                List groupingKey = (entry as List)[0]
+                Map enrichedData = (entry as List)[1] as Map
+                BidsLogger.logProgress("nf-bids-handler", "├─ Enhancing entry for grouping key: ${groupingKey}")
+                Map enhanced = applyIncludeCrossModal(
+                    enrichedData,
+                    availableData,
+                    config
+                )
+
+                if (shouldKeepChannel(enhanced, config)) {
+                    BidsLogger.logProgress("nf-bids-handler", "├─ Broadcasting enhanced data for key: ${groupingKey} with data: ${(enhanced.data as Map).keySet().join(', ')}")
+                    broadcastedResults << [groupingKey, enhanced]
+                }
+            }
         }
 
         // Return unbound queue - will be bound only in validateAndEmitChannel
