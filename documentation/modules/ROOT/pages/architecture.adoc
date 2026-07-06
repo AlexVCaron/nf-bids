@@ -1,6 +1,6 @@
 = Architecture Overview
 :navtitle: Architecture Overview
-:plugin-version: 0.1.0-beta.10
+:plugin-version: 0.1.0-beta.11
 
 [.lead]
 This page traces the path a BIDS dataset takes through the plugin — from the user's
