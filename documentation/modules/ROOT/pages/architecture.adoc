@@ -83,11 +83,11 @@ installation path first, then a set of well-known fallback locations — and exe
 
 [source,bash]
 ----
-bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_csv "$2" > "$3"' \
-    bash <script> <bids_dir> <output.csv>
+bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"' \
+    bash <script> <bids_dir> <output.tsv>
 ----
 
-The CSV output is consumed by `BidsCsvParser`, which creates `BidsFile` objects.
+The TSV output is consumed by `BidsCsvParser`, which creates `BidsFile` objects.
 `BidsParser` collects these into a `BidsDataset` (which also loads `participants.tsv`).
 
 See xref:concepts/bids-parsing.adoc[BIDS Parsing & Dataset Normalization].

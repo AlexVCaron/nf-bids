@@ -44,7 +44,7 @@ package "Dataset parsing" as P_parser #FFF8E8 {
   }
 
   class LibBidsShWrapper {
-    + parseBidsToCSV(...)
+    + parseBidsToTable(...)
     - findLibBidsScript()
   }
 }

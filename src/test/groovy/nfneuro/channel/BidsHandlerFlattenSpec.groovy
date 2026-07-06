@@ -496,6 +496,46 @@ class BidsHandlerFlattenSpec extends Specification {
         }
     }
 
+    def 'should include cross-modal T1w for each task when non-task key is available'() {
+        given:
+        def handler = new BidsHandler()
+        def loopOver = ['subject', 'session', 'run', 'task']
+        def config = [
+            T1w   : [plain_set: [:]],
+            mrsref: [plain_set: [include_cross_modal: ['T1w']]]
+        ]
+        def results = new DataflowQueue()
+        results << [['sub-01', 'NA', 'NA', 'task-baseline'], [
+            data: [mrsref: [nii: 'sub-01_task-baseline_mrsref.nii.gz']],
+            filePaths: ['sub-01_task-baseline_mrsref.nii.gz'],
+            bidsParentDir: '/data/bids'
+        ]]
+        results << [['sub-01', 'NA', 'NA', 'task-pain'], [
+            data: [mrsref: [nii: 'sub-01_task-pain_mrsref.nii.gz']],
+            filePaths: ['sub-01_task-pain_mrsref.nii.gz'],
+            bidsParentDir: '/data/bids'
+        ]]
+        results << [['sub-01', 'NA', 'NA', 'NA'], [
+            data: [T1w: [nii: 'sub-01_T1w.nii.gz']],
+            filePaths: ['sub-01_T1w.nii.gz'],
+            bidsParentDir: '/data/bids'
+        ]]
+
+        when:
+        def method = handler.getClass().getDeclaredMethod('applyCrossModalBroadcasting', DataflowQueue, Map, List)
+        method.setAccessible(true)
+        def broadcasted = method.invoke(handler, results, config, loopOver) as DataflowQueue
+        def emitted = []
+        broadcasted.each { emitted << it }
+
+        then:
+        emitted.size() == 2
+        emitted.every { entry ->
+            def enriched = (entry as List)[1] as Map
+            (enriched.data as Map).containsKey('mrsref') && (enriched.data as Map).containsKey('T1w')
+        }
+    }
+
     private static void setParticipants(BidsHandler handler, List<Map<String, String>> participants) {
         def field = handler.getClass().getDeclaredField('participantsMetadata')
         field.setAccessible(true)

@@ -13,7 +13,7 @@ import groovy.transform.CompileStatic
  * metadata (size, modification time) loaded on demand.</p>
  *
  * <p>Instances are created by {@link nfneuro.plugin.util.BidsCsvParser} from
- * the CSV output of {@code libBIDSsh_parse_bids_to_csv}.  The
+ * the TSV output of {@code libBIDSsh_parse_bids_to_table}.  The
  * {@link #isPrimaryFile()} and {@link #getBasename()} helpers drive grouping
  * logic in the set handlers.</p>
  */

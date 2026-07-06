@@ -119,20 +119,20 @@ Exceptions from the background thread are caught in `handlerException()`, which 
 `BidsParser` is constructed with a `Session` reference and creates two collaborators:
 
 * `LibBidsShWrapper` — the bridge to the external bash parser.
-* `BidsCsvParser` — the CSV reader.
+* `BidsCsvParser` — the TSV reader.
 
 `parseToDataset()` follows three steps:
 
 [source,groovy]
 ----
-def csvFile = libBidsWrapper.parseBidsToCSV(bidsDir, libBidsShPath)
+def csvFile = libBidsWrapper.parseBidsToTable(bidsDir, libBidsShPath)
 def bidsFiles = csvParser.parse(csvFile)
 def dataset = new BidsDataset(bidsDir)
 bidsFiles.each { file -> dataset.addFile(file) }
 dataset.loadParticipants()
 ----
 
-=== `LibBidsShWrapper.parseBidsToCSV()`
+=== `LibBidsShWrapper.parseBidsToTable()`
 
 This is the most complex step in the chain.
 The wrapper must locate the `libBIDS.sh` script, validate paths against a shell-metacharacter blocklist, and invoke the script safely.
@@ -188,15 +188,15 @@ The command is built in array form to avoid shell string interpolation:
 [source,groovy]
 ----
 ['bash', '-c',
- 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_csv "$2" > "$3"',
+ 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"',
  'bash', scriptPath, bidsDir, outputFile.absolutePath]
 ----
 
-The output CSV is written to a temporary file, which `BidsCsvParser` then reads.
+The output TSV is written to a temporary file, which `BidsCsvParser` then reads.
 
 === `BidsCsvParser.parse()`
 
-Reads the CSV header line (columns: `derivatives,data_type,subject,session,...,suffix,extension,path`) and converts each subsequent row into a `BidsFile` object.
+Reads the TSV header line (columns: `derivatives,datatype,subject,template,session,cohort,sample,task,tracksys,acquisition,nucleus,volume,ceagent,tracer,stain,reconstruction,direction,run,modality,echo,flip,inversion,mtransfer,part,processing,hemisphere,space,split,recording,chunk,atlas,segmentation,scale,resolution,density,label,description,suffix,extension,path`) and converts each subsequent row into a `BidsFile` object.
 Each `BidsFile` holds the path, the BIDS suffix, and a list of `BidsEntity` key-value pairs.
 
 === `BidsDataset` Assembly

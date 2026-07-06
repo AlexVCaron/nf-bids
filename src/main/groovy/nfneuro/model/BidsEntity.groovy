@@ -19,7 +19,9 @@ class BidsEntity {
 
     public static final Map<String, String> SHORT_ENTITY_MAPPING = [
         'subject': 'sub',
+        'template': 'tpl',
         'session': 'ses',
+        'cohort': '',
         'sample': '',
         'task': 'task',
         'tracksys': '',
@@ -44,7 +46,9 @@ class BidsEntity {
         'split': '',
         'recording': '',
         'chunk': '',
+        'atlas': '',
         'segmentation': 'seg',
+        'scale': '',
         'resolution': 'res',
         'density': 'den',
         'label': '',

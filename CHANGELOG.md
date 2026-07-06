@@ -4,6 +4,24 @@ All notable changes and development history for the nf-bids plugin.
 
 ---
 
+## [Unreleased]
+
+### ⚠️ BREAKING CHANGES
+
+- Updated bundled `libBIDS.sh` from `v1.0` (`schema-guided`) to `v3.0`.
+- Parser input switched from CSV (`libBIDSsh_parse_bids_to_csv`) to TSV (`libBIDSsh_parse_bids_to_table`).
+- Metadata key `data_type` is now `datatype` to match upstream BIDS nomenclature.
+
+### Added
+
+- New parsed entities from `libBIDS.sh` v3.0 schema sync: `template` (`tpl`), `cohort`, `atlas`, and `scale`.
+- Default alias coverage for `template_id`, `cohort_id`, `atlas_id`, and `scale_id`.
+
+### Changed
+
+- `LibBidsShWrapper` now validates `libBIDS.sh >= v2.0` by checking for `libBIDSsh_parse_bids_to_table`.
+- Parsing temp file output now uses `.tsv`.
+
 ## [Unreleased] 0.1.0-beta.9
 
 ### ⚠️ BREAKING CHANGES

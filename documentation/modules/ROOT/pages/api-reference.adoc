@@ -83,7 +83,7 @@ and parameter descriptions.
 | Class | One-line purpose
 
 | `BidsParser`
-| Drives dataset parsing: calls `LibBidsShWrapper`, parses the resulting CSV, and returns a `BidsDataset`.
+| Drives dataset parsing: calls `LibBidsShWrapper`, parses the resulting TSV, and returns a `BidsDataset`.
 
 | `LibBidsShWrapper`
 | Locates and executes the `libBIDS.sh` bash library; validates paths against a shell-injection deny-list.
@@ -168,7 +168,7 @@ and parameter descriptions.
 | Context-aware error wrapping (`tryWithContext`, `safeExecute`, `validateWithContext`) and typed BIDS exception sub-classes.
 
 | `BidsCsvParser`
-| Parses the CSV produced by `libBIDSsh_parse_bids_to_csv` into `BidsFile` objects.
+| Parses the TSV produced by `libBIDSsh_parse_bids_to_table` into `BidsFile` objects.
 |===
 
 == Key entry points

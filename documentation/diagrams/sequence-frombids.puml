@@ -29,7 +29,7 @@ BidsChannelFactory --> Workflow : return Dataflow channel
 
 == Async execution ==
 BidsHandler -> BidsParser : parseToDataset(...)
-BidsParser -> LibBIDS : parse dataset to CSV
+BidsParser -> LibBIDS : parse dataset to TSV
 LibBIDS --> BidsParser : parsed rows
 BidsParser --> BidsHandler : BidsDataset
 

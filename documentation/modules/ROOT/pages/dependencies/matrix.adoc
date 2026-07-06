@@ -46,7 +46,7 @@ No Java source files exist; all production code is compiled Groovy.
 
 | *libBIDS.sh*
 | {libbids-sh-version}
-| External bash library that walks the BIDS directory tree and emits a structured CSV.
+| External bash library that walks the BIDS directory tree and emits a structured TSV.
 It is the only BIDS-file-inventory mechanism in the plugin; no Java-side directory scanning occurs.
 Bundled as a git submodule and included in the plugin ZIP via `fileTree('libBIDS.sh') { include '*.sh' }`.
 | `.gitmodules` (submodule URL), `build.gradle` (bundling), xref:dependencies/libbids-sh.adoc[The libBIDS.sh Dependency]
@@ -54,7 +54,7 @@ Bundled as a git submodule and included in the plugin ZIP via `fileTree('libBIDS
 | *Bash*
 | ≥ 4.x (for `set -euo pipefail` and `source`)
 | Required at runtime on every machine where the plugin executes.
-`LibBidsShWrapper` invokes bash as `['bash', '-c', ...]`; the `libBIDSsh_parse_bids_to_csv` function requires bash 4 associative arrays.
+`LibBidsShWrapper` invokes bash as `['bash', '-c', ...]`; the `libBIDSsh_parse_bids_to_table` function requires bash 4 associative arrays.
 | `LibBidsShWrapper.groovy`: `buildParseCommand()`
 |===
 
@@ -163,7 +163,7 @@ When implemented, this will invoke `bids-validator` (likely via Docker) before p
 | Runtime
 
 | libBIDS.sh
-| v1.0
+| v3.0
 | Runtime
 
 | Bash

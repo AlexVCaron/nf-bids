@@ -2,7 +2,7 @@
 :navtitle: The libBIDS.sh Dependency
 
 [.lead]
-`libBIDS.sh` is a battle-tested bash library that traverses a BIDS directory tree and emits a structured CSV.
+`libBIDS.sh` is a battle-tested bash library that traverses a BIDS directory tree and emits a structured TSV.
 This page explains how the library enters the project, how Gradle bundles it into the plugin JAR, and how `LibBidsShWrapper` locates and executes it at runtime.
 
 image::generated/libbids-integration.svg[libBIDS.sh integration]
@@ -10,14 +10,14 @@ image::generated/libbids-integration.svg[libBIDS.sh integration]
 == What libBIDS.sh Does
 
 `libBIDS.sh` (version {libbids-sh-version}, hosted at https://github.com/CoBrALab/libBIDS.sh[CoBrALab/libBIDS.sh]) is a pure-bash BIDS parsing library developed by the CoBrALab.
-Its central function, `libBIDSsh_parse_bids_to_csv`, walks a BIDS dataset, reads file names and sidecars, and writes a CSV with columns:
+Its central function, `libBIDSsh_parse_bids_to_table`, walks a BIDS dataset, reads file names and sidecars, and writes a TSV with columns:
 
 ----
-derivatives,data_type,subject,session,sample,task,...,suffix,extension,path
+derivatives\tdatatype\tsubject\ttemplate\tsession\tcohort\tsample\ttask\ttracksys\tacquisition\tnucleus\tvolume\tceagent\ttracer\tstain\treconstruction\tdirection\trun\tmodality\techo\tflip\tinversion\tmtransfer\tpart\tprocessing\themisphere\tspace\tsplit\trecording\tchunk\tatlas\tsegmentation\tscale\tresolution\tdensity\tlabel\tdescription\tsuffix\textension\tpath
 ----
 
 Each row represents one file.
-The nf-bids plugin uses this CSV as its only source of BIDS file inventory — no Java-side directory walking occurs.
+The nf-bids plugin uses this TSV as its only source of BIDS file inventory — no Java-side directory walking occurs.
 
 == Vendoring as a Git Submodule
 
@@ -68,7 +68,7 @@ This embedded copy is the highest-priority discovery target at runtime.
 
 == Runtime Script Discovery
 
-`LibBidsShWrapper.parseBidsToCSV()` resolves the script path before executing the parser.
+`LibBidsShWrapper.parseBidsToTable()` resolves the script path before executing the parser.
 If the caller passes `options.libbids_sh`, that explicit path is used directly (after path validation).
 Otherwise, `findLibBidsScript()` probes a priority-ordered list of locations and returns the first match.
 
@@ -155,16 +155,16 @@ The parser is invoked using the array form of `Process.execute()` to avoid strin
 [source,groovy]
 ----
 ['bash', '-c',
- 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_csv "$2" > "$3"',
+ 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"',
  'bash',                  // $0 — interpreter name
  scriptPath,              // $1 — sourced library
  bidsDir,                 // $2 — BIDS root
- outputFile.absolutePath  // $3 — output CSV
+ outputFile.absolutePath  // $3 — output TSV
 ]
 ----
 
 `set -euo pipefail` ensures the bash subshell exits on any error, unset variable, or pipe failure.
-The plugin waits for the process to complete via `process.waitFor()`, captures stdout and stderr separately, and throws a `RuntimeException` if the exit code is non-zero or if the output CSV is empty.
+The plugin waits for the process to complete via `process.waitFor()`, captures stdout and stderr separately, and throws a `RuntimeException` if the exit code is non-zero or if the output TSV is empty.
 
 == Script Integrity Verification
 
@@ -172,7 +172,7 @@ The plugin waits for the process to complete via `process.waitFor()`, captures s
 
 . The file exists.
 . The file is readable.
-. The file content contains the string `libBIDSsh_parse_bids_to_csv` (the expected entry point).
+. The file content contains the string `libBIDSsh_parse_bids_to_table` (the expected entry point).
 
 This guards against accidentally pointing the plugin at an unrelated shell script.
 
