@@ -166,10 +166,10 @@ class PlainSetHandler extends BaseSetHandler {
         allFiles.each { file ->
             BidsLogger.logProgress(logGroup(), "  ├─ Checking associated file: ${file.path}")
             if (file.getBasename() == baseName) {
-                String extType = file.getExtensionType()
+                String extensionType = file.getExtensionType()
                 // When allowedExts is specified, only include json plus explicitly listed types.
                 // When allowedExts is null (option not set) include everything (backward-compat).
-                if (allowedExts == null || extType == 'json' || allowedExts.contains(extType)) {
+                if (allowedExts == null || extensionType == 'json' || allowedExts.contains(extensionType)) {
                     nestedMap[file.getType()] = file.relativeTo(datasetRoot)
                 }
             }
