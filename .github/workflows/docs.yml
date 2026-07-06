@@ -27,7 +27,7 @@ permissions:
 
 # Never run two deployments concurrently; let an in-progress run finish.
 concurrency:
-  group: pages
+  group: pages-${{ github.head_ref || 'deployment' }}
   cancel-in-progress: false
 
 jobs:
