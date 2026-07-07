@@ -97,6 +97,7 @@ class BidsHandler {
      * @return {@code this} for method chaining
      */
     BidsHandler withOpts(Map options) {
+        this.options = new LinkedHashMap<String, Object>()
         this.options["use_bidsignore"] = true
         this.options["use_default_ignores"] = true
         options?.each { k, v -> this.options[k] = v }

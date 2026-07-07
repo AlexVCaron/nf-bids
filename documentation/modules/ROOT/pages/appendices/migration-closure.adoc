@@ -30,7 +30,7 @@ operators provided by nf-bids.
 .`nextflow.config`
 [source,groovy]
 ----
-plugins { id 'nf-bids@0.1.0-beta.11-bidsignore.2' }
+plugins { id 'nf-bids@0.1.0-beta.11-bidsignore.4' }
 ----
 
 .Workflow script
