@@ -25,6 +25,7 @@ All notable changes and development history for the nf-bids plugin.
 ### Fixed
 
 - `mixed_set` now honors its configuration: `suffix_maps_to` is applied (config keys such as `epi_full` correctly match the mapped suffix), and when the `sequential_dimension` is also a `loop_over` entity the sequenced files are collapsed into a single item and fused with the other results instead of being split per value.
+- `sequential_set` now collapses its sequence entity (`by_entity`/`by_entities`) the same way: when the sequence entity is also a `loop_over` entity, the sequenced files are gathered into a single item (entity value `NA`) and fused with the other results instead of being split per value. The consumption logic is shared with `mixed_set` via `BaseSetHandler`.
 
 ## [Unreleased] 0.1.0-beta.9
 

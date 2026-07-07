@@ -104,7 +104,7 @@ class MixedSetHandler extends BaseSetHandler {
 
         // Entities consumed as the sequential dimension must be kept out of the
         // grouping key so the emitted item can fuse with the other results.
-        Set<String> consumedEntities = consumedSequenceEntities(config)
+        Set<String> consumedEntities = consumedEntities(config)
 
         // Add suffix data as maps of {groupName -> {extension: [paths]}}
         sets.each { configKey, setData ->
@@ -147,37 +147,6 @@ class MixedSetHandler extends BaseSetHandler {
         BidsLogger.logProgress(logGroup(), "Mixed set emitted with ${sets.size()} suffixes")
 
         return [channelData]
-    }
-
-    /**
-     * Collect the entities consumed as the {@code sequential_dimension} across all
-     * mixed-set configurations, normalized to their short form.
-     *
-     * @param config Full configuration map
-     * @return Set of normalized entity names used as sequential dimensions
-     */
-    private Set<String> consumedSequenceEntities(Map config) {
-        Set<String> consumed = [] as Set
-        if (!config) {
-            return consumed
-        }
-        config.each { configKey, configValue ->
-            if (configValue instanceof Map) {
-                Map mixedSet = getSetConfig(configValue as Map)
-                if (mixedSet?.sequential_dimension) {
-                    consumed << BidsEntity.normalizeName(mixedSet.sequential_dimension as String)
-                }
-            }
-        }
-        return consumed
-    }
-
-    @Override
-    protected List<String> groupingEntities(Map config, List<String> loopOverEntities) {
-        Set<String> consumed = consumedSequenceEntities(config)
-        return loopOverEntities.findAll { entity ->
-            !consumed.contains(BidsEntity.normalizeName(entity as String))
-        }
     }
 
     /**

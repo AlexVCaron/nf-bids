@@ -215,7 +215,52 @@ abstract class BaseSetHandler {
      * @return Entities to group files by
      */
     protected List<String> groupingEntities(Map config, List<String> loopOverEntities) {
-        return loopOverEntities
+        Set<String> consumed = consumedEntities(config)
+        if (consumed.isEmpty()) {
+            return loopOverEntities
+        }
+        return loopOverEntities.findAll { entity ->
+            !consumed.contains(BidsEntity.normalizeName(entity as String))
+        }
+    }
+
+    /**
+     * Collect the entities consumed internally by this set type across all
+     * configurations, normalized to their short form.
+     *
+     * <p>A consumed entity is one whose value varies across the files that are
+     * merged into a single emitted item (for example a sequential set's
+     * {@code by_entity}/{@code by_entities}, or a mixed set's
+     * {@code sequential_dimension}).  Such entities must be kept out of both the
+     * grouping key and the emitted meta so files spanning that dimension collapse
+     * into a single item and fuse with the other results instead of being split
+     * into one item per value.</p>
+     *
+     * <p>Set types without a sequenced dimension (plain and named sets) return an
+     * empty set, making this a no-op for them.</p>
+     *
+     * @param config Full configuration map
+     * @return Set of normalized entity names consumed by this set type
+     */
+    protected Set<String> consumedEntities(Map config) {
+        Set<String> consumed = [] as Set
+        if (!config) {
+            return consumed
+        }
+        config.each { configKey, configValue ->
+            if (configValue instanceof Map) {
+                Map setConfig = getSetConfig(configValue as Map)
+                if (setConfig != null) {
+                    List sequenceEntities = getSequenceByEntities(setConfig)
+                    sequenceEntities?.each { entity ->
+                        if (entity) {
+                            consumed << BidsEntity.normalizeName(entity as String)
+                        }
+                    }
+                }
+            }
+        }
+        return consumed
     }
 
     /**
