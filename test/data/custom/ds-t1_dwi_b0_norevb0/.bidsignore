@@ -1,0 +1,11 @@
+**/anat/*localizer*
+**/anat/*scout*
+**/anat/*rec*
+**/*__dup*
+**/*_defacemaskreg.mat
+# follow MIDS extension wip
+*/*/*/*_bp-cspine*
+# localizers exported
+*/*/*/*_localizer*
+# follows SWI BEP wip
+*/*/swi/* 

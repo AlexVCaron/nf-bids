@@ -1,0 +1,18 @@
+{
+    "Acknowledgements": "https://docs.cneuromod.ca/en/latest/AUTHORS.html",
+    "Authors": [
+        "Pierre Bellec",
+        "Julie Boyle",
+        "Basile Pinsard"
+    ],
+    "BIDSVersion": "1.0.1",
+    "Funding": [
+        "Courtois Foundation"
+    ],
+    "HowToAcknowledge": "https://docs.cneuromod.ca/en/latest/ACCESS.html#how-to-acknowledge",
+    "License": "https://docs.cneuromod.ca/en/latest/ACCESS.html#data-transfer-agreement-(dta)",
+    "Name": "anatomical sub-dataset of the Courtois-Neuromod project",
+    "ReferencesAndLinks": [
+        "https://docs.cneuromod.ca/"
+    ]
+}
