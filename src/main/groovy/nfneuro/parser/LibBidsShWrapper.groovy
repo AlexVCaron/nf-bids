@@ -89,7 +89,7 @@ class LibBidsShWrapper {
      * @reference libbids_sh_parse process implementation:
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
-    File parseBidsToTable(String bidsDir, String libBidsShPath = null, Boolean bidsignore = true) {
+    File parseBidsToTable(String bidsDir, String libBidsShPath = null, Boolean bidsignore = true, Boolean defaultIgnores = true) {
         // Validate inputs early to prevent command injection
         if (libBidsShPath) {
             validateShellPath(libBidsShPath, "libBIDS.sh script")
@@ -131,7 +131,7 @@ class LibBidsShWrapper {
         BidsLogger.logProgress("libBIDS-wrapper", "Output TSV: ${outputFile.absolutePath}")
 
         try {
-            def command = buildParseCommand(scriptPath, bidsDir, outputFile, bidsignore)
+            def command = buildParseCommand(scriptPath, bidsDir, outputFile, bidsignore, defaultIgnores)
             BidsLogger.logProgress("libBIDS-wrapper", "Command: ${command}")
 
             def process = command.execute()

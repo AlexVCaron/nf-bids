@@ -1,6 +1,6 @@
 = nf-bids Documentation
 :navtitle: Overview
-:plugin-version: 0.1.0-beta.11
+:plugin-version: 0.1.0-beta.11-bidsignore
 :nextflow-min-version: 24.10.0
 :libbids-sh-version: v3.0
 
