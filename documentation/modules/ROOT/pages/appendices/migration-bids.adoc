@@ -1,6 +1,6 @@
 = BIDS Migration Guide
 :navtitle: BIDS Migration Guide
-:plugin-version: 0.1.0-beta.11-bidsignore
+:plugin-version: 0.1.0-beta.11-bidsignore.2
 
 [.lead]
 This guide covers every upgrade path: from the original bids2nf Nextflow subworkflow,

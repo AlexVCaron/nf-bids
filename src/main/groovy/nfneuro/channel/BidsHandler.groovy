@@ -97,7 +97,9 @@ class BidsHandler {
      * @return {@code this} for method chaining
      */
     BidsHandler withOpts(Map options) {
-        this.options = options ?: [:]
+        this.options["use_bidsignore"] = true
+        this.options["use_default_ignores"] = true
+        options?.each { k, v -> this.options[k] = v }
         this.participantsMetadataMerger = new ParticipantsMetadataMerger(this.options.entity_aliases_json as String)
         return this
     }

@@ -14,7 +14,7 @@ bootstrap_runtime() {
 bootstrap_runtime
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PLUGIN_VERSION="0.1.0-beta.11-bidsignore"
+PLUGIN_VERSION="0.1.0-beta.11-bidsignore.2"
 PLUGINS_DIR="${NXF_PLUGINS_DIR:-$HOME/.nextflow/plugins}"
 
 ensure_nf_bids_plugin() {
