@@ -127,6 +127,13 @@ class BidsConfigValidator {
                 result.warnings << "Suffix '${suffix}': include_cross_modal should be a list of suffixes"
             }
         }
+
+        // Validate global (suffix-level) exclude_entities
+        if (suffixConfig.exclude_entities != null) {
+            if (!(suffixConfig.exclude_entities instanceof List)) {
+                result.errors << "Suffix '${suffix}': exclude_entities must be a list"
+            }
+        }
     }
 
     /**
