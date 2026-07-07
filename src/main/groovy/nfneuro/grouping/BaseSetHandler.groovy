@@ -69,8 +69,16 @@ abstract class BaseSetHandler {
         BidsLogger.logProgress(logGroup(), "Processing mixed sets with ${bidsFiles.size()} files")
         BidsLogger.logProgress(logGroup(), "Loop-over entities: ${loopOverEntities}")
 
+        // Determine the entities used for loop-over grouping.  Handlers may exclude
+        // entities that are "consumed" internally by the set (e.g. a mixed set's
+        // sequential_dimension) so that files spanning that dimension are collapsed
+        // into a single group and fused with the other results instead of being
+        // split into one item per value.
+        List<String> groupingEntities = groupingEntities(config, loopOverEntities)
+        BidsLogger.logProgress(logGroup(), "Grouping entities: ${groupingEntities}")
+
         // Start by grouping all files following loop-over entities
-        return BidsEntityUtils.groupByEntities(bidsFiles, loopOverEntities)
+        return BidsEntityUtils.groupByEntities(bidsFiles, groupingEntities)
             .collect { groupKey, filesInGroup ->
                 // Once initial sorting is done, look at every file to determine its fit with a set
                 filesInGroup.collect { file ->
@@ -192,6 +200,68 @@ abstract class BaseSetHandler {
      * @return Set configuration (plain_set, named_set, etc.)
      */
     protected abstract Map getSetConfig(Map suffixConfig)
+
+    /**
+     * Determine the entities used to group files for loop-over.
+     *
+     * <p>By default this is the full list of loop-over entities.  Handlers whose
+     * sets consume an entity internally (for example a {@code mixed_set}'s
+     * {@code sequential_dimension}) override this to remove those entities so that
+     * files spanning the consumed dimension are collapsed into a single group and
+     * fused with the other results.</p>
+     *
+     * @param config Full configuration map
+     * @param loopOverEntities Configured loop-over entities
+     * @return Entities to group files by
+     */
+    protected List<String> groupingEntities(Map config, List<String> loopOverEntities) {
+        Set<String> consumed = consumedEntities(config)
+        if (consumed.isEmpty()) {
+            return loopOverEntities
+        }
+        return loopOverEntities.findAll { entity ->
+            !consumed.contains(BidsEntity.normalizeName(entity as String))
+        }
+    }
+
+    /**
+     * Collect the entities consumed internally by this set type across all
+     * configurations, normalized to their short form.
+     *
+     * <p>A consumed entity is one whose value varies across the files that are
+     * merged into a single emitted item (for example a sequential set's
+     * {@code by_entity}/{@code by_entities}, or a mixed set's
+     * {@code sequential_dimension}).  Such entities must be kept out of both the
+     * grouping key and the emitted meta so files spanning that dimension collapse
+     * into a single item and fuse with the other results instead of being split
+     * into one item per value.</p>
+     *
+     * <p>Set types without a sequenced dimension (plain and named sets) return an
+     * empty set, making this a no-op for them.</p>
+     *
+     * @param config Full configuration map
+     * @return Set of normalized entity names consumed by this set type
+     */
+    protected Set<String> consumedEntities(Map config) {
+        Set<String> consumed = [] as Set
+        if (!config) {
+            return consumed
+        }
+        config.each { configKey, configValue ->
+            if (configValue instanceof Map) {
+                Map setConfig = getSetConfig(configValue as Map)
+                if (setConfig != null) {
+                    List sequenceEntities = getSequenceByEntities(setConfig)
+                    sequenceEntities?.each { entity ->
+                        if (entity) {
+                            consumed << BidsEntity.normalizeName(entity as String)
+                        }
+                    }
+                }
+            }
+        }
+        return consumed
+    }
 
     /**
      * Get set name

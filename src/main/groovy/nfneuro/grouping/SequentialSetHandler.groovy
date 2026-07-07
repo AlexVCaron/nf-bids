@@ -83,6 +83,11 @@ class SequentialSetHandler extends BaseSetHandler {
         // Create channel data
         def channelData = new BidsChannelData()
 
+        // Entities consumed as the sequence dimension (by_entity/by_entities) must
+        // be kept out of the emitted meta so the item can fuse with the other
+        // results: their value varies across the sequenced files.
+        Set<String> consumedEntities = consumedEntities(config)
+
         // Add suffix data (arrays or nested structures)
         sets.each { configKey, setData ->
             String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
@@ -121,7 +126,13 @@ class SequentialSetHandler extends BaseSetHandler {
             relatedFiles.each { file ->
                 channelData.addFilePath(file.relativeTo(datasetRoot))
                 file.entities.each { entity ->
-                    channelData.addEntity(entity.name, entity.value)
+                    // Skip entities consumed as the sequence dimension: their value
+                    // varies across the sequenced files, so they must not appear in
+                    // the grouping key (otherwise the item cannot fuse with the
+                    // other results).
+                    if (!consumedEntities.contains(entity.name)) {
+                        channelData.addEntity(entity.name, entity.value)
+                    }
                 }
             }
         }

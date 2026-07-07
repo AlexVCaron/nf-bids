@@ -120,6 +120,14 @@ Use `by_entities: [echo, run]` when multiple entities define the sequence order.
 Set `order: flat` (default) or `order: hierarchical` only with `by_entities`;
 the option is ignored for single-entity `by_entity` sequences.
 
+[NOTE]
+====
+When a sequence entity (e.g. `echo`) is also listed in `loop_over`, the files
+spanning that dimension are collapsed into a single sequenced item and the
+entity's value in `meta` becomes `NA`, so the sequential set fuses with the other
+results instead of producing one item per value.
+====
+
 === MixedSetHandler — `mixed_set`
 
 Combines a named dimension (acquisition, inversion) with a sequential dimension (echo,
@@ -156,6 +164,15 @@ mpm:
 ]
 // Access: item.mpm.MTw.nii[0], item.mpm.T1w.json.size()
 ----
+
+[NOTE]
+====
+When the `sequential_dimension` (e.g. `run`) is also listed in `loop_over`, the
+files spanning that dimension are collapsed into a single sequenced item and the
+entity's value in `meta` becomes `NA`, so the mixed set fuses with the other
+results instead of producing one item per value.  `suffix_maps_to` is honored,
+so a config key such as `epi_full` can target the `epi` suffix.
+====
 
 == Flat vs legacy output formats
 

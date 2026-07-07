@@ -34,7 +34,7 @@ class MixedSetHandler extends BaseSetHandler {
 
     @Override
     protected String setName() {
-        return "mixed-set"
+        return "mixed_set"
     }
 
     @Override
@@ -102,6 +102,10 @@ class MixedSetHandler extends BaseSetHandler {
         // Create channel data
         def channelData = new BidsChannelData()
 
+        // Entities consumed as the sequential dimension must be kept out of the
+        // grouping key so the emitted item can fuse with the other results.
+        Set<String> consumedEntities = consumedEntities(config)
+
         // Add suffix data as maps of {groupName -> {extension: [paths]}}
         sets.each { configKey, setData ->
             String fileSuffix = setData.fileSuffix ?: configKey  // Get file suffix from setData
@@ -130,7 +134,12 @@ class MixedSetHandler extends BaseSetHandler {
             relatedFiles.each { file ->
                 channelData.addFilePath(file.relativeTo(datasetRoot))
                 file.entities.each { entity ->
-                    channelData.addEntity(entity.name, entity.value)
+                    // Skip entities consumed as the sequential dimension: their value
+                    // varies across the sequenced files, so they must not appear in the
+                    // grouping key (otherwise the item cannot fuse with the other results).
+                    if (!consumedEntities.contains(entity.name)) {
+                        channelData.addEntity(entity.name, entity.value)
+                    }
                 }
             }
         }
