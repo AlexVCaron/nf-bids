@@ -180,7 +180,12 @@ class BidsHandler {
             loadConfiguration(null)
         }
 
-        BidsDataset dataset = parser.parseToDataset(bidsDir, options.libbids_sh as String)
+        BidsDataset dataset = parser.parseToDataset(
+            bidsDir,
+            options.libbids_sh as String,
+            options.use_bidsignore as Boolean,
+            options.use_default_ignores as Boolean
+        )
         dataset.loadParticipants()
         List<BidsFile> bidsFiles = dataset.getFiles()
         this.participantsMetadata = (dataset.participants ?: []) as List<Map<String, String>>
