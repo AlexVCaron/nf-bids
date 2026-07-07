@@ -215,7 +215,6 @@ class BidsDataset {
             }
 
             return canonicalPath
-
         } catch (IOException e) {
             throw new IllegalArgumentException(
                 "Invalid BIDS dataset path: ${path}. Error: ${e.message}",

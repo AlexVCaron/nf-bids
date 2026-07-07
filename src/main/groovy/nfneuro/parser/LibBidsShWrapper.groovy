@@ -89,7 +89,7 @@ class LibBidsShWrapper {
      * @reference libbids_sh_parse process implementation:
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
-    File parseBidsToTable(String bidsDir, String libBidsShPath = null) {
+    File parseBidsToTable(String bidsDir, String libBidsShPath = null, Boolean bidsignore = true, Boolean defaultIgnores = true) {
         // Validate inputs early to prevent command injection
         if (libBidsShPath) {
             validateShellPath(libBidsShPath, "libBIDS.sh script")
@@ -131,7 +131,7 @@ class LibBidsShWrapper {
         BidsLogger.logProgress("libBIDS-wrapper", "Output TSV: ${outputFile.absolutePath}")
 
         try {
-            def command = buildParseCommand(scriptPath, bidsDir, outputFile)
+            def command = buildParseCommand(scriptPath, bidsDir, outputFile, bidsignore, defaultIgnores)
             BidsLogger.logProgress("libBIDS-wrapper", "Command: ${command}")
 
             def process = command.execute()
@@ -240,20 +240,35 @@ class LibBidsShWrapper {
      * @reference Bash command structure:
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L17-L24
      */
-    private List<String> buildParseCommand(String scriptPath, String bidsDir, File outputFile) {
+    private List<String> buildParseCommand(String scriptPath, String bidsDir, File outputFile, Boolean bidsignore, Boolean defaultIgnores = true) {
         // Additional validation for output file path
         validateShellPath(outputFile.absolutePath, "output file")
+        List<String> extraArgs = new ArrayList<>()
+
+        if (bidsignore) {
+            BidsLogger.logProgress("libBIDS-wrapper", "BIDS validation is disabled (bidsignore=true)")
+        } else {
+            BidsLogger.logProgress("libBIDS-wrapper", "BIDS validation is enabled (bidsignore=false)")
+            extraArgs.add("--no-bidsignore")
+        }
+
+        if (defaultIgnores) {
+            BidsLogger.logProgress("libBIDS-wrapper", "Default ignores are enabled")
+        } else {
+            BidsLogger.logProgress("libBIDS-wrapper", "Default ignores are disabled")
+            extraArgs.add("--no-default-ignores")
+        }
 
         // Use array form with bash to avoid string interpolation risks
         return [
             'bash',
             '-c',
-            'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"',
+            'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" ${@:4} > "$3"',
             'bash',  // $0
             scriptPath,  // $1
             bidsDir,  // $2
             outputFile.absolutePath  // $3
-        ]
+        ] + extraArgs
     }
 
     /**

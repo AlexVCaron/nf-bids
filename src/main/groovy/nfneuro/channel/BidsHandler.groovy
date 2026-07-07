@@ -97,7 +97,10 @@ class BidsHandler {
      * @return {@code this} for method chaining
      */
     BidsHandler withOpts(Map options) {
-        this.options = options ?: [:]
+        this.options = new LinkedHashMap<String, Object>()
+        this.options["use_bidsignore"] = true
+        this.options["use_default_ignores"] = true
+        options?.each { k, v -> this.options[k] = v }
         this.participantsMetadataMerger = new ParticipantsMetadataMerger(this.options.entity_aliases_json as String)
         return this
     }
@@ -180,7 +183,12 @@ class BidsHandler {
             loadConfiguration(null)
         }
 
-        BidsDataset dataset = parser.parseToDataset(bidsDir, options.libbids_sh as String)
+        BidsDataset dataset = parser.parseToDataset(
+            bidsDir,
+            options.libbids_sh as String,
+            options.use_bidsignore as Boolean,
+            options.use_default_ignores as Boolean
+        )
         dataset.loadParticipants()
         List<BidsFile> bidsFiles = dataset.getFiles()
         this.participantsMetadata = (dataset.participants ?: []) as List<Map<String, String>>

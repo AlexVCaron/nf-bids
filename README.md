@@ -7,7 +7,7 @@ A Nextflow plugin that provides:
 - **Heterogeneous dataset support** for mixed acquisition schemes
 - **Closure-based channel operators** for flexible data grouping and joining
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.10-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.1.0-beta.11)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.1.0&hyphen;beta.10-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.1.0-beta.11-bidsignore.4)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-v3.0-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v3.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -31,7 +31,7 @@ To install it, add the lines below in your `nextflow.config` file:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.1.0-beta.11'
+    id 'nf-bids@0.1.0-beta.11-bidsignore.4'
 }
 ```
 
@@ -143,6 +143,8 @@ Load and parse a BIDS dataset into a Nextflow channel.
 |`bids_dir`|`path-like`|Directory containing a valid [BIDS](https://bids-specification.readthedocs.io/en/stable/) input dataset.|
 |`config`|`path-like`|Path to a `yaml` configuration file for entity parsing. See [Configuration](https://nf-neuro.github.io/nf-bids/concepts/configuration.html).|
 |`options.libbids_sh`|`path-like`|(Optional) Path to an alternative [libBIDS.sh](https://github.com/CoBrALab/libBIDS.sh) parsing script.|
+|`options.use_bidsignore`|`boolean`|(Optional) When `true`, use dataset root `.bidsignore` file to exclude files (default `true`).|
+|`options.use_default_ignores`|`boolean`|(Optional) When `true`, use default ignore patterns - `.git**`, `.*`, `sourcedata/`, `code/`, `stimuli/` and `log/` - (default `true`).|
 |`options.entity_aliases_json`|`path-like`|(Optional) Path to a custom JSON entity-alias map used when normalizing BIDS entities for participants metadata merging.|
 |`options.validate`|`boolean`|(Not implemented) Run the [BIDS Validator](https://github.com/bids-standard/bids-validator) on the input dataset before parsing.|
 |`options.validator_version`|`string`|(Not implemented) [BIDS Validator version](https://github.com/bids-standard/bids-validator/releases) to use.|

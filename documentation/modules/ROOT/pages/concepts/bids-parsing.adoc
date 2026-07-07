@@ -34,7 +34,7 @@ injection:
 
 [source,bash]
 ----
-bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"' \
+bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" ${@:4} > "$3"' \
     bash <scriptPath> <bidsDir> <outputCsv>
 ----
 

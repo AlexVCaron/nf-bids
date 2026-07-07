@@ -49,11 +49,11 @@ class BidsParser {
      * @reference libbids_sh_parse process:
      *            https://github.com/agahkarakuzu/bids2nf/blob/main/modules/parsers/lib_bids_sh_parser.nf#L1-L28
      */
-    BidsDataset parseToDataset(String bidsDir, String libBidsShPath = null) {
+    BidsDataset parseToDataset(String bidsDir, String libBidsShPath = null, Boolean bidsignore = true, Boolean defaultIgnores = true) {
         BidsLogger.logProgress("nf-bids-parser", "Parsing BIDS dataset: ${bidsDir}")
 
         // Execute libBIDS.sh wrapper
-        def tableFile = libBidsWrapper.parseBidsToTable(bidsDir, libBidsShPath)
+        def tableFile = libBidsWrapper.parseBidsToTable(bidsDir, libBidsShPath, bidsignore, defaultIgnores)
 
         // Parse TSV table to BidsFile objects
         def bidsFiles = csvParser.parse(tableFile)
