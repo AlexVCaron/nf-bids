@@ -37,8 +37,8 @@ class MixedSetHandlerSpec extends Specification {
     }
 
     def 'setName is mixed_set so suffix_maps_to resolves for mixed sets'() {
-        expect: 'setName matches the getSetType key used to build the suffix mapping'
-        new MixedSetHandler().logGroup() == 'nf-bids-mixed_set'
+        expect: 'setName matches the getSetType key ("mixed_set") used to build the suffix mapping'
+        new MixedSetHandler().setName() == 'mixed_set'
     }
 
     def 'suffix_maps_to matches mapped-suffix files and sequential_dimension collapses into one fused item'() {

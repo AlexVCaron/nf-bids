@@ -22,6 +22,10 @@ All notable changes and development history for the nf-bids plugin.
 - `LibBidsShWrapper` now validates `libBIDS.sh >= v2.0` by checking for `libBIDSsh_parse_bids_to_table`.
 - Parsing temp file output now uses `.tsv`.
 
+### Fixed
+
+- `mixed_set` now honors its configuration: `suffix_maps_to` is applied (config keys such as `epi_full` correctly match the mapped suffix), and when the `sequential_dimension` is also a `loop_over` entity the sequenced files are collapsed into a single item and fused with the other results instead of being split per value.
+
 ## [Unreleased] 0.1.0-beta.9
 
 ### ⚠️ BREAKING CHANGES
