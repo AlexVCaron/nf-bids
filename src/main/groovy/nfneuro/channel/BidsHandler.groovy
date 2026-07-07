@@ -15,6 +15,8 @@ import nextflow.Session
 import nextflow.Channel
 import nextflow.extension.CH
 import nextflow.file.FileHelper
+import nextflow.util.VersionNumber
+import nextflow.BuildInfo
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -135,7 +137,7 @@ class BidsHandler {
     DataflowWriteChannel ignite(Session session) {
         DataflowWriteChannel target = this.withTarget(CH.create()).target
 
-        if (NF.dsl2) {
+        if (Integer.parseInt(new VersionNumber(BuildInfo.version).major) >= 26 || NF.dsl2) {
             session.addIgniter { -> this.perform(true) }
         }
         else {
