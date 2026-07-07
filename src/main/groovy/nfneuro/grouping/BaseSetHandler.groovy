@@ -452,10 +452,20 @@ abstract class BaseSetHandler {
                 }
             }
 
-            // Exclude files with specific entities if specified
-            if (setConfig.exclude_entities) {
+            // Exclude files with specific entities if specified.
+            // exclude_entities may be declared globally at the suffix level (outside
+            // the set, alongside additional_extensions/suffix_maps_to) and/or inside
+            // the set config. Both are honoured for every set type.
+            List<String> excludeEntities = []
+            if (suffixConfig.exclude_entities instanceof List) {
+                excludeEntities.addAll(suffixConfig.exclude_entities as List<String>)
+            }
+            if (setConfig.exclude_entities instanceof List) {
+                excludeEntities.addAll(setConfig.exclude_entities as List<String>)
+            }
+            if (excludeEntities) {
                 boolean excluded = false
-                for (String entityName : setConfig.exclude_entities as List<String>) {
+                for (String entityName : excludeEntities) {
                     String normalizedEntity = BidsEntity.normalizeName(entityName)
                     if (file.hasEntity(normalizedEntity)) {
                         BidsLogger.logProgress(logGroup(), "File excluded by entity ${entityName} for ${configKey}: ${file.path}")
