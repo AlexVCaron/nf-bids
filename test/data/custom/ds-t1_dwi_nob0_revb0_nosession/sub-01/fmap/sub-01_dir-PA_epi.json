@@ -33,8 +33,8 @@
   "InstitutionName": "IUGM",
   "InstitutionalDepartmentName": "Department",
   "IntendedFor": [
-    "dwi/sub-01_dir-AP_dwi.nii.gz",
-    "dwi/sub-01_dir-PA_dwi.nii.gz"
+    "bids::sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+    "bids::sub-01/dwi/sub-01_dir-PA_dwi.nii.gz"
 ],
   "MRAcquisitionType": "2D",
   "MagneticFieldStrength": 3,
