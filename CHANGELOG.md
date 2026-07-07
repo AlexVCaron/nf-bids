@@ -26,6 +26,7 @@ All notable changes and development history for the nf-bids plugin.
 
 - `mixed_set` now honors its configuration: `suffix_maps_to` is applied (config keys such as `epi_full` correctly match the mapped suffix), and when the `sequential_dimension` is also a `loop_over` entity the sequenced files are collapsed into a single item and fused with the other results instead of being split per value.
 - `sequential_set` now collapses its sequence entity (`by_entity`/`by_entities`) the same way: when the sequence entity is also a `loop_over` entity, the sequenced files are gathered into a single item (entity value `NA`) and fused with the other results instead of being split per value. The consumption logic is shared with `mixed_set` via `BaseSetHandler`.
+- Global (suffix-level) `exclude_entities` is now applied to every set type (`plain_set`, `named_set`, `sequential_set`, `mixed_set`), while per-set `exclude_entities` continues to be honoured. Previously the global option had no effect on named, mixed, or sequential sets.
 
 ## [Unreleased] 0.1.0-beta.9
 

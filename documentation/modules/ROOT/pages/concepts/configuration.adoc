@@ -175,7 +175,9 @@ If omitted, defaults to `[subject, session, run, task]`.
 
 | `exclude_entities`
 | `List<String>`
-| BIDS entity names to ignore when matching files (e.g. `[direction]`).
+| BIDS entity names that cause a file to be skipped when matching (e.g.
+  `[direction]`). Applies to every set type. May also be declared inside a set
+  block; entries from both levels are combined.
 
 | `suffix_maps_to`
 | `String`
