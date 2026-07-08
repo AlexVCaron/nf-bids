@@ -338,4 +338,454 @@ nextflow_workflow {
             }
         }
     }
+
+    test("ds-t1_dwi_b0_norevb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_b0_norevb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_nob0_multiple_revb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_nob0_multiple_revb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_nob0_norevb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_nob0_norevb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_nob0_revb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_nob0_revb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_nob0_revb0_nosession - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_nob0_revb0_nosession"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_nob0_revb0_old_intendedfor - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_nob0_revb0_old_intendedfor"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_revdwi_nob0_norevb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_revdwi_nob0_norevb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_dwi_two_subjects_diff_dir_nob0_norevb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_dwi_two_subjects_diff_dir_nob0_norevb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-t1_multiple_dwi_nob0_multiple_revb0 - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-t1_multiple_dwi_nob0_multiple_revb0"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
+
+    test("ds-neuromod - Plugin output") {
+        when {
+            params {
+                bids_dir = "${baseDir}/test/data/custom/ds-neuromod"
+                libbids_sh = "${baseDir}/libBIDS.sh/libBIDS.sh"
+                config = "${baseDir}/test/configs/config_dwi_versatile.yaml"
+            }
+        }
+        then {
+            assert workflow.success
+            assert workflow.out.bids_channel
+            def results = workflow.out.bids_channel
+            collect()
+            def canonicalize
+            canonicalize = { value ->
+                if (value instanceof Map) {
+                    def cleaned = value.findAll { k, _ -> k != 'bidsParentDir' }.collectEntries { k, v ->
+                        [(k): canonicalize(v)]
+                    }
+                    return new java.util.TreeMap(cleaned)
+                }
+                if (value instanceof List) {
+                    def normalizedList = value.collect { item -> canonicalize(item) }
+                    return normalizedList.sort { a, b ->
+                        groovy.json.JsonOutput.toJson(a) <=> groovy.json.JsonOutput.toJson(b)
+                    }
+                }
+                return value
+            }
+            def json = groovy.json.JsonOutput.toJson(canonicalize(results))
+            def root = params.bids_dir.toString().replace("\\", "/")
+            def normalizedJson = json.replace(root + "/", "").replace(root, ".")
+            def yaml = new groovy.yaml.YamlBuilder()(new groovy.json.JsonSlurper().parseText(normalizedJson))
+            def snapshotText = yaml.toString().replaceAll(/,\s*bidsParentDir:[^,\]]+/, "")
+            try {
+                assert snapshot(snapshotText).match()
+            } catch (Throwable e) {
+                println "[snapshot-debug] content-length=${snapshotText.length()}"
+                println "[snapshot-debug] content-head:\n${snapshotText.take(2500)}"
+                println "[snapshot-debug] content-tail:\n${snapshotText.takeRight(2500)}"
+                throw e
+            }
+        }
+    }
 }
