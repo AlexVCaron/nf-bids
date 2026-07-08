@@ -4,7 +4,25 @@ All notable changes and development history for the nf-bids plugin.
 
 ---
 
-## [Unreleased]
+## [0.2.0] - 2026-07-07 🎉 First Stable Release
+
+First stable release of **nf-bids**, published on the [Nextflow Plugins Registry](https://registry.nextflow.io/plugins/nf-bids). Consolidates all `0.1.0-beta.x` work: `Channel.fromBIDS()` with flat output and heterogeneous dataset support, the closure-based `groupTupleBy` / `joinBy` / `combineBy` operators, and a full documentation site at https://nf-neuro.github.io/nf-bids.
+
+### Added
+
+- `.bidsignore` support: files listed in the dataset's `.bidsignore` are excluded from parsing (via the updated bundled `libBIDS.sh` v3.0).
+
+### Changed
+
+- Updated the bundled `libBIDS.sh` submodule to the latest `v3.0`.
+
+### Fixed
+
+- Benchmark expectations updated for the current operator implementations.
+
+---
+
+## [0.1.0-beta.11] - 2026-07-06
 
 ### ⚠️ BREAKING CHANGES
 
@@ -14,21 +32,43 @@ All notable changes and development history for the nf-bids plugin.
 
 ### Added
 
-- New parsed entities from `libBIDS.sh` v3.0 schema sync: `template` (`tpl`), `cohort`, `atlas`, and `scale`.
-- Default alias coverage for `template_id`, `cohort_id`, `atlas_id`, and `scale_id`.
+- Online documentation site published at https://nf-neuro.github.io/nf-bids.
+- `unpack_json_sidecar` option: JSON sidecar contents are parsed and merged directly into the channel output.
+- `entity_aliases_json` option for user-defined entity alias definitions.
+- `participants.tsv` metadata enrichment: participant columns are merged into `meta`.
+- Fused output mode for `joinBy` and `combineBy`.
+- `additional_extensions` filtering in `plain_set` configurations.
+- Outer join for multi-run BIDS sets (e.g. single T1w × multi-run fmap/epi).
+- New parsed entities from `libBIDS.sh` v3.0 schema sync: `template` (`tpl`), `cohort`, `atlas`, and `scale`, with default alias coverage (`template_id`, `cohort_id`, `atlas_id`, `scale_id`).
+- CI workflows for the unit test suite and documentation publishing.
 
 ### Changed
 
 - `LibBidsShWrapper` now validates `libBIDS.sh >= v2.0` by checking for `libBIDSsh_parse_bids_to_table`.
 - Parsing temp file output now uses `.tsv`.
+- Bundled `libBIDS.sh` switched from a vendored copy to a git submodule.
+- Test data (bids-examples) moved to a git submodule; test suites split into categories.
+- Entity normalization ownership refactored; pass-through metadata wrappers removed.
 
 ### Fixed
 
-- `mixed_set` now honors its configuration: `suffix_maps_to` is applied (config keys such as `epi_full` correctly match the mapped suffix), and when the `sequential_dimension` is also a `loop_over` entity the sequenced files are collapsed into a single item and fused with the other results instead of being split per value.
-- `sequential_set` now collapses its sequence entity (`by_entity`/`by_entities`) the same way: when the sequence entity is also a `loop_over` entity, the sequenced files are gathered into a single item (entity value `NA`) and fused with the other results instead of being split per value. The consumption logic is shared with `mixed_set` via `BaseSetHandler`.
-- Global (suffix-level) `exclude_entities` is now applied to every set type (`plain_set`, `named_set`, `sequential_set`, `mixed_set`), while per-set `exclude_entities` continues to be honoured. Previously the global option had no effect on named, mixed, or sequential sets.
+- `bidsDir` is now resolved to an absolute path in the `fromBIDS` factory.
+- Cross-modal T1w broadcasting for task-grouped outputs.
+- Non-JSON file values are normalized to `Path` when unpacking sidecars.
+- Malformed JSON sidecars now raise a clear parse error.
+- nf-test concurrent modification issue (output maps are deep-copied).
 
-## [Unreleased] 0.1.0-beta.9
+---
+
+## [0.1.0-beta.10] - 2026-01-08
+
+### Changed
+
+- Finalized the flat output release: documentation and README updates.
+
+---
+
+## [0.1.0-beta.9] - 2026-01-05
 
 ### ⚠️ BREAKING CHANGES
 
@@ -156,7 +196,28 @@ dwi_rl:  # Files WITH dir-RL/dir-LR
 
 ---
 
-## [Unreleased] 0.1.0-beta.5
+## [0.1.0-beta.7] - 2025-12-04
+
+### Fixed
+
+- Suffix vs config key management in channel output.
+
+---
+
+## [0.1.0-beta.6] - 2025-12-03
+
+### Added
+
+- First implementation of the flat `fromBIDS` output format (groundwork for the beta.9 redesign).
+
+### Fixed
+
+- Bundled `libBIDS.sh` inclusion in the plugin distribution.
+- `combineBy` documentation examples.
+
+---
+
+## [0.1.0-beta.5] - 2025-11-22
 
 ### ⚠️ BREAKING CHANGES
 
@@ -239,7 +300,40 @@ subjects.combineBy(
 
 ---
 
-## [0.2.0] - 2025-10-29 🎉 100% BASELINE ALIGNMENT
+## [0.1.0-beta.4] - 2025-11-20
+
+### Added
+
+- First implementation of the closure-based channel operators `groupTupleBy`, `joinBy`, and `combineBy`, registered in the plugin.
+- Extensive operator test suites.
+
+---
+
+## [0.1.0-beta.3] - 2025-11-06
+
+### Changed
+
+- Documentation overhaul: README, examples, configuration guide, and migration guide.
+- Set handler refactoring and cleanup.
+- Revised license terms (COPYING).
+
+### Fixed
+
+- Regenerated validation snapshots; removed wrongly committed tests.
+
+---
+
+## [0.1.0-beta.1] - 2025-10-30
+
+### Added
+
+- First public beta of the plugin.
+- `libBIDS.sh` bundled inside the plugin.
+- Validation datasets.
+
+---
+
+## Baseline Alignment Milestone - 2025-10-29 🎉 100% BASELINE ALIGNMENT
 
 ### 🏆 Achievement: Production Ready
 
@@ -269,7 +363,7 @@ The plugin now produces **identical outputs** to the original bids2nf codebase a
 
 ---
 
-## [0.1.0] - 2024-12-XX - Initial Plugin Implementation
+## [0.1.0] - 2025-10-30 - Initial Plugin Implementation
 
 ### Added
 - Core plugin infrastructure using Nextflow plugin API
@@ -306,7 +400,7 @@ The plugin now produces **identical outputs** to the original bids2nf codebase a
 - Built snapshot comparison tooling
 
 #### Phase 4: Baseline Alignment
-See version 0.2.0 above for detailed fixes.
+See the baseline alignment milestone above for detailed fixes.
 
 ### Technical Details
 
@@ -336,7 +430,7 @@ See version 0.2.0 above for detailed fixes.
 - **Oct 29 PM**: Fixed entity normalization (16→17/18)
 - **Oct 29 PM**: Fixed JSON parts grouping and exclude_entities (17→18/18) 🎉
 
-### December 2024 - Initial Development
+### October 2025 - Initial Development
 - Core plugin infrastructure
 - BIDS parsing and entity extraction
 - File grouping handlers

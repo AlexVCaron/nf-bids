@@ -1,13 +1,13 @@
 name: nf-bids
 title: nf-bids Plugin
-version: '0.1.0-beta.11-bidsignore.4'
-display_version: '0.1.0-beta.11-bidsignore.4'
+version: '0.2.0'
+display_version: '0.2.0'
 start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc
 asciidoc:
   attributes:
-    plugin-version: '0.1.0-beta.11-bidsignore.4'
+    plugin-version: '0.2.0'
     nextflow-min-version: '24.10.0'
     libbids-sh-version: 'v3.0'
     source-language: groovy@

@@ -50,7 +50,7 @@ workflow {
         .count()
         .view { count ->
             def end2 = System.currentTimeMillis()
-            "Result: ${count} combinations (expected: 540) in ${end2 - start2}ms"
+            "Result: ${count} combinations (expected: 360) in ${end2 - start2}ms"
         }
     
     // Test 3: Realistic BIDS scenario

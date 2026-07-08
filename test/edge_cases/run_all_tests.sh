@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-PLUGIN_VERSION="0.1.0-beta.11-bidsignore.4"
+PLUGIN_VERSION="0.2.0"
 PLUGINS_DIR="${NXF_PLUGINS_DIR:-$HOME/.nextflow/plugins}"
 
 TEST_FILES=(
