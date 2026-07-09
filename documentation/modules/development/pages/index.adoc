@@ -1,0 +1,168 @@
+= Architecture Overview
+:navtitle: Architecture Overview
+:page-aliases: ROOT:architecture.adoc
+:plugin-version: 0.2.0
+
+[.lead]
+This page traces the path a BIDS dataset takes through the plugin — from the user's
+`Channel.fromBIDS()` call to the flat map that arrives in the workflow.
+
+== Package map
+
+The plugin is distributed as a single JAR.  Its logical packages mirror distinct
+responsibilities:
+
+[cols="2,3"]
+|===
+| Package | Responsibility
+
+| `nfneuro.plugin`
+| Nextflow entry points: `BidsPlugin`, `BidsExtension`, `BidsFactory`, `BidsObserver`.
+
+| `nfneuro.plugin.channel`
+| `BidsChannelFactory` (orchestrator) and `BidsHandler` (pipeline builder).
+
+| `nfneuro.plugin.channel.operations`
+| Closure-based operators: `GroupTupleByOp`, `JoinByOp`, `CombineByOp`.
+
+| `nfneuro.plugin.channel.operations.keys`
+| Key extraction helpers: `KeyExtractor`, `CompositeKey`.
+
+| `nfneuro.plugin.parser`
+| External-tool bridge: `BidsParser`, `LibBidsShWrapper`, `BidsValidator`.
+
+| `nfneuro.plugin.config`
+| YAML loading and analysis: `BidsConfigLoader`, `BidsConfigValidator`, `BidsConfigAnalyzer`.
+
+| `nfneuro.plugin.grouping`
+| Set-type handlers: `BaseSetHandler` and its four concrete subclasses.
+
+| `nfneuro.plugin.model`
+| Value objects: `BidsDataset`, `BidsEntity`, `BidsFile`, `BidsChannelData`.
+
+| `nfneuro.plugin.util`
+| Cross-cutting utilities: `BidsLogger`, `BidsErrorHandler`, `SuffixMapper`,
+  `BidsEntityUtils`, `BidsCsvParser`.
+|===
+
+image:ROOT:generated/class-core.svg[Core class diagram]
+
+image:ROOT:generated/package-dependencies.svg[Package dependencies]
+
+== The BIDS data flow
+
+=== Step 1 — Plugin bootstrap
+
+When Nextflow loads the plugin it instantiates `BidsPlugin` (a pf4j `BasePlugin`), which
+triggers the service-loader registration of `BidsExtension` and `BidsFactory`.
+`BidsFactory` creates the `BidsObserver` that logs pipeline lifecycle events.
+
+`BidsExtension` annotates its methods with `@Factory` and `@Operator`, making them
+available as `Channel.fromBIDS(...)` and the dot-style channel operators respectively.
+See xref:concepts/plugin-bootstrap.adoc[Plugin Bootstrap & DSL Registration] for details.
+
+=== Step 2 — Pre-flight and config loading
+
+`BidsChannelFactory.fromBIDS()` receives the BIDS directory path, optional config path,
+and an options map.  Before any parsing it:
+
+1. Verifies the BIDS directory exists.
+2. Validates the config file path if supplied.
+3. Checks the `libbids_sh` option path if overridden.
+
+`BidsConfigLoader` then reads the YAML with SnakeYAML and immediately feeds it through
+`BidsConfigValidator`, which enforces structural rules (exactly one set type per suffix,
+valid `by_entity` values, etc.).  `BidsConfigAnalyzer` scans the validated map to
+determine which set-handler classes are needed.
+
+See xref:usage:frombids/configuration.adoc[Configuration Loading & Validation].
+
+=== Step 3 — libBIDS.sh execution
+
+`LibBidsShWrapper` locates the libBIDS.sh script — checking the embedded plugin
+installation path first, then a set of well-known fallback locations — and executes:
+
+[source,bash]
+----
+bash -c 'set -euo pipefail && source "$1" && libBIDSsh_parse_bids_to_table "$2" > "$3"' \
+    bash <script> <bids_dir> <output.tsv>
+----
+
+The TSV output is consumed by `BidsCsvParser`, which creates `BidsFile` objects.
+`BidsParser` collects these into a `BidsDataset` (which also loads `participants.tsv`).
+
+See xref:development:concepts/bids-parsing.adoc[BIDS Parsing & Dataset Normalization].
+
+=== Step 4 — Set-type dispatch
+
+`BidsHandler` iterates over every suffix defined in the config.  For each, it reads the
+set-type flag discovered by `BidsConfigAnalyzer` and routes the relevant `BidsFile`
+slice to the matching handler:
+
+[cols="1,2,2"]
+|===
+| Config key | Handler class | When to use
+
+| `plain_set`
+| `PlainSetHandler`
+| Single file per suffix per grouping key (e.g. T1w)
+
+| `named_set`
+| `NamedSetHandler`
+| Multiple named directions/groups for one suffix (e.g. DWI AP/PA)
+
+| `sequential_set`
+| `SequentialSetHandler`
+| Ordered series varying by an entity (e.g. echoes in MESE)
+
+| `mixed_set`
+| `MixedSetHandler`
+| Named groups each containing a sequential series (e.g. MPM acquisitions)
+|===
+
+Each handler extends `BaseSetHandler`, which groups files by the `loop_over` entities
+first, then delegates to the subclass for intra-group packing.
+
+See xref:usage:frombids/output.adoc[Output Shaping & Set Handling].
+
+=== Step 5 — Channel emission
+
+`BaseSetHandler` collects `BidsChannelData` objects and injects them into a
+`DataflowQueue`.  `BidsHandler` optionally applies cross-modal broadcasting
+(copying anatomical data across modalities) before the final channel is returned to the
+user's workflow.
+
+With `flatten_output: true` (the default since 0.1.0-beta.9) each emitted item is a
+flat Groovy map:
+
+[source,groovy]
+----
+[
+    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
+    T1w:  [nii:  Path('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
+           json: Path('/data/bids/sub-01/anat/sub-01_T1w.json')]
+]
+----
+
+=== Step 6 — Closure-based operators (optional)
+
+Once the channel is emitted the user may pipe it through `groupTupleBy`, `joinBy`, or
+`combineBy`.  All three are implemented as `@Operator` methods on `BidsExtension`:
+
+* `GroupTupleByOp` accumulates items by closure-extracted key and emits `[key, [items]]`.
+* `JoinByOp` buffers both channels, matches by key, and emits fused joined items (key omitted).
+* `CombineByOp` produces the cartesian product within each key group as fused combined items
+  (key omitted).
+
+`KeyExtractor` validates closures (arity > 0) and wraps `List` return values in
+`CompositeKey` (an `@EqualsAndHashCode`-annotated class) for correct hash-map semantics.
+
+See xref:usage:operators/usage.adoc[Closure-Based Channel Operators].
+
+== Error handling and logging
+
+`BidsErrorHandler` provides `tryWithContext`, `safeExecute`, and `validateWithContext`
+wrappers throughout the processing chain.  `BidsLogger` centralises all log calls behind
+contextual prefixes (`[nf-bids]`, `[libBIDS-wrapper]`, etc.).
+
+See xref:concepts/error-handling.adoc[Error Handling & Logging].

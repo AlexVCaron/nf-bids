@@ -1,0 +1,56 @@
+= Operator Configuration
+:navtitle: Configuration
+
+This page describes how to configure closure-based operators with option maps and key extractors.
+
+== groupTupleBy
+
+[source,groovy]
+----
+channel.groupTupleBy({ it.meta.subject }, [size: 4, remainder: true, sort: { it.meta.session }])
+----
+
+Supported options:
+
+* `size`: flush groups when they reach N items.
+* `remainder`: emit partial groups on channel close.
+* `sort`: sort grouped items (`true`, closure, or comparator).
+
+== joinBy
+
+[source,groovy]
+----
+left.joinBy(right, { it.meta.subject }, [remainder: false])
+----
+
+Supported options:
+
+* `remainder`: when true, preserve unmatched items (outer-join behavior).
+
+You can also use separate key extractors:
+
+[source,groovy]
+----
+left.joinBy(right, { it.scan_id }, { it.participant_id }, [remainder: true])
+----
+
+== combineBy
+
+[source,groovy]
+----
+left.combineBy(right, { it.meta.subject })
+----
+
+`combineBy` performs a keyed cartesian product across matching groups.
+
+== Configuration Guidelines
+
+* Keep key extractors deterministic and based on stable fields.
+* Use composite keys when needed (`{ [it.meta.subject, it.meta.session] }`).
+* For large channels, tune grouping/join scope before downstream heavy tasks.
+
+See xref:operators/usage.adoc[Operator usage] and xref:operators/examples.adoc[Operator examples] for full call patterns.
+
+== Next Step
+
+Continue with xref:operators/examples.adoc[Operator Examples].

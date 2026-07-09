@@ -1,0 +1,134 @@
+= Contributing to the Documentation
+:page-aliases: ROOT:maintenance/contributing-docs.adoc
+:navtitle: Contributing to the Docs
+
+[.lead]
+How to build, preview, and publish the nf-bids documentation site, plus the
+standing rules that keep it faithful to the code. If you change the plugin's
+public surface, its `libBIDS.sh` integration, or its release flow, you are also
+responsible for the matching documentation change.
+
+== Toolchain
+
+The site is built with the same stack locally and in CI:
+
+[cols="1,3",options="header"]
+|===
+| Tool | Why it is needed
+| Java 21 (JDK) | Runs Gradle and the GroovyDoc API-reference generation.
+| Gradle wrapper (`./gradlew`) | Orchestrates the whole docs build.
+| Node.js 20 + npm | Runs Antora (the static-site generator).
+| Graphviz (`dot`) | Renders PlantUML class/package diagrams.
+| PlantUML (jar) | Renders diagram sources to SVG; fetched on demand into `documentation/lib/`.
+|===
+
+Graphviz is the only system package; everything else is fetched by the build.
+
+== Build the site locally
+
+From the repository root:
+
+[source,bash]
+----
+./gradlew docs
+----
+
+This runs the full pipeline: render diagrams → build the Antora site →
+generate the GroovyDoc API reference → integrate the API reference into the
+site. The output lands in `documentation/build/site/`.
+
+Equivalent npm-level commands (from `documentation/`) are available for
+quick iteration:
+
+[source,bash]
+----
+npm run diagrams   # render *.puml -> SVG only
+npm run build      # render diagrams + build the Antora site
+----
+
+== Preview the site
+
+[source,bash]
+----
+make docs-serve
+# or, from documentation/:
+npm run serve
+----
+
+This serves `documentation/build/site/` on http://localhost:5050. The Antora
+output uses relative links and a UI bundle, so it must be served over HTTP —
+opening `index.html` directly with a `file://` URL will not load styles or
+navigation correctly.
+
+== Reproduce the CI build
+
+CI runs the exact same `./gradlew docs`, only in *strict* mode so that any
+missing or broken artifact fails the build instead of shipping silently:
+
+[source,bash]
+----
+DOCS_STRICT=1 ./gradlew docs
+bash documentation/bin/verify-site.sh
+----
+
+In strict mode, missing diagram tooling, broken xrefs, missing images, and a
+missing API reference are all hard errors.
+
+== Publish
+
+Publication is automated by `.github/workflows/docs.yml`:
+
+* A push to `main` rebuilds and deploys the live site to GitHub Pages.
+* Pushing a `v*` release tag rebuilds and deploys the release snapshot.
+* Pull requests build and validate the site but never deploy.
+
+You do not publish by hand. The workflow checks out the `libBIDS.sh` submodule,
+installs the toolchain, runs the strict build, asserts the artifacts are
+complete with `verify-site.sh`, and only then deploys.
+
+== Maintenance rules
+
+These rules are enforced during review via the
+xref:maintenance/qa-checklist.adoc[Docs QA Checklist].
+
+[#docstring-rule]
+=== Rule 1 — Public API changes require docstrings
+
+Every public class, constructor, and method added to or changed in
+`src/main/groovy` must carry a Groovydoc comment, *or* be explicitly excluded
+from the public API surface. The API reference is generated from these
+docstrings, so an undocumented public member produces an empty or misleading
+reference entry. Never hand-write API pages to compensate — fix the docstring at
+the source instead.
+
+[#libbids-rule]
+=== Rule 2 — Integration / validation / release changes update their chapter
+
+A structural change to:
+
+* the `libBIDS.sh` integration (bundling, runtime discovery, the
+`LibBidsShWrapper` execution path) must update
+xref:development:dependencies/libbids-sh.adoc[the libBIDS.sh dependency chapter];
+* validation or test behaviour must update xref:development:guides/testing.adoc[the testing guide];
+* release behaviour must update xref:development:guides/release.adoc[the release guide].
+
+=== Rule 3 — Diagram source and output stay in sync
+
+Diagram *sources* (`documentation/diagrams/*.puml`) are committed; the rendered
+SVGs are build artifacts and are *not* committed. When the structure a diagram
+depicts changes in the source code, update the corresponding `.puml` in the same
+pull request so the rendered diagram never lies about the code.
+
+=== Rule 4 — Version is bumped in two places, atomically
+
+A release version bump must update both `build.gradle` and
+`documentation/antora.yml` in the same commit, so the published plugin and the
+published documentation always advertise the same version. See
+xref:development:guides/release.adoc[the release guide].
+
+=== Rule 5 — Never commit build artifacts
+
+`documentation/node_modules/`, `documentation/build/`,
+`documentation/lib/*.jar`, and generated images are ignored by
+`documentation/.gitignore`. Keep them out of commits so the changelog stays
+readable.

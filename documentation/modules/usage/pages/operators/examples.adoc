@@ -1,0 +1,46 @@
+= Operator Examples
+:navtitle: Examples
+
+This page contains practical examples for closure-based operators.
+
+== groupTupleBy
+
+[source,groovy]
+----
+Channel
+  .of([meta: [subject: 'sub-01'], file: 'a.nii.gz'],
+      [meta: [subject: 'sub-01'], file: 'b.nii.gz'],
+      [meta: [subject: 'sub-02'], file: 'c.nii.gz'])
+  .groupTupleBy { it.meta.subject }
+  .view()
+----
+
+== joinBy
+
+[source,groovy]
+----
+left  = Channel.of([id: 'sub-01', t1: 't1.nii.gz'])
+right = Channel.of([id: 'sub-01', bold: 'bold.nii.gz'])
+
+left.joinBy(right) { it.id }
+    .view()
+----
+
+== combineBy
+
+[source,groovy]
+----
+subjects = Channel.of([id: 'sub-01', age: 25])
+sessions = Channel.of([id: 'sub-01', session: 'ses-01'],
+                      [id: 'sub-01', session: 'ses-02'])
+
+subjects.combineBy(sessions) { it.id }
+        .view()
+----
+
+See xref:operators/usage.adoc[Operator usage] for signatures and options.
+
+== Next Step
+
+If you are migrating from built-in tuple operators, continue with
+xref:operators/migration.adoc[Closure Operators Migration].

@@ -1,0 +1,41 @@
+= Diagram Gallery
+:page-aliases: ROOT:diagrams.adoc
+:navtitle: Diagram Gallery
+
+[.lead]
+Visual reference for the nf-bids plugin architecture, runtime call flow, and external dependencies.
+Each diagram is generated from PlantUML sources in `documentation/diagrams/`.
+All images are clickable in the rendered site to open full-resolution versions.
+
+== High-Level Architecture
+
+image:ROOT:generated/package-dependencies.svg[Package dependency graph]
+
+Shows the major runtime layers only: workflow calls, extension entry points, runtime orchestration,
+dataset parsing, config/grouping, and final channel emission.
+Use this as the mental model before diving into implementation details.
+
+== Mid-Level Runtime Classes
+
+image:ROOT:generated/class-core.svg[Core class diagram]
+
+Focuses on a small set of classes that implement `fromBIDS()`: extension and factory entry points,
+handler orchestration, parser bridge, and set-handler dispatch.
+See xref:concepts/plugin-bootstrap.adoc[Plugin Bootstrap] and
+xref:usage:frombids/output.adoc[Output Shaping] for deeper details.
+
+== Mid-Level `Channel.fromBIDS()` Sequence
+
+image:ROOT:generated/sequence-frombids.svg[fromBIDS sequence diagram]
+
+Traces the key interactions only: call entry, immediate channel return, asynchronous parse,
+grouping, and final emission.
+See xref:development:concepts/bids-parsing.adoc[BIDS Parsing] and xref:development:dependencies/libbids-sh.adoc[libBIDS.sh Dependency] for more detail.
+
+== libBIDS.sh Integration
+
+image:ROOT:generated/libbids-integration.svg[libBIDS.sh integration diagram]
+
+High-level view of packaging (submodule → plugin JAR → installed plugin) plus runtime script
+discovery and execution.
+See xref:development:dependencies/libbids-sh.adoc[libBIDS.sh Dependency] for setup instructions.

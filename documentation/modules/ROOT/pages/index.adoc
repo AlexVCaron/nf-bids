@@ -8,116 +8,41 @@
 *BIDS dataset integration and closure-based channel operators for Nextflow workflows.*
 
 nf-bids is a Nextflow plugin that parses https://bids-specification.readthedocs.io/[BIDS]
-(Brain Imaging Data Structure) datasets into richly typed Nextflow channels and provides
+(Brain Imaging Data Structure) datasets into typed Nextflow channels and provides
 closure-based operators for grouping and joining heterogeneous neuroimaging data.
 
-== What nf-bids does
+== Start Here
 
-Working with BIDS datasets in Nextflow typically requires manual file discovery, path
-construction, and brittle index-based tuple wrangling.  nf-bids eliminates all three:
+If you want to install and run the plugin in a workflow, start in:
 
-* **`Channel.fromBIDS()`** — one call loads a BIDS directory, runs the
-  https://github.com/CoBrALab/libBIDS.sh[libBIDS.sh] parser, groups files per subject
-  according to a YAML config, and emits a channel of flat maps with absolute
-  `java.nio.file.Path` values — no path concatenation needed.
-* **Closure-based operators** — `groupTupleBy`, `joinBy`, and `combineBy` let you
-  group or join by semantic field names (`it.meta.subject`) rather than positional tuple
-  indices, and work with any Groovy data structure, not only tuples.
+* xref:usage:index.adoc[User Guide]
 
-The plugin targets Nextflow {nextflow-min-version}+, ships with libBIDS.sh
-{libbids-sh-version} embedded, and is published on the
-https://registry.nextflow.io/plugins/nf-bids@{plugin-version}[Nextflow Plugin Registry].
+If you want plugin internals, architecture, testing, release, or API docs, use:
 
-== Quick start
+* xref:development:index.adoc[Development Overview]
+
+== Quick Example
 
 .`nextflow.config`
 [source,groovy]
 ----
 plugins {
-    id 'nf-bids@{plugin-version}'
+  id 'nf-bids@{plugin-version}'
 }
 ----
 
 .`main.nf`
 [source,groovy]
 ----
-include { fromBIDS }    from 'plugin/nf-bids'
-include { groupTupleBy } from 'plugin/nf-bids'
+include { fromBIDS; groupTupleBy } from 'plugin/nf-bids'
 
 workflow {
-    Channel.fromBIDS(params.bids_dir, params.config)
-        .map { item ->
-            def sub  = item.meta.subject
-            def t1w  = item.T1w.nii       // absolute java.nio.file.Path
-            def json = item.T1w.json
-            [sub, t1w, json]
-        }
-        .groupTupleBy { it[0] }           // group by subject
-        .view()
+  Channel.fromBIDS(params.bids_dir, params.config)
+    .groupTupleBy { it.meta.subject }
+    .view()
 }
 ----
 
-Each emitted item is a flat map:
-
-[source,groovy]
-----
-[
-    meta: [subject: 'sub-01', session: 'ses-01', run: 'NA'],
-    T1w:  [nii: Path('/data/bids/sub-01/anat/sub-01_T1w.nii.gz'),
-           json: Path('/data/bids/sub-01/anat/sub-01_T1w.json')]
-]
-----
-
-For full installation and first-run instructions see xref:guides/installation.adoc[Installation Guide].
-
-== How this documentation is organised
-
-[cols="1,3"]
-|===
-| Section | What you'll find
-
-| xref:architecture.adoc[Architecture]
-| BIDS data-flow narrative, package roles, and embedded class/sequence diagrams.
-
-| *Concepts*
-|
-
-| xref:concepts/plugin-bootstrap.adoc[Plugin Bootstrap]
-| How `BidsPlugin`, `BidsExtension`, `BidsFactory`, and `BidsObserver` wire into Nextflow.
-
-| xref:concepts/bids-parsing.adoc[BIDS Parsing]
-| `BidsParser`, `LibBidsShWrapper`, and the model layer (`BidsDataset`, `BidsEntity`, `BidsFile`).
-
-| xref:concepts/configuration.adoc[Configuration]
-| YAML config structure, set types, `loop_over`, and `BidsConfigLoader/Validator/Analyzer`.
-
-| xref:concepts/output-shaping.adoc[Output Shaping]
-| The four set handlers (plain/named/sequential/mixed) and the flat vs legacy output formats.
-
-| xref:concepts/channel-operators.adoc[Channel Operators]
-| `groupTupleBy`, `joinBy`, `combineBy` — signatures, options, and real examples.
-
-| xref:concepts/error-handling.adoc[Error Handling & Logging]
-| `BidsErrorHandler` context wrappers, custom exceptions, and `BidsLogger` methods.
-
-| xref:source-model/index.adoc[Source & Dependency Model]
-| Source-tree map, the runtime entry path, and the libBIDS.sh dependency.
-
-| xref:api-reference.adoc[API Reference]
-| GroovyDoc reference generated from source docstrings.
-
-| xref:guides/installation.adoc[Guides]
-| Installation, workflow examples, contributor setup, testing, and release procedures.
-
-| *Appendices*
-|
-
-| xref:appendices/migration-bids.adoc[BIDS Migration Guide]
-| Migrate from the original bids2nf subworkflow or earlier plugin betas.
-
-| xref:appendices/migration-closure.adoc[Closure Operators Migration Guide]
-| Migrate from Nextflow's index-based `groupTuple`/`join`/`combine` operators.
-
-| xref:maintenance/qa-checklist.adoc[Maintenance]
-| Documentation QA checklist and contribution rules.
-|===
+The plugin targets Nextflow {nextflow-min-version}+, ships with libBIDS.sh
+{libbids-sh-version} embedded, and is published on the
+https://registry.nextflow.io/plugins/nf-bids@{plugin-version}[Nextflow Plugin Registry].

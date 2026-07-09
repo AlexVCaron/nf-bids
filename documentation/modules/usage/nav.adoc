@@ -1,0 +1,17 @@
+* xref:index.adoc[User Guide]
+
+.Channel.fromBIDS
+* xref:frombids/installation.adoc[Installation]
+* xref:frombids/usage.adoc[Usage & Parameters]
+* xref:frombids/configuration.adoc[Configuration]
+* xref:frombids/output.adoc[Output Shapes]
+* xref:frombids/examples.adoc[Examples]
+* xref:frombids/migration.adoc[Migration]
+
+.Channel Operators
+* xref:operators/installation.adoc[Installation & Import]
+* xref:operators/usage.adoc[Usage]
+* xref:operators/configuration.adoc[Configuration]
+* xref:operators/examples.adoc[Examples]
+* xref:operators/migration.adoc[Migration]
+* xref:operators/performance.adoc[Performance]

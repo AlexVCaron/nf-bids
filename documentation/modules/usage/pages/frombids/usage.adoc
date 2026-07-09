@@ -1,0 +1,104 @@
+= Channel.fromBIDS Usage & Parameters
+:navtitle: Usage & Parameters
+
+This page documents the `Channel.fromBIDS` factory call and runtime options.
+
+== Signature
+
+[source,groovy]
+----
+Channel.fromBIDS(
+	String bidsDir,
+	String configPath = null,
+	Map options = [:]
+)
+----
+
+== Required Parameters
+
+[cols="1,1,3", options="header"]
+|===
+| Parameter | Type | Description
+
+| `bidsDir`
+| `String`
+| Path to the BIDS dataset root.
+
+| `configPath`
+| `String`
+| Path to the xref:frombids/configuration.adoc[YAML configuration file].
+|===
+
+== Optional Runtime Options
+
+[cols="1,1,3", options="header"]
+|===
+| Option | Type | Description
+
+| `flatten_output`
+| `Boolean`
+| Default `true`. Emits flat map items. Use `false` for legacy tuple format.
+
+| `unpack_json_sidecar`
+| `Boolean`
+| Default `false`. When `true`, JSON sidecars are emitted as parsed maps.
+
+| `libbids_sh`
+| `String`
+| Optional override path to `libBIDS.sh`.
+
+| `use_bidsignore`
+| `Boolean`
+| Whether to respect `.bidsignore` entries while parsing.
+
+| `use_default_ignores`
+| `Boolean`
+| Whether default ignore patterns are applied while parsing.
+
+| `entity_aliases_json`
+| `String`
+| Optional path to a JSON file used to enrich metadata aliases in emitted items.
+
+| `bids_validation`
+| `Boolean`
+| Validation toggle (reserved for validator integration flow).
+|===
+
+NOTE: Advanced validator-related options such as `validator_version` and
+`ignore_codes` are not part of the active user-facing runtime flow in the current release.
+
+== Basic Usage
+
+[source,groovy]
+----
+include { fromBIDS } from 'plugin/nf-bids'
+
+workflow {
+	Channel.fromBIDS(params.bids_dir, params.config)
+		.view()
+}
+----
+
+== Usage with Runtime Options
+
+[source,groovy]
+----
+Channel.fromBIDS(
+	params.bids_dir,
+	params.config,
+	[
+		flatten_output: true,
+		unpack_json_sidecar: false,
+		use_bidsignore: true,
+		use_default_ignores: true,
+		libbids_sh: null,
+		entity_aliases_json: null
+	]
+)
+----
+
+== Next Steps
+
+1. xref:frombids/configuration.adoc[Configuration]
+2. xref:frombids/output.adoc[Output Shapes]
+3. xref:frombids/examples.adoc[Examples]

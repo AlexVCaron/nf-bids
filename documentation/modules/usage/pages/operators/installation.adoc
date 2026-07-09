@@ -1,0 +1,38 @@
+= Channel Operators Installation & Import
+:navtitle: Installation & Import
+
+Closure-based operators are provided by the nf-bids plugin extension methods.
+
+== Plugin Installation
+
+Add the plugin to `nextflow.config`:
+
+[source,groovy]
+----
+plugins {
+	id 'nf-bids@{plugin-version}'
+}
+----
+
+== Import Operators
+
+[source,groovy]
+----
+include { groupTupleBy; joinBy; combineBy } from 'plugin/nf-bids'
+----
+
+== Verify Availability
+
+Run a minimal script that calls one operator:
+
+[source,groovy]
+----
+Channel.of([id: 'sub-01']).groupTupleBy { it.id }.view()
+----
+
+If plugin resolution fails, verify the version against
+https://registry.nextflow.io/plugins/nf-bids[the registry listing].
+
+== Next Step
+
+Continue with xref:operators/usage.adoc[Operator Usage].

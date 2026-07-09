@@ -1,0 +1,24 @@
+= Configuration Internals
+:navtitle: Configuration Internals
+
+[.lead]
+This page focuses on the implementation internals behind configuration parsing and validation.
+
+== Main Classes
+
+* `BidsConfigLoader` parses YAML with SnakeYAML and enforces reserved-key rules.
+* `BidsConfigValidator` performs structural validation and emits errors/warnings.
+* `BidsConfigAnalyzer` computes handler activation flags and `loop_over` entities.
+
+== Internal Flow
+
+. `BidsConfigLoader.load(configPath)` parses the YAML map.
+. `BidsConfigValidator.validate(config)` verifies set-type and field rules.
+. `BidsConfigAnalyzer.analyzeConfiguration(config)` determines active set handlers.
+. `BidsHandler` consumes this analysis to route to handler implementations.
+
+== Related Pages
+
+* xref:usage:frombids/configuration.adoc[User Configuration Guide]
+* xref:development:concepts/bids-parsing.adoc[BIDS Parsing & Normalization]
+* xref:development:source-model/runtime-flow.adoc[Runtime Entry Path]

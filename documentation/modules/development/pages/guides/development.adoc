@@ -1,0 +1,204 @@
+= Development Guide
+:page-aliases: ROOT:guides/development.adoc
+:navtitle: Development Guide
+
+[.lead]
+Contributor-oriented setup and day-to-day commands for working on nf-bids. This
+page replaces the legacy Markdown development notes from the retired `docs/`
+directory with pointers to the current Antora guides that reflect the
+repository's actual build, test, and documentation flow.
+
+== First-time setup
+
+Start with xref:development:guides/building.adoc[Building & Installation]
+for cloning, submodule initialisation, assembly, and local plugin installation.
+That guide also covers prerequisite versions for Java, Nextflow, Node.js, npm,
+and Graphviz.
+
+For documentation-specific tooling, see
+xref:maintenance/contributing-docs.adoc[Contributing to the Documentation].
+
+== Project map
+
+The source tree is documented in detail in
+xref:development:source-model/index.adoc[Source Tree Map]. The most important contributor
+areas are:
+
+[cols="1,3",options="header"]
+|===
+| Path | Role
+| `src/main/groovy/nfneuro/` | Plugin implementation: channel factory, config loading, parsing, grouping, operators, utilities
+| `src/test/groovy/nfneuro/` | Unit tests (Spock / JUnit)
+| `test/validation/` | Integration and regression suites (nf-test + snapshots)
+| `test/edge_cases/` | Edge-case suites and stress scenarios
+| `test/benchmark/` | Benchmark workflows and benchmark result generation
+| `documentation/` | Antora site source, build scripts, diagrams, and UI overrides
+| `libBIDS.sh/` | Vendored parser submodule used at runtime
+|===
+
+== Daily command set
+
+From the repository root:
+
+[source,bash]
+----
+./gradlew assemble      # compile and package the plugin
+./gradlew test          # run unit tests
+cd test/validation && bash test_datasets.sh && cd ../..  # run integration / validation suites
+./gradlew install       # install into the local Nextflow plugin cache
+./gradlew docs          # build the Antora documentation site
+----
+
+Equivalent convenience targets exist in `Makefile` for `assemble`, `test`,
+`install`, `docs`, and `docs-serve`.
+
+== Testing workflow
+
+Use the xref:development:guides/testing.adoc[Testing Guide] as the authoritative reference.
+In practice, contributors usually work in this order:
+
+. Run `./gradlew test` for fast feedback on unit-level changes.
+. Run targeted `nf-test` suites while iterating on behaviour.
+. Run `cd test/validation && bash test_datasets.sh && cd ../..` before merging behaviour changes.
+. Rebuild docs with `./gradlew docs` when public APIs, diagrams, or docs change.
+
+The testing guide also documents snapshot updates, edge-case workflows, and
+benchmark expectations.
+
+== Documentation responsibilities
+
+Any public API, runtime behaviour, release step, or validation change should be
+mirrored in the relevant Antora page during the same pull request.
+
+Use these pages as your documentation maintenance checklist:
+
+* xref:maintenance/contributing-docs.adoc[Contributing to the Documentation]
+* xref:maintenance/qa-checklist.adoc[Documentation QA Checklist]
+* xref:development:guides/release.adoc[Release Guide]
+
+== Debugging and inspection
+
+Useful places to inspect while iterating:
+
+* `build/reports/tests/test/index.html` — unit-test report output.
+* `.nf-test/` — nf-test work directory and logs.
+* `documentation/build/site/` — rendered Antora site after `./gradlew docs`.
+* `build/libs/` — assembled plugin JARs.
+
+When a documentation build fails, check both the Gradle task output and the
+helper scripts in `documentation/bin/`.
+
+== Related pages
+
+* xref:development:guides/building.adoc[Building & Installation]
+* xref:development:guides/testing.adoc[Testing Guide]
+* xref:development:guides/release.adoc[Release Guide]
+* xref:development:source-model/index.adoc[Source Tree Map]
+* xref:maintenance/contributing-docs.adoc[Contributing to the Documentation]
+
+== Running GitHub Actions Locally with act
+
+Use `act` to reproduce CI jobs locally before pushing. This is the fastest way
+to catch workflow-level issues (tool bootstrap, path handling, snapshot
+discrepancies) that do not always appear in direct local runs.
+
+=== Installation and prerequisites
+
+==== 1) Install Docker and verify daemon access
+
+`act` runs jobs in Docker containers.
+
+[source,bash]
+----
+docker version
+docker info
+----
+
+==== 2) Install act
+
+Linux (script from upstream):
+
+[source,bash]
+----
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+act --version
+----
+
+macOS (Homebrew):
+
+[source,bash]
+----
+brew install act
+act --version
+----
+
+==== 3) Verify jobs available in this repository
+
+From repository root:
+
+[source,bash]
+----
+act --list
+----
+
+==== 4) Optional but recommended local defaults
+
+Pin the default runner image in `.actrc` (if not already set) to keep results
+stable across runs.
+
+Example:
+
+[source,text]
+----
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+----
+
+=== Validation workflow (snapshot-aware)
+
+Before running CI validation locally, refresh snapshots when behaviour changed:
+
+[source,bash]
+----
+cd test/validation
+bash test_datasets.sh --update-snapshots
+cd ../..
+----
+
+Run the validation job exactly as CI does:
+
+[source,bash]
+----
+act pull_request -W .github/workflows/validation.yml -j validation
+----
+
+Tips:
+
+* The workflow sets `NFT_DIFF=pdiff`, so snapshot mismatches show unified diffs.
+* Save output for review with `| tee act-validation.log`.
+
+=== Edge-case workflow
+
+Run the edge-case CI job:
+
+[source,bash]
+----
+act pull_request -W .github/workflows/validation.yml -j edge_cases
+----
+
+This executes `test/edge_cases/run_all_tests.sh` inside the workflow job.
+
+=== Benchmark workflow
+
+The benchmark workflow triggers on `push` and `workflow_dispatch` (not
+`pull_request`). Use `workflow_dispatch` with `act`:
+
+[source,bash]
+----
+act workflow_dispatch -W .github/workflows/benchmark.yml -j benchmark
+----
+
+Tips:
+
+* Save output for review with `| tee act-benchmark.log`.
+* In local `act` mode, commit/push benchmark artifact steps are intentionally
+  skipped by workflow guards.

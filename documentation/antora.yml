@@ -5,6 +5,8 @@ display_version: '0.2.0'
 start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc
+  - modules/usage/nav.adoc
+  - modules/development/nav.adoc
 asciidoc:
   attributes:
     plugin-version: '0.2.0'

@@ -1,0 +1,97 @@
+= Documentation QA Checklist
+:page-aliases: ROOT:maintenance/qa-checklist.adoc
+:navtitle: Docs QA Checklist
+
+[.lead]
+A reviewer-facing checklist to apply to *every* change that touches the
+documentation site, the source docstrings, the diagrams, or the build/release
+behaviour. It exists so that the documentation cannot silently drift away from
+the real code.
+
+Use it as the acceptance criteria during pull-request review. A change is only
+mergeable when every applicable box can be ticked.
+
+== When this checklist applies
+
+Apply the relevant sections whenever a pull request changes any of:
+
+* `documentation/**` — pages, navigation, playbook, diagrams, build scripts.
+* `src/main/groovy/**` — public classes/methods (affects the generated API reference).
+* `libBIDS.sh` integration, validation behaviour, or release behaviour.
+* `.github/workflows/docs.yml`, `gradle/docs.gradle` — the docs pipeline itself.
+
+== 1. Build and render
+
+[%interactive]
+* [ ] `./gradlew docs` completes locally with no errors.
+* [ ] A strict build passes: `DOCS_STRICT=1 ./gradlew docs` (this is what CI runs).
+* [ ] `bash documentation/bin/verify-site.sh` reports the site is complete.
+* [ ] No new Antora warnings (broken xrefs, missing images, unresolved includes).
+Strict mode turns these into failures, so a green strict build already proves this.
+
+== 2. Source accuracy
+
+The single most important property of this site: prose, tables, and diagrams
+must describe the code that actually exists.
+
+[%interactive]
+* [ ] Every class, method, and package name referenced in changed pages exists
+in `src/main/groovy` with that *exact* spelling.
+* [ ] Real package names are used, not directory names — packages are
+`nfneuro.plugin.*` even though directories are `nfneuro/*` (the `plugin`
+segment is omitted on disk).
+* [ ] `--tests` filters and code snippets use fully-qualified names that the
+build actually accepts (e.g. `nfneuro.plugin.channel.BidsHandlerFlattenSpec`).
+* [ ] Described control flow / ordering matches the source (verify against the
+method body, not memory).
+* [ ] Output shapes in examples match what the operators really emit.
+
+== 3. API reference (generated, never hand-written)
+
+[%interactive]
+* [ ] Any new or changed *public* class/constructor/method in `src/main/groovy`
+carries a Groovydoc comment (`/** ... */`), or is explicitly excluded from the
+public API surface. See xref:maintenance/contributing-docs.adoc[the docstring rule].
+* [ ] The API reference is still produced by GroovyDoc from those docstrings —
+no page hand-duplicates code comments.
+* [ ] `link:api/index.html` resolves in the built site (checked by `verify-site.sh`).
+
+== 4. Diagrams
+
+[%interactive]
+* [ ] Diagram *source* (`documentation/diagrams/*.puml`) is committed; rendered
+SVGs are *not* committed (they are build artifacts, see `.gitignore`).
+* [ ] Each diagram still renders without a PlantUML syntax error
+(`verify-site.sh` greps for this).
+* [ ] When the depicted structure changed in source, the matching `.puml` was
+updated in the *same* pull request — diagram and code stay in sync.
+* [ ] Diagrams remain legible at the package / class / sequence level (they
+explain behaviour; they are not decorative).
+
+== 5. AsciiDoc hygiene
+
+[%interactive]
+* [ ] Literal `{...}` and `$\{...}` in prose, tables, or inline code are escaped
+(`\{`) so AsciiDoc does not silently drop them as attribute references.
+Listing blocks (`----`) are safe and need no escaping.
+* [ ] New pages are reachable from `modules/ROOT/nav.adoc`.
+* [ ] Cross-references use `xref:` and resolve (strict build proves this).
+
+== 6. Cross-cutting consistency
+
+[%interactive]
+* [ ] A change to `libBIDS.sh` integration updated
+xref:development:dependencies/libbids-sh.adoc[the libBIDS.sh chapter].
+* [ ] A change to validation/test layers updated xref:development:guides/testing.adoc[Testing].
+* [ ] A change to release behaviour updated xref:development:guides/release.adoc[Release].
+* [ ] A version bump updated *both* `build.gradle` and `documentation/antora.yml`
+(see xref:development:guides/release.adoc[the release guide]).
+
+== 7. Repository hygiene
+
+[%interactive]
+* [ ] No build artifacts were committed (`documentation/node_modules/`,
+`documentation/build/`, `documentation/lib/*.jar`, generated images) — these are
+covered by `documentation/.gitignore`.
+* [ ] The diff contains only the intended change; no stray reformatting of
+unrelated source.

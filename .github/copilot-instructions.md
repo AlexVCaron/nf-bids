@@ -52,8 +52,8 @@ Run all commands from the **project root**:
 
 ## Where to learn more
 
-- `documentation/modules/ROOT/pages/architecture.adoc` — system architecture.
-- `documentation/modules/ROOT/pages/guides/development.adoc` — dev workflow, CI (act) usage.
-- `documentation/modules/ROOT/pages/guides/testing.adoc` — full testing matrix (unit, validation, edge cases, benchmarks, docs build).
-- `documentation/modules/ROOT/pages/guides/release.adoc` — release process.
+- `documentation/modules/development/pages/index.adoc` — system architecture.
+- `documentation/modules/development/pages/guides/development.adoc` — dev workflow, CI (act) usage.
+- `documentation/modules/development/pages/guides/testing.adoc` — full testing matrix (unit, validation, edge cases, benchmarks, docs build).
+- `documentation/modules/development/pages/guides/release.adoc` — release process.
 - Deep domain knowledge (BIDS semantics, config grammar, etc.) lives in `.github/skills/`.
