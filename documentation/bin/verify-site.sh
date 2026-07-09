@@ -44,8 +44,8 @@ done
 ok "${#diagram_sources[@]} diagram(s) rendered and shipped"
 
 # 4. Generated API reference (GroovyDoc) integrated into the site.
-[[ -f "${version_dir}/api/index.html" ]] \
-  || fail "Missing generated API reference at ${version_dir#${SITE_DIR}/}/api/index.html"
+[[ -f "${version_dir}/development/api/index.html" ]] \
+  || fail "Missing generated API reference at ${version_dir#${SITE_DIR}/}/development/api/index.html"
 ok "API reference present"
 
 printf '\033[1;32m[verify] Documentation site is complete.\033[0m\n'

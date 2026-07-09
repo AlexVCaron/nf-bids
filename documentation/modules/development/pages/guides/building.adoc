@@ -1,0 +1,35 @@
+= Building & Installation
+
+This page covers contributor and maintainer build and local installation flows.
+
+== Build From Source
+
+[source,bash]
+----
+git clone https://github.com/nf-neuro/nf-bids.git
+cd nf-bids
+git submodule update --init --recursive
+./gradlew assemble
+----
+
+Expected output artifact:
+
+* `build/libs/nf-bids-{plugin-version}.jar`
+
+== Install Into Local Nextflow Cache
+
+[source,bash]
+----
+./gradlew install
+# or
+make install
+----
+
+This installs under `~/.nextflow/plugins/nf-bids-{plugin-version}/`.
+
+== Verify Local Build Is Used
+
+Run any workflow that declares `id 'nf-bids@{plugin-version}'` and uses
+`include { fromBIDS } from 'plugin/nf-bids'`.
+
+If changes do not appear at runtime, reinstall with `make install` after rebuilding.

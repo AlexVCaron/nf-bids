@@ -1,0 +1,208 @@
+= Dependency Matrix
+:page-aliases: ROOT:dependencies/matrix.adoc
+:navtitle: Dependency Matrix
+
+[.lead]
+Every version-pinned dependency that nf-bids requires to build, test, or run, with the source file where each version was verified and an explanation of why it is needed.
+
+== Runtime Dependencies
+
+These dependencies are required when a workflow uses the plugin.
+
+[cols="1,1,4,2", options="header"]
+|===
+| Dependency | Version | Purpose | Where verified
+
+| *Nextflow*
+| ≥ {nextflow-min-version}
+| The workflow execution engine.
+Provides the `nextflow.plugin.*` SPI (pf4j), `DataflowReadChannel` / `DataflowWriteChannel`, `Session`, `Channel.STOP`, `FileHelper.asPath()`, and the `@Factory` / `@Operator` annotations that nf-bids uses to inject `fromBIDS`, `groupTupleBy`, `joinBy`, and `combineBy` into workflow scripts.
+| `build.gradle`: `nextflowVersion = '24.10.0'`
+
+| *Groovy*
+| 4.0.23
+| The language in which all plugin classes are written.
+`@CompileStatic` is used throughout for compile-time type checking.
+Groovy 4 ships inside Nextflow's classpath; the plugin does not bundle its own Groovy runtime.
+| README.md "Key Technologies" section
+
+| *Java (JVM)*
+| ≥ 11 (Nextflow requirement)
+| Nextflow 24.10.x requires Java 11+.
+The plugin uses `java.nio.file.Path`, `java.util.concurrent.CompletableFuture`, and `java.nio.file.Files`.
+No Java source files exist; all production code is compiled Groovy.
+| Nextflow 24.10.0 release notes
+
+| *GPars (groovyx.gpars)*
+| Bundled with Nextflow
+| Provides `DataflowQueue` and `DataflowWriteChannel`.
+`BidsHandler` accumulates results in a `DataflowQueue` before binding them to the output channel; the `*Op` operator classes subscribe to `DataflowReadChannel` items.
+| Imported in `BidsHandler.groovy`, `GroupTupleByOp.groovy`, `JoinByOp.groovy`, `CombineByOp.groovy`
+
+| *SnakeYAML*
+| Bundled with Nextflow
+| Parses the `bids2nf.yaml` configuration file.
+`BidsConfigLoader` creates an `org.yaml.snakeyaml.Yaml` instance and calls `yaml.load(FileReader)`.
+| `BidsConfigLoader.groovy`: `import org.yaml.snakeyaml.Yaml`
+
+| *libBIDS.sh*
+| {libbids-sh-version}
+| External bash library that walks the BIDS directory tree and emits a structured TSV.
+It is the only BIDS-file-inventory mechanism in the plugin; no Java-side directory scanning occurs.
+Bundled as a git submodule and included in the plugin ZIP via `fileTree('libBIDS.sh') { include '*.sh' }`.
+| `.gitmodules` (submodule URL), `build.gradle` (bundling), xref:development:dependencies/libbids-sh.adoc[The libBIDS.sh Dependency]
+
+| *Bash*
+| ≥ 4.x (for `set -euo pipefail` and `source`)
+| Required at runtime on every machine where the plugin executes.
+`LibBidsShWrapper` invokes bash as `['bash', '-c', ...]`; the `libBIDSsh_parse_bids_to_table` function requires bash 4 associative arrays.
+| `LibBidsShWrapper.groovy`: `buildParseCommand()`
+|===
+
+== Build Dependencies
+
+These dependencies are required to compile and assemble the plugin JAR.
+
+[cols="1,1,4,2", options="header"]
+|===
+| Dependency | Version | Purpose | Where verified
+
+| *Gradle Wrapper*
+| 8.14
+| The build system.
+Compiles Groovy sources, runs Spock/JUnit tests, assembles the plugin ZIP (via the `io.nextflow.nextflow-plugin` Gradle plugin), generates GroovyDoc, and orchestrates the Antora documentation build.
+| `gradle/wrapper/gradle-wrapper.properties`: `distributionUrl=.../gradle-8.14-bin.zip`
+
+| *Nextflow Plugin Gradle Plugin*
+| 1.0.0-beta.10
+| A custom Gradle plugin (`io.nextflow.nextflow-plugin`) that wires up plugin assembly, descriptor generation, and dependency bundling (including `libBIDS.sh`).
+Adds the `nextflowPlugin {}` DSL block used in `build.gradle`.
+| `build.gradle`: `id 'io.nextflow.nextflow-plugin' version '1.0.0-beta.10'`
+
+| *PlantUML*
+| Bundled as `documentation/lib/plantuml.jar`
+| Renders `.puml` diagram sources to SVG for inclusion in the Antora documentation site.
+Invoked by `gradle/docs.gradle` via the `renderDiagrams` task (`bash bin/build-docs.sh --diagrams-only`).
+| `documentation/lib/plantuml.jar` (file presence), `gradle/docs.gradle`
+
+| *Antora*
+| Installed via `npm` in `documentation/`
+| Renders the AsciiDoc documentation source tree into a static HTML site.
+Invoked by `gradle/docs.gradle` via the `buildDocsSite` task.
+`documentation/node_modules/` confirms the npm install is present.
+| `gradle/docs.gradle`, `documentation/node_modules/`
+
+| *Graphviz (dot)*
+| System install
+| PlantUML delegates `@startdot` / `@startuml` diagram types to `dot` for graph layout.
+Required on the build machine when rendering package-dependency or sequence diagrams that use the `dot` engine.
+No version is pinned; PlantUML calls `dot` from `PATH`.
+| PlantUML documentation; used indirectly during `renderDiagrams`
+|===
+
+== Test Dependencies
+
+These dependencies are only required to run the test suite (`./gradlew test`).
+
+[cols="1,1,4,2", options="header"]
+|===
+| Dependency | Version | Purpose | Where verified
+
+| *Spock Framework*
+| Bundled by Nextflow plugin Gradle plugin
+| The primary unit-test framework.
+Specification classes (`*Spec.groovy`) use Spock's `given/when/then` notation.
+Examples: `BidsConfigLoaderSpec`, `SuffixMapperSpec`, `BidsHandlerFlattenSpec`.
+| `src/test/groovy/nfneuro/**/*Spec.groovy`
+
+| *nf-test*
+| Used for integration tests in `validation/`
+| Integration and validation tests that exercise `Channel.fromBIDS()` against real BIDS example datasets.
+Run separately with `nf-test test validation/`.
+| `nf-test.config`, `README.md` contributing section
+|===
+
+== Optional / Not-Yet-Implemented
+
+[cols="1,1,4,2", options="header"]
+|===
+| Dependency | Version | Purpose | Where verified
+
+| *BIDS Validator*
+| Not implemented (v1.1)
+| `BidsValidator.groovy` exists as a stub.
+Its `validate()` method logs a warning and returns immediately.
+The validation call in `BidsChannelFactory` is commented out.
+When implemented, this will invoke `bids-validator` (likely via Docker) before parsing begins.
+| `BidsValidator.groovy` class-level javadoc, `BidsChannelFactory.groovy` commented block
+|===
+
+== Summary
+
+[cols="1,1,1", options="header"]
+|===
+| Dependency | Min Version | Phase
+
+| Nextflow
+| 24.10.0
+| Runtime
+
+| Groovy
+| 4.0.23 (via Nextflow)
+| Runtime
+
+| Java JVM
+| 11
+| Runtime
+
+| GPars
+| via Nextflow
+| Runtime
+
+| SnakeYAML
+| via Nextflow
+| Runtime
+
+| libBIDS.sh
+| v3.0
+| Runtime
+
+| Bash
+| 4.x
+| Runtime
+
+| Gradle Wrapper
+| 8.14
+| Build
+
+| Nextflow Plugin Gradle Plugin
+| 1.0.0-beta.10
+| Build
+
+| PlantUML
+| (bundled jar)
+| Build (docs)
+
+| Antora
+| (npm)
+| Build (docs)
+
+| Graphviz
+| any
+| Build (docs)
+
+| Spock
+| via Gradle plugin
+| Test
+
+| nf-test
+| any recent
+| Test (integration)
+|===
+
+== Related Pages
+
+* xref:development:dependencies/libbids-sh.adoc[The libBIDS.sh Dependency] — detailed libBIDS.sh integration
+* xref:usage:frombids/installation.adoc[Installation Guide] — prerequisite setup steps
+* xref:development:source-model/index.adoc[Source Tree Map] — where each dependency appears in the source
+* xref:development:source-model/runtime-flow.adoc[Runtime Entry Path] — how dependencies are used at runtime

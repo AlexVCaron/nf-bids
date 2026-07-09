@@ -9,11 +9,15 @@ applyTo: "documentation/**"
 
 - The site is built with Antora (structure/versioning), AsciiDoc (content),
   GroovyDoc (API reference), and PlantUML (diagrams).
-- Pages are AsciiDoc files under `documentation/modules/ROOT/pages/`. The legacy
-  repo-level `docs/` directory is retired — author only in Antora sources.
-- Navigation is manually maintained in `documentation/modules/ROOT/nav.adoc`.
-  Adding a page REQUIRES adding an `xref:` entry to `nav.adoc` or it will not
-  appear in the site menu.
+- Pages are AsciiDoc files under `documentation/modules/` (`ROOT`, `usage`,
+  `development`). The legacy repo-level `docs/` directory is retired — author
+  only in Antora sources.
+- Navigation is manually maintained in each module nav file:
+  `documentation/modules/ROOT/nav.adoc`,
+  `documentation/modules/usage/nav.adoc`, and
+  `documentation/modules/development/nav.adoc`.
+  Adding a page REQUIRES adding an `xref:` entry to the relevant nav file or it
+  will not appear in the site menu.
 - Component descriptor: `documentation/antora.yml` (component `nf-bids`; its
   `version:` tracks the plugin version in `build.gradle` and both are bumped
   together on release). Playbook: `documentation/antora-playbook.yml`.
@@ -23,7 +27,7 @@ applyTo: "documentation/**"
 - Full build (repo root): `make docs` or `./gradlew docs`. The `docs` task runs
   `integrateApiDocs`, which depends on `apiDocs` (GroovyDoc) and `buildDocsSite`
   (renders diagrams then builds the Antora site via `bin/build-docs.sh`, and
-  copies GroovyDoc into the site under `nf-bids/<version>/api/`).
+  copies GroovyDoc into the site under `nf-bids/<version>/development/api/`).
 - Partial builds: `./gradlew apiDocs` (GroovyDoc only),
   `./gradlew renderDiagrams` / `make docs-diagrams` (diagrams only).
 - From `documentation/`: `npm install` (first time), then `npm run build`
@@ -67,4 +71,4 @@ applyTo: "documentation/**"
 
 - `documentation/` is the AUTHORITATIVE knowledge source for this repo. When
   code behavior changes, update the relevant `.adoc` page under
-  `modules/ROOT/pages/` in the same PR.
+  `modules/{ROOT,usage,development}/pages/` in the same PR.

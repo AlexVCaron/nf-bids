@@ -131,10 +131,10 @@ integrate_api_docs() {
   (cd "${REPO_ROOT}" && ./gradlew groovydoc --no-daemon --console=plain)
   [[ -f "${GROOVYDOC_OUT}/index.html" ]] || fail "GroovyDoc generation failed (missing ${GROOVYDOC_OUT}/index.html)."
 
-  rm -rf "${version_dir}/api"
-  mkdir -p "${version_dir}/api"
-  rsync -a "${GROOVYDOC_OUT}/" "${version_dir}/api/"
-  log "Integrated GroovyDoc at ${version_dir}/api/index.html"
+  rm -rf "${version_dir}/development/api"
+  mkdir -p "${version_dir}/development/api"
+  rsync -a "${GROOVYDOC_OUT}/" "${version_dir}/development/api/"
+  log "Integrated GroovyDoc at ${version_dir}/development/api/index.html"
 }
 
 apply_ui_overrides() {

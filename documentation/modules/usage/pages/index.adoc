@@ -1,0 +1,16 @@
+= User Guide
+
+This section documents how to install and use the nf-bids plugin in production workflows.
+
+Start with xref:frombids/installation.adoc[Channel.fromBIDS installation], then follow:
+
+* xref:frombids/usage.adoc[Channel.fromBIDS usage and parameters]
+* xref:frombids/configuration.adoc[Channel.fromBIDS configuration]
+* xref:frombids/examples.adoc[Channel.fromBIDS examples]
+
+For closure-based operators, continue with:
+
+* xref:operators/installation.adoc[Operator installation and import]
+* xref:operators/usage.adoc[Operator usage]
+* xref:operators/configuration.adoc[Operator configuration]
+* xref:operators/examples.adoc[Operator examples]

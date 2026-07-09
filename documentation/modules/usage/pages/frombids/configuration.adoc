@@ -1,0 +1,218 @@
+= Configuration Loading & Validation
+:navtitle: Configuration Loading & Validation
+:page-aliases: ROOT:concepts/configuration.adoc
+
+[.lead]
+The YAML configuration file tells nf-bids _which_ BIDS suffixes to collect and _how_
+to group them for channel emission.
+
+== Configuration file structure
+
+[source,yaml]
+----
+# Which BIDS entities define the outer grouping key (one item per channel emission)
+loop_over:
+  - subject
+  - session
+
+# Each top-level key (other than loop_over) names a "config key"
+# that becomes a top-level field in the flat output map.
+T1w:
+  plain_set: {}                     # no extra options needed for a simple plain set
+
+dwi_ap:
+  named_set:
+    ap: {direction: dir-AP}         # entity pattern for the AP direction
+    pa: {direction: dir-PA}
+  required: [ap, pa]               # both directions must exist or the group is dropped
+  additional_extensions: [.bval, .bvec]
+  suffix_maps_to: dwi              # the BIDS suffix is 'dwi', not 'dwi_ap'
+
+mese:
+  sequential_set:
+    by_entity: echo                 # vary over the 'echo' entity
+  additional_extensions: [.json]
+
+mpm:
+  mixed_set:
+    named_dimension: acquisition
+    sequential_dimension: echo
+    named_groups:
+      MTw: {acquisition: acq-MTw}
+      PDw: {acquisition: acq-PDw}
+      T1w: {acquisition: acq-T1w}
+  required: [MTw, PDw, T1w]
+----
+
+== Global rules
+
+* `loop_over` is the only global top-level key.
+* Every other top-level key is a config key (for example `T1w`, `dwi_ap`, `mese`).
+* The top-level key `meta` is reserved and cannot be used as a config key.
+* Each config key must define exactly one set type:
+  `plain_set`, `named_set`, `sequential_set`, or `mixed_set`.
+* `loop_over` must be a list.
+* If omitted, `loop_over` defaults to `[subject, session, run, task]`.
+
+== Global options (per config key)
+
+These options can be used alongside any set type unless stated otherwise.
+
+[cols="1,1,3"]
+|===
+| Option | Type | Description
+
+| `additional_extensions`
+| `List<String>`
+| Extra file extensions to collect alongside `.nii.gz` and `.json`
+  (for example `[.bval, .bvec]`).
+
+| `include_cross_modal`
+| `List<String>`
+| Additional config keys to copy into the same emitted item.
+
+| `exclude_entities`
+| `List<String>`
+| Entity names ignored during file matching for this config key.
+
+| `suffix_maps_to`
+| `String`
+| Real BIDS suffix to match when it differs from the config key name.
+
+| `required`
+| `List<String>`
+| Named groups that must be present (used with `named_set` and `mixed_set`).
+|===
+
+== Set types
+
+[cols="1,3"]
+|===
+| Set type | When to use
+
+| `plain_set`
+| One file per suffix per grouping key, no discriminating entity (e.g. T1w, FLAIR).
+
+| `named_set`
+| Multiple named variants of the same suffix distinguished by an entity value
+  (e.g. DWI AP/PA encoded by `dir-AP` / `dir-PA`).
+
+| `sequential_set`
+| An ordered series that varies over a single entity (e.g. multi-echo MESE images).
+
+| `mixed_set`
+| Named groups each containing their own sequential series (e.g. MPM protocol).
+|===
+
+=== plain_set
+
+Structure:
+
+[source,yaml]
+----
+T1w:
+  plain_set: {}
+  additional_extensions: [.json]
+  suffix_maps_to: T1w
+  include_cross_modal: [brainmask]
+  exclude_entities: [run]
+----
+
+Specific rules:
+
+* `plain_set` has no required inner fields.
+* Use it when one group should contain a single file set per `loop_over` key.
+
+=== named_set
+
+Structure:
+
+[source,yaml]
+----
+dwi_ap:
+  named_set:
+    ap: {direction: dir-AP}
+    pa: {direction: dir-PA}
+  required: [ap, pa]
+  additional_extensions: [.bval, .bvec]
+  suffix_maps_to: dwi
+----
+
+Specific options and rules:
+
+* `named_set` must define at least one named group.
+* Each named group value must be a map of entity constraints.
+* `required` entries must match group names declared in `named_set`.
+
+=== sequential_set
+
+Structure:
+
+[source,yaml]
+----
+mese:
+  sequential_set:
+    by_entity: echo
+  additional_extensions: [.json]
+
+bold:
+  sequential_set:
+    by_entities: [run, echo]
+    order: hierarchical
+----
+
+Specific options:
+
+[cols="1,1,3"]
+|===
+| Option | Type | Description
+
+| `by_entity`
+| `String`
+| Sequence over a single entity (for example `echo`).
+
+| `by_entities`
+| `List<String>`
+| Sequence over multiple entities.
+
+| `order`
+| `String`
+| Ordering mode for `by_entities`: `flat` or `hierarchical`.
+|===
+
+Specific rules:
+
+* Exactly one of `by_entity` or `by_entities` must be set.
+* `by_entities` must be a non-empty list.
+* `order` must be `flat` or `hierarchical`.
+* `order` is only meaningful with `by_entities`.
+
+=== mixed_set
+
+Structure:
+
+[source,yaml]
+----
+mpm:
+  mixed_set:
+    named_dimension: acquisition
+    sequential_dimension: echo
+    named_groups:
+      MTw: {acquisition: acq-MTw}
+      PDw: {acquisition: acq-PDw}
+      T1w: {acquisition: acq-T1w}
+  required: [MTw, PDw, T1w]
+----
+
+Specific options and rules:
+
+* Required fields inside `mixed_set`:
+  `named_dimension`, `sequential_dimension`, `named_groups`.
+* `named_groups` values must be entity-pattern maps.
+* `required` follows the same behavior as `named_set`.
+
+== Related pages
+
+* xref:usage:frombids/usage.adoc[Usage & Parameters]
+* xref:usage:frombids/output.adoc[Output Shaping & Set Handling]
+* xref:usage:frombids/migration.adoc[BIDS Migration Guide]

@@ -1,0 +1,35 @@
+= Output Shaping Internals
+:navtitle: Output Shaping & Set Handling
+
+[.lead]
+This page describes the internal handler pipeline that converts grouped `BidsFile`
+items into the emitted channel structures.
+
+== Handler Hierarchy
+
+`BaseSetHandler` owns the common grouping loop and delegates to concrete handlers:
+
+* `PlainSetHandler`
+* `NamedSetHandler`
+* `SequentialSetHandler`
+* `MixedSetHandler`
+
+== Internal Processing Steps
+
+. Group files by `loop_over` entities.
+. Match each file against config keys and set definitions.
+. Accumulate typed set payloads and enforce `required` groups.
+. Sort sequential dimensions when applicable.
+. Emit `BidsChannelData` for downstream flattening/emission.
+
+== Developer Notes
+
+* `configKey` drives emitted top-level fields.
+* `suffix_maps_to` controls file matching suffixes.
+* Mixed sets combine named and sequential dimensions in one payload.
+
+== Related Pages
+
+* xref:usage:frombids/output.adoc[User Output Shapes]
+* xref:development:concepts/configuration-internals.adoc[Configuration Internals]
+* xref:development:api-reference.adoc[API Reference]

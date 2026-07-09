@@ -1,0 +1,26 @@
+= Channel Operators Internals
+:navtitle: Channel Operators Internals
+
+[.lead]
+This page documents internals of `groupTupleBy`, `joinBy`, and `combineBy`.
+
+== Key Infrastructure
+
+`KeyExtractor` validates closure arity and normalizes list keys into `CompositeKey` for stable equality/hash behavior.
+
+== Operator Implementation Notes
+
+* `GroupTupleByOp` groups items by extracted key and flushes by options (`size`, `remainder`).
+* `JoinByOp` indexes channels by key and emits merged items for matching keys.
+* `CombineByOp` performs keyed cartesian products within matching groups.
+
+== Error Handling
+
+Operator constructors fail fast on invalid key-extractor closures.
+Runtime key extraction errors are wrapped with contextual messages for debugging.
+
+== Related Pages
+
+* xref:usage:operators/usage.adoc[User Operator Guide]
+* xref:usage:operators/migration.adoc[Closure Operators Migration]
+* xref:development:api-reference.adoc[API Reference]
