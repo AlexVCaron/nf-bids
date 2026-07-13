@@ -18,7 +18,7 @@ No build tools are required; Nextflow downloads and caches the plugin automatica
 [WARNING]
 .MacOS users
 ====
-MacOS ships an outdated version of `BASH`. To use`nf-bids`, update it using `Homebrew` :
+MacOS ships an outdated version of `BASH`. To use `nf-bids`, update it using `Homebrew` :
 
 [.wrap,console]
 ----
