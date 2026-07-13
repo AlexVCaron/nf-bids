@@ -27,7 +27,6 @@ brew install bash
 ----
 ====
 
-
 Add the following block to your `nextflow.config`:
 
 [source,groovy]
