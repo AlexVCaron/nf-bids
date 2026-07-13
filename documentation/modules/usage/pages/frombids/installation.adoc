@@ -15,6 +15,18 @@ compatibility details.
 The plugin is published to the https://registry.nextflow.io/plugins/nf-bids[Nextflow Plugin Registry].
 No build tools are required; Nextflow downloads and caches the plugin automatically on first run.
 
+[WARNING]
+.MacOS users
+====
+MacOS ships an outdated version of `BASH`. To use`nf-bids`, update it using `Homebrew` :
+
+[.wrap,console]
+----
+brew update
+brew install bash
+----
+====
+
 Add the following block to your `nextflow.config`:
 
 [source,groovy]
