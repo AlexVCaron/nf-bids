@@ -1,13 +1,13 @@
 # Benchmark Results
 
-Generated: 2026-07-13 14:05:55 UTC
+Generated: 2026-07-20 17:56:42 UTC
 
 ## benchmark_grouptuple.nf
 
 
  N E X T F L O W   ~  version 25.10.0
 
-Launching `benchmark_grouptuple.nf` [scruffy_cuvier] DSL2 - revision: d740764823
+Launching `benchmark_grouptuple.nf` [fervent_euclid] DSL2 - revision: d740764823
 
 ==========================================
 Performance Benchmark: groupTuple vs groupTupleBy
@@ -46,20 +46,20 @@ TEST: groupTupleBy with semantic keys (1,000 items)
 ==========================================
 Benchmark Complete
 ==========================================
-groupTupleBy (100 items): 170ms
-groupTuple (100 items): 272ms
-groupTupleBy (1,000 items): 245ms
-groupTupleBy semantic (1,000 items): 211ms
-groupTuple (1,000 items): 358ms
-groupTupleBy (10,000 items): 411ms
-groupTuple (10,000 items): 583ms
+groupTupleBy (100 items): 383ms
+groupTuple (100 items): 610ms
+groupTupleBy (1,000 items): 598ms
+groupTupleBy semantic (1,000 items): 478ms
+groupTuple (1,000 items): 784ms
+groupTupleBy (10,000 items): 845ms
+groupTuple (10,000 items): 1361ms
 
 ## benchmark_join.nf
 
 
  N E X T F L O W   ~  version 25.10.0
 
-Launching `benchmark_join.nf` [infallible_wiles] DSL2 - revision: c7913de808
+Launching `benchmark_join.nf` [backstabbing_mayer] DSL2 - revision: c7913de808
 
 ==========================================
 Performance Benchmark: join vs joinBy
@@ -102,21 +102,21 @@ TEST: joinBy with different extractors (1,000 items)
 ==========================================
 Benchmark Complete
 ==========================================
-join (100 items): 366ms
-joinBy (100 items): 291ms
-join (1,000 items): 561ms
-joinBy (1,000 items): 941ms
-joinBy semantic (1,000 items): 802ms
-joinBy different extractors (1,000 items): 835ms
-join (10,000 items): 1364ms
-joinBy (10,000 items): 2513ms
+join (100 items): 566ms
+joinBy (100 items): 478ms
+join (1,000 items): 778ms
+joinBy (1,000 items): 1448ms
+joinBy different extractors (1,000 items): 1335ms
+joinBy semantic (1,000 items): 1410ms
+join (10,000 items): 2115ms
+joinBy (10,000 items): 3492ms
 
 ## benchmark_combine.nf
 
 
  N E X T F L O W   ~  version 25.10.0
 
-Launching `benchmark_combine.nf` [exotic_crick] DSL2 - revision: 6fcc21b1c4
+Launching `benchmark_combine.nf` [desperate_leakey] DSL2 - revision: 6fcc21b1c4
 
 ==========================================
 Performance Benchmark: combineBy (0.1.0-beta.5)
@@ -148,18 +148,18 @@ TEST: BIDS-like subject × session pairing (30 subjects, 2 sessions each)
 ==========================================
 Benchmark Complete
 ==========================================
-combineBy (5 keys, 2×2 per key = 20 items): 67ms
-combine (10×10 = 100 combinations): 142ms
-combineBy BIDS (30 subjects, 1×2 per subject = 60 items): 58ms
-combineBy (10 keys, 6×6 per key = 360 items): 79ms
-combineBy (20 keys, 10×10 per key = 2000 items): 116ms
+combineBy (5 keys, 2×2 per key = 20 items): 115ms
+combine (10×10 = 100 combinations): 222ms
+combineBy BIDS (30 subjects, 1×2 per subject = 60 items): 98ms
+combineBy (10 keys, 6×6 per key = 360 items): 151ms
+combineBy (20 keys, 10×10 per key = 2000 items): 226ms
 
 ## benchmark_combineby_new.nf
 
 
  N E X T F L O W   ~  version 25.10.0
 
-Launching `benchmark_combineby_new.nf` [special_gates] DSL2 - revision: d45186c24a
+Launching `benchmark_combineby_new.nf` [golden_poincare] DSL2 - revision: d45186c24a
 
 
 ==========================================
@@ -175,7 +175,7 @@ CombineBy Performance Benchmark (0.1.0-beta.5+)
 ==========================================
 Benchmark Complete
 ==========================================
-Result: 40 subject-session pairs (expected: 40) in 32ms
-Result: 80 combinations (expected: 80) in 134ms
-Result: 360 combinations (expected: 360) in 68ms
+Result: 80 combinations (expected: 80) in 201ms
+Result: 40 subject-session pairs (expected: 40) in 73ms
+Result: 360 combinations (expected: 360) in 105ms
 
