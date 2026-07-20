@@ -22,8 +22,8 @@ ok()   { printf '\033[1;32m[verify] OK:\033[0m %s\n' "$*"; }
 ok "landing page present"
 
 # 2. Component start page (versioned path is derived from antora.yml).
-component_index="$(find "${SITE_DIR}/nf-bids" -mindepth 2 -maxdepth 2 -name index.html 2>/dev/null | sort -V | tail -n1 || true)"
-[[ -n "${component_index}" ]] || fail "Missing versioned component index under build/site/nf-bids/"
+component_index="$(find "${SITE_DIR}" -mindepth 2 -maxdepth 2 -name index.html ! -name "_" 2>/dev/null | sort -V | tail -n1 || true)"
+[[ -n "${component_index}" ]] || fail "Missing versioned component index under build/site/"
 version_dir="$(dirname "${component_index}")"
 ok "component index present (${version_dir#${SITE_DIR}/})"
 
