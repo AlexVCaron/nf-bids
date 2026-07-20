@@ -4,7 +4,7 @@ All notable changes and development history for the nf-bids plugin.
 
 ---
 
-## [0.2.0] - 2026-07-07 🎉 First Stable Release
+## [0.3.0] - 2026-07-07 🎉 First Stable Release
 
 First stable release of **nf-bids**, published on the [Nextflow Plugins Registry](https://registry.nextflow.io/plugins/nf-bids). Consolidates all `0.1.0-beta.x` work: `Channel.fromBIDS()` with flat output and heterogeneous dataset support, the closure-based `groupTupleBy` / `joinBy` / `combineBy` operators, and a full documentation site at https://nf-neuro.github.io/nf-bids.
 

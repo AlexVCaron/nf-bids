@@ -8,7 +8,7 @@ A Nextflow plugin that provides:
 - **Heterogeneous dataset support** for mixed acquisition schemes
 - **Closure-based channel operators** for flexible data grouping and joining
 
-[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.2.0-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.2.0)
+[![nf-bids](https://img.shields.io/badge/nf&hyphen;bids-0.3.0-mediumseagreen)](https://registry.nextflow.io/plugins/nf-bids@0.3.0)
 [![Nextflow](https://img.shields.io/badge/nextflow-&geq;24.10.0-mediumseagreen)](https://www.nextflow.io/docs/latest/install.html)
 [![libBIDS.sh](https://img.shields.io/badge/libBIDS.sh-v3.0-blue)](https://github.com/CoBrALab/libBIDS.sh/releases/tag/v3.0)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -32,7 +32,7 @@ To install it, add the lines below in your `nextflow.config` file:
 
 ```groovy
 plugins {
-    id 'nf-bids@0.2.0'
+    id 'nf-bids@0.3.0'
 }
 ```
 

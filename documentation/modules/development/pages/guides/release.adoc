@@ -33,7 +33,7 @@ Locate the `version` declaration at the top of `build.gradle`:
 
 [source,groovy]
 ----
-version = '0.2.0'   // <-- change this
+version = '0.3.0'   // <-- change this
 ----
 
 === `documentation/antora.yml`
@@ -42,11 +42,11 @@ Update the `version`, `display_version`, and the `plugin-version` attribute:
 
 [source,yaml]
 ----
-version: '0.2.0'         # <-- new version
-display_version: '0.2.0'
+version: '0.3.0'         # <-- new version
+display_version: '0.3.0'
 asciidoc:
   attributes:
-    plugin-version: '0.2.0'
+    plugin-version: '0.3.0'
     nextflow-min-version: '24.10.0'
     libbids-sh-version: 'v3.0'
 ----
@@ -64,7 +64,7 @@ the existing format:
 
 [source,markdown]
 ----
-## [0.2.0] - YYYY-MM-DD
+## [0.3.0] - YYYY-MM-DD
 
 ### Added
 - ...
