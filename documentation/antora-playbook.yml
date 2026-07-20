@@ -8,7 +8,7 @@ site:
   title: nf-bids Plugin Documentation
   start_page: nf-bids::index.adoc
   # url is overridden in CI for GitHub Pages (see .github/workflows/docs.yml)
-  url: https://nf-neuro.github.io/nf-bids
+  url: https://nf-neuro.github.io
 
 content:
   sources:

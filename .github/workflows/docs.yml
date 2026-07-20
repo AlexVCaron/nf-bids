@@ -76,9 +76,9 @@ jobs:
         env:
           # Hard-fail on missing diagrams / broken links / missing API ref.
           DOCS_STRICT: '1'
-          # Inject the real Pages URL on deploy builds; empty on PRs (Antora
-          # then keeps the playbook default, which is fine for validation).
-          DOCS_SITE_URL: ${{ steps.pages.outputs.base_url }}
+          # Use the user/org root so Antora canonical URLs don't duplicate the
+          # repository path segment when component URLs are flattened for deploy.
+          DOCS_SITE_URL: https://${{ github.repository_owner }}.github.io
         run: ./gradlew --no-daemon docs
 
       - name: Verify generated artifacts are present
@@ -88,7 +88,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: documentation/build/site
+          path: documentation/build/site-publish
 
   deploy:
     name: Deploy to GitHub Pages
