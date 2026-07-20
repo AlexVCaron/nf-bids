@@ -127,8 +127,8 @@ build_site() {
 
 integrate_api_docs() {
   local version_dir
-  version_dir="$(find "${DOC_DIR}/build/site/nf-bids" -mindepth 1 -maxdepth 1 -type d | head -n1 || true)"
-  [[ -n "${version_dir}" ]] || fail "Could not locate built component version directory under build/site/nf-bids/"
+  version_dir="$(find "${DOC_DIR}/build/site" -mindepth 1 -maxdepth 1 -type d ! -name '_' | head -n1 || true)"
+  [[ -n "${version_dir}" ]] || fail "Could not locate built component version directory under build/site/"
 
   log "Generating GroovyDoc API reference..."
   (cd "${REPO_ROOT}" && ./gradlew groovydoc --no-daemon --console=plain)
@@ -141,8 +141,8 @@ integrate_api_docs() {
 }
 
 apply_ui_overrides() {
-  local site_css="${DOC_DIR}/build/site/nf-bids/_/css/site.css"
-  local site_js="${DOC_DIR}/build/site/nf-bids/_/js/site.js"
+  local site_css="${DOC_DIR}/build/site/_/css/site.css"
+  local site_js="${DOC_DIR}/build/site/_/js/site.js"
 
   [[ -f "${site_css}" ]] || fail "Missing generated stylesheet: ${site_css}"
   [[ -f "${site_js}" ]] || fail "Missing generated script bundle: ${site_js}"
