@@ -90,6 +90,12 @@ jobs:
         with:
           path: documentation/build/site-publish
 
+      - name: Upload Pages artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          path: documentation/build/site-publish
+
   deploy:
     name: Deploy to GitHub Pages
     # Never deploy from pull requests; only from main / tags / manual runs.
