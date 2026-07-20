@@ -1,7 +1,7 @@
 = Architecture Overview
 :navtitle: Architecture Overview
 :page-aliases: ROOT:architecture.adoc
-:plugin-version: 0.2.0
+:plugin-version: 0.3.0
 
 [.lead]
 This page traces the path a BIDS dataset takes through the plugin — from the user's
